@@ -6,9 +6,14 @@ A Walt Disney World guest transportation app that helps you find the best way to
 
 ## 📱 Try it on your phone (easiest way)
 
-1. Download **[Expo Go](https://expo.dev/go)** from the App Store (iPhone) or Google Play (Android) — it's free
-2. Follow the "Run it yourself" steps below to start the app
-3. Scan the QR code that appears in your terminal with Expo Go
+> **⚠️ Important — iPhone users:** This app requires the **Expo Go beta**, not the regular App Store version. The standard version won't work.
+
+**Step 1 — Install Expo Go beta via TestFlight:**
+👉 **[Install Expo Go Beta (TestFlight)](https://testflight.apple.com/join/GZJxxfUU)**
+
+Open that link on your iPhone, tap "Install", and wait for it to download. TestFlight is Apple's official beta testing platform — it's safe and free.
+
+**Step 2 — Run the app** using the instructions below, then scan the QR code with the Expo Go beta app.
 
 ---
 
@@ -32,7 +37,7 @@ npm install --legacy-peer-deps
 npx expo start --clear
 ```
 
-A QR code will appear. Scan it with **Expo Go** on your phone and the app will open.
+A QR code will appear. Scan it with the **Expo Go beta** app (TestFlight link above) and the app will open.
 
 ---
 
