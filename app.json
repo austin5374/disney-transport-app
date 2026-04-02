@@ -1,0 +1,28 @@
+{
+  "expo": {
+    "name": "Disney Transport",
+    "slug": "disney-transport-app",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.disneyworld.transport",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Used to detect which Disney park or resort you are currently at."
+      }
+    },
+    "android": {
+      "package": "com.disneyworld.transport",
+      "permissions": ["ACCESS_FINE_LOCATION", "ACCESS_COARSE_LOCATION"]
+    },
+    "plugins": [
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Used to detect which Disney park or resort you are at."
+        }
+      ]
+    ]
+  }
+}
