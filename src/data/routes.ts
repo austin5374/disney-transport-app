@@ -1247,15 +1247,6 @@ export const ALL_ROUTES: Route[] = [
   // ─────────────────────────────────────────────────────────────────────────
 
   {
-    id: 'ds-mk-via-pofq',
-    from: 'DS', to: 'MK', name: 'Bus to Port Orleans, Bus to Magic Kingdom',
-    legs: [
-      { mode: 'bus', from: 'DS', to: 'POFQ', rideMinutes: 20, simRange: [1,20], accessible: true, tip: 'No direct Disney bus from DS to parks. Transfer through a nearby resort.' },
-      { mode: 'bus', from: 'POFQ', to: 'MK', rideMinutes: 30, simRange: [1,20], accessible: true, walkMinutes: 5 },
-    ],
-    totalRideMinutes: 50, totalRideRange: [50,75], tags: ['transfer'],
-  },
-  {
     id: 'ds-mk-minnie',
     from: 'DS', to: 'MK', name: 'Minnie Van (Lyft)',
     legs: [{ mode: 'minnie_van', from: 'DS', to: 'MK', rideMinutes: 20, simRange: [0,0], accessible: true }],
@@ -1428,13 +1419,14 @@ export const ALL_ROUTES: Route[] = [
   },
   {
     id: 'tl-mk-via-ds',
-    from: 'TL', to: 'MK', name: 'Bus to Disney Springs, transfer to Magic Kingdom',
+    from: 'TL', to: 'MK', name: 'Bus to Disney Springs, Bus to Grand Floridian, Walk to Magic Kingdom',
     legs: [
       { mode: 'bus', from: 'TL', to: 'DS', rideMinutes: 10, simRange: [1,20], accessible: true },
-      { mode: 'bus', from: 'DS', to: 'POFQ', rideMinutes: 20, simRange: [1,20], accessible: true, walkMinutes: 5 },
-      { mode: 'bus', from: 'POFQ', to: 'MK', rideMinutes: 30, simRange: [1,20], accessible: true, walkMinutes: 5 },
+      { mode: 'bus', from: 'DS', to: 'GF', rideMinutes: 30, simRange: [1,20], accessible: true, walkMinutes: 0 },
+      { mode: 'walk', from: 'GF', to: 'MK', rideMinutes: 12, simRange: [0,0], accessible: true },
     ],
-    totalRideMinutes: 60, totalRideRange: [60,90], tags: ['transfer'],
+    totalRideMinutes: 52, totalRideRange: [52,80], tags: ['transfer'],
+    notes: 'Disney Springs bus access is limited to resort guests, or guests with a park or dining reservation there.',
   },
   {
     id: 'tl-mk-minnie',

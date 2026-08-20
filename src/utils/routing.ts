@@ -59,10 +59,16 @@ function mirrorRoute(r: Route): Route {
 
 function directRoutes(from: string, to: string, timeOverride?: Date): Route[] {
   const explicit = ALL_ROUTES.filter(r => r.from === from && r.to === to && timeValid(r, timeOverride));
-  if (explicit.length > 0) return explicit;
-  return ALL_ROUTES
+  const hasRealExplicit = explicit.some(r => r.legs.every(l => l.mode !== 'minnie_van'));
+  if (hasRealExplicit) return explicit;
+
+  // Explicit data for this pair is missing or minnie-only — check whether the
+  // reverse direction has a real (non-minnie) route worth mirroring.
+  const mirrored = ALL_ROUTES
     .filter(r => r.from === to && r.to === from && timeValid(r, timeOverride))
+    .filter(r => r.legs.every(l => l.mode !== 'minnie_van'))
     .map(mirrorRoute);
+  return mirrored.length > 0 ? [...explicit, ...mirrored] : explicit;
 }
 
 // Compose a two-segment journey through a major transfer hub, mirroring how

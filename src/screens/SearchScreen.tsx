@@ -25,6 +25,8 @@ const DEFAULT_FILTERS: ActiveFilters = {
   noTransfer:   false,
 };
 
+type LocationStatus = 'idle' | 'checking' | 'found' | 'not_at_park' | 'denied';
+
 export default function SearchScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets();
   const [from, setFrom]           = useState<Destination | null>(null);
@@ -35,6 +37,7 @@ export default function SearchScreen({ navigation }: Props) {
   const [fromPickerOpen, setFromPickerOpen] = useState(false);
   const [toPickerOpen, setToPickerOpen]     = useState(false);
   const [geoSheet, setGeoSheet]   = useState<{ zone: string; dest: Destination } | null>(null);
+  const [locationStatus, setLocationStatus] = useState<LocationStatus>('idle');
 
   // Auto-navigate when both fields filled
   useEffect(() => {
@@ -51,34 +54,44 @@ export default function SearchScreen({ navigation }: Props) {
     }
   }, [from, to]);
 
-  const handleUseMyLocation = async () => {
+  const detectLocation = async (auto: boolean) => {
+    setLocationStatus('checking');
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
-        setFromPickerOpen(true);
+        setLocationStatus('denied');
+        if (!auto) setFromPickerOpen(true);
         return;
       }
       const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
       const zoneId = detectZone(loc.coords.latitude, loc.coords.longitude);
-      if (!zoneId) {
-        setFromPickerOpen(true);
-        return;
-      }
-      const destId = ZONE_TO_DESTINATION[zoneId];
-      const dest   = DESTINATION_MAP[destId];
-      if (dest) {
+      const destId = zoneId ? ZONE_TO_DESTINATION[zoneId] : null;
+      const dest = destId ? DESTINATION_MAP[destId] : null;
+      if (zoneId && dest) {
+        setLocationStatus('found');
         setGeoSheet({ zone: zoneId, dest });
       } else {
-        setFromPickerOpen(true);
+        setLocationStatus('not_at_park');
+        if (!auto) setFromPickerOpen(true);
       }
     } catch {
-      setFromPickerOpen(true);
+      setLocationStatus('denied');
+      if (!auto) setFromPickerOpen(true);
     }
   };
+
+  // Try to place the user automatically as soon as the screen opens
+  useEffect(() => {
+    detectLocation(true);
+  }, []);
+
+  const handleUseMyLocation = () => detectLocation(false);
 
   const addRecent = (dest: Destination) => {
     setRecent(prev => [dest, ...prev.filter(d => d.id !== dest.id)].slice(0, 5));
   };
+
+  const needsManualLocation = !from && (locationStatus === 'not_at_park' || locationStatus === 'denied');
 
   return (
     <View style={styles.screen}>
@@ -108,11 +121,20 @@ export default function SearchScreen({ navigation }: Props) {
         {/* From: secondary, defaults toward current location */}
         <View style={styles.fromRow}>
           <View style={styles.fromDotWrap}>
-            <View style={styles.fromDot} />
+            <View style={[styles.fromDot, needsManualLocation && styles.fromDotWarning]} />
           </View>
           <TouchableOpacity style={styles.fromBody} onPress={() => setFromPickerOpen(true)}>
-            <Text style={from ? styles.fromValue : styles.fromPlaceholder} numberOfLines={1}>
-              {from ? from.label : 'From: current location or pick...'}
+            <Text
+              style={from ? styles.fromValue : needsManualLocation ? styles.fromWarning : styles.fromPlaceholder}
+              numberOfLines={1}
+            >
+              {from
+                ? from.label
+                : locationStatus === 'checking'
+                  ? 'Finding you...'
+                  : needsManualLocation
+                    ? "Can't tell where you are, tap to pick manually"
+                    : 'From: current location or pick...'}
             </Text>
           </TouchableOpacity>
           <TouchableOpacity onPress={handleUseMyLocation} style={styles.locationPill}>
@@ -247,6 +269,9 @@ const styles = StyleSheet.create({
     borderColor: Colors.primaryBlue,
     backgroundColor: Colors.cardBg,
   },
+  fromDotWarning: {
+    borderColor: Colors.statusDown,
+  },
   fromBody: {
     flex: 1,
   },
@@ -258,6 +283,11 @@ const styles = StyleSheet.create({
   fromPlaceholder: {
     fontSize: 14,
     color: Colors.textSecondary,
+  },
+  fromWarning: {
+    fontSize: 14,
+    color: Colors.statusDown,
+    fontWeight: '500',
   },
   locationPill: {
     flexDirection: 'row',

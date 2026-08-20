@@ -13,7 +13,7 @@ export const Colors = {
   lightBlueTint: '#DAE7ED',
   blueBorder:    '#82ADCD',
   // Backgrounds
-  pageBg:        '#F3F8FB',
+  pageBg:        '#E8F1F6',
   cardBg:        '#FFFFFF',
   cardBorder:    '#DCE7EE',
   divider:       '#E7EFF4',

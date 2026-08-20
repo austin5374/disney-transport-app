@@ -1,6 +1,6 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
-  View, Text, ScrollView, StyleSheet, RefreshControl, TouchableOpacity,
+  View, Text, ScrollView, Animated, StyleSheet, RefreshControl, TouchableOpacity,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -42,6 +42,16 @@ export default function StatusScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [booting, setBooting] = useState(true);
   const [clock, setClock] = useState(Date.now());
+  const scrollY = useRef(new Animated.Value(0)).current;
+
+  const brandOpacity = scrollY.interpolate({ inputRange: [0, 36], outputRange: [1, 0], extrapolate: 'clamp' });
+  const brandHeight = scrollY.interpolate({ inputRange: [0, 36], outputRange: [23, 0], extrapolate: 'clamp' });
+  const brandMarginBottom = scrollY.interpolate({ inputRange: [0, 36], outputRange: [6, 0], extrapolate: 'clamp' });
+  const subOpacity = scrollY.interpolate({ inputRange: [0, 28], outputRange: [1, 0], extrapolate: 'clamp' });
+  const subHeight = scrollY.interpolate({ inputRange: [0, 28], outputRange: [19, 0], extrapolate: 'clamp' });
+  const subMarginTop = scrollY.interpolate({ inputRange: [0, 28], outputRange: [3, 0], extrapolate: 'clamp' });
+  const titleFontSize = scrollY.interpolate({ inputRange: [0, 40], outputRange: [24, 18], extrapolate: 'clamp' });
+  const headerPaddingBottom = scrollY.interpolate({ inputRange: [0, 40], outputRange: [16, 10], extrapolate: 'clamp' });
 
   useEffect(() => {
     const t = setTimeout(() => setBooting(false), 700);
@@ -65,17 +75,21 @@ export default function StatusScreen() {
 
   return (
     <View style={styles.screen}>
-      {/* Header */}
+      {/* Header — shrinks as the list scrolls */}
       <LinearGradient colors={Gradients.sky} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
-        <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
-          <Text style={styles.brand}>{Brand.name}</Text>
-          <Text style={styles.headerTitle}>Transportation Status</Text>
-          <Text style={styles.headerSub}>
+        <Animated.View style={[styles.header, { paddingTop: insets.top + 10, paddingBottom: headerPaddingBottom }]}>
+          <Animated.Text style={[styles.brand, { opacity: brandOpacity, height: brandHeight, marginBottom: brandMarginBottom }]}>
+            {Brand.name}
+          </Animated.Text>
+          <Animated.Text style={[styles.headerTitle, { fontSize: titleFontSize }]}>
+            Transportation Status
+          </Animated.Text>
+          <Animated.Text style={[styles.headerSub, { opacity: subOpacity, height: subHeight, marginTop: subMarginTop }]}>
             {disrupted.length === 0
               ? 'All systems operating normally'
               : `${disrupted.length} ${disrupted.length === 1 ? 'line' : 'lines'} with service advisories`}
-          </Text>
-        </View>
+          </Animated.Text>
+        </Animated.View>
 
         {/* Group filter */}
         <View style={styles.chipsWrap}>
@@ -97,9 +111,14 @@ export default function StatusScreen() {
         </View>
       </LinearGradient>
 
-      <ScrollView
+      <Animated.ScrollView
         contentContainerStyle={styles.scroll}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.primaryBlue} />}
+        onScroll={Animated.event(
+          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+          { useNativeDriver: false }
+        )}
+        scrollEventThrottle={16}
       >
         {booting ? (
           <Skeleton />
@@ -128,7 +147,7 @@ export default function StatusScreen() {
           </>
         )}
         <View style={{ height: 24 }} />
-      </ScrollView>
+      </Animated.ScrollView>
     </View>
   );
 }
