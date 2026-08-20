@@ -30,14 +30,10 @@ export default function MoreScreen() {
     <View style={styles.screen}>
       <LinearGradient colors={Gradients.sky} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={[styles.header, { paddingTop: insets.top + 10 }]}>
         <Text style={styles.headerTitle}>About</Text>
+        <Text style={styles.headerSub}>{Brand.tagline}</Text>
       </LinearGradient>
 
       <ScrollView contentContainerStyle={styles.scroll}>
-        <View style={styles.hero}>
-          <Text style={styles.heroTitle}>{Brand.name}</Text>
-          <Text style={styles.heroSub}>{Brand.tagline}</Text>
-        </View>
-
         {ROWS.map(r => (
           <View key={r.title} style={styles.row}>
             <View style={styles.rowIcon}>
@@ -86,23 +82,14 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: '700',
   },
+  headerSub: {
+    color: 'rgba(255,255,255,0.75)',
+    fontSize: 12.5,
+    marginTop: 3,
+  },
   scroll: {
+    paddingTop: 16,
     paddingBottom: 32,
-  },
-  hero: {
-    alignItems: 'center',
-    paddingVertical: 24,
-  },
-  heroTitle: {
-    fontSize: 28,
-    fontWeight: '800',
-    color: Colors.primaryBlue,
-    letterSpacing: 0.5,
-  },
-  heroSub: {
-    fontSize: 13,
-    color: Colors.textSecondary,
-    marginTop: 4,
   },
   row: {
     flexDirection: 'row',
