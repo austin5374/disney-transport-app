@@ -177,7 +177,7 @@ export default function SearchScreen({ navigation }: Props) {
               <View style={styles.tripFieldTap}>
                 <Text style={styles.tripLabel}>To</Text>
                 <Text style={[styles.tripValue, !to && styles.tripValuePlaceholder]} numberOfLines={1}>
-                  {to?.label ?? 'Search parks, resorts, Disney Springs...'}
+                  {to?.label ?? 'Search parks, resorts, and more!'}
                 </Text>
               </View>
             </TouchableOpacity>
