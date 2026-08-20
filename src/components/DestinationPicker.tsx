@@ -81,7 +81,6 @@ export default function DestinationPicker({
               placeholderTextColor={Colors.textPlaceholder}
               value={query}
               onChangeText={setQuery}
-              autoFocus
               returnKeyType="search"
             />
             {query.length > 0 && (

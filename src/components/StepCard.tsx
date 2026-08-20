@@ -1,13 +1,35 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { Leg } from '../types';
 import { Colors, transportColor } from '../utils/theme';
 import { modeLabel } from '../utils/routing';
 import { DESTINATION_MAP } from '../data/destinations';
 import LiveArrival from './LiveArrival';
+import InfoSheet from './InfoSheet';
 
 const placeLabel = (id: string) => DESTINATION_MAP[id]?.label ?? id;
+
+// What to call the physical spot you'd walk to for each mode — used by the
+// "walking directions" prompt below. Walking/rideshare legs get none: you're
+// either already walking, or waiting for a car, not heading to a station.
+function boardingPointNoun(mode: string): string | null {
+  switch (mode) {
+    case 'bus':              return 'bus stop';
+    case 'monorail_express':
+    case 'monorail_resort':
+    case 'monorail_epcot':   return 'monorail station';
+    case 'skyliner':         return 'Skyliner station';
+    case 'ferry_ttc_mk':
+    case 'friendship_boat':
+    case 'sassagoula_boat':
+    case 'water_taxi_gold':
+    case 'water_taxi_red':
+    case 'water_taxi_green':
+    case 'water_taxi_blue':  return 'boat dock';
+    default:                 return null;
+  }
+}
 
 interface StepCardProps {
   leg: Leg;
@@ -69,6 +91,8 @@ export default function StepCard({ leg, stepNum, totalSteps, state }: StepCardPr
   const isUpcoming = state === 'upcoming';
   const isMinnie   = leg.mode === 'minnie_van';
   const accentColor = transportColor(leg.mode);
+  const boardingPoint = boardingPointNoun(leg.mode);
+  const [showWalkInfo, setShowWalkInfo] = React.useState(false);
 
   return (
     <View style={[
@@ -104,8 +128,9 @@ export default function StepCard({ leg, stepNum, totalSteps, state }: StepCardPr
         </View>
       </View>
 
-      {/* Tip box */}
-      {leg.tip && !isDone && (
+      {/* Tip box: only for the current step — advice for a step you haven't
+          reached yet is premature and just adds noise */}
+      {leg.tip && isCurrent && (
         <View style={styles.tipBox}>
           <Text style={styles.tipText}>{leg.tip}</Text>
         </View>
@@ -124,6 +149,24 @@ export default function StepCard({ leg, stepNum, totalSteps, state }: StepCardPr
           <Ionicons name="phone-portrait-outline" size={14} color={Colors.primaryBlue} />
           <Text style={styles.lyftBtn}>Book via Lyft app</Text>
         </View>
+      )}
+
+      {/* Walking directions concept: current step only, transit modes only */}
+      {isCurrent && boardingPoint && (
+        <TouchableOpacity style={styles.walkRow} onPress={() => setShowWalkInfo(true)} activeOpacity={0.7}>
+          <Ionicons name="walk-outline" size={15} color={Colors.primaryBlue} />
+          <Text style={styles.walkText}>Walking directions to the {boardingPoint}</Text>
+          <Ionicons name="chevron-forward" size={14} color={Colors.primaryBlue} />
+        </TouchableOpacity>
+      )}
+
+      {boardingPoint && (
+        <InfoSheet
+          visible={showWalkInfo}
+          title="Walking directions"
+          message={`This is a demo, so it can't route you for real — but here's the idea: tapping this would open turn-by-turn walking directions from where you are to the ${boardingPoint} at ${placeLabel(leg.from)}.`}
+          onClose={() => setShowWalkInfo(false)}
+        />
       )}
     </View>
   );
@@ -204,6 +247,21 @@ const styles = StyleSheet.create({
   },
   lyftBtn: {
     fontSize: 13,
+    color: Colors.primaryBlue,
+    fontWeight: '500',
+  },
+  walkRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: 10,
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: Colors.divider,
+  },
+  walkText: {
+    flex: 1,
+    fontSize: 12.5,
     color: Colors.primaryBlue,
     fontWeight: '500',
   },

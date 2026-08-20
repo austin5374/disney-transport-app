@@ -1,21 +1,22 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
-  View, Text, TouchableOpacity, StyleSheet, Alert, ScrollView,
+  View, Text, TouchableOpacity, StyleSheet, ScrollView,
 } from 'react-native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { useFocusEffect } from '@react-navigation/native';
 import * as Location from 'expo-location';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { RootStackParamList, Destination, ActiveFilters, TransportMode } from '../types';
-import { Colors, transportColor } from '../utils/theme';
-import { detectZone, ZONE_TO_DESTINATION, getActiveRoutes, modeLabel } from '../utils/routing';
+import { RootStackParamList, Destination, ActiveFilters } from '../types';
+import { Colors, groupBadgeColors } from '../utils/theme';
+import { detectZone, ZONE_TO_DESTINATION } from '../utils/routing';
 import { DESTINATION_MAP } from '../data/destinations';
 import AppHeader from '../components/AppHeader';
 import TimeBanner from '../components/TimeBanner';
 import FilterPills from '../components/FilterPills';
 import DestinationPicker from '../components/DestinationPicker';
 import AppModal from '../components/AppModal';
+import InfoSheet from '../components/InfoSheet';
 
 type Props = { navigation: StackNavigationProp<RootStackParamList, 'Search'> };
 
@@ -29,15 +30,14 @@ const DEFAULT_FILTERS: ActiveFilters = {
 
 type LocationStatus = 'idle' | 'checking' | 'found' | 'not_at_park' | 'denied';
 
-// A handful of well-known trips shown before the visitor has picked anything,
-// so the planner never opens on a blank page. Each pair is a real, verified
-// route in routes.ts (walk, monorail, Skyliner direct, Skyliner + transfer).
-const POPULAR_ROUTE_IDS: { fromId: string; toId: string }[] = [
-  { fromId: 'CON', toId: 'MK' },
-  { fromId: 'GF',  toId: 'MK' },
-  { fromId: 'CBR', toId: 'EP' },
-  { fromId: 'POP', toId: 'HS' },
-];
+// One-tap "where to" shortcuts shown before a destination is picked, so the
+// planner never opens on a blank page. Fixed resort->park pairs (the old
+// "Popular routes") only ever helped a visitor already standing at that
+// exact resort — everyone else got routes that didn't apply to them. These
+// tiles fill in just the destination and reuse whatever "from" is already
+// known (current location or a manual pick), so they're useful regardless
+// of where the visitor actually is.
+const QUICK_DESTINATION_IDS = ['MK', 'EP', 'HS', 'AK', 'DS'];
 
 export default function SearchScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets();
@@ -50,12 +50,13 @@ export default function SearchScreen({ navigation }: Props) {
   const [toPickerOpen, setToPickerOpen]     = useState(false);
   const [geoSheet, setGeoSheet]   = useState<{ zone: string; dest: Destination } | null>(null);
   const [locationStatus, setLocationStatus] = useState<LocationStatus>('idle');
+  const [sameLocationInfo, setSameLocationInfo] = useState(false);
 
   // Auto-navigate when both fields filled
   useEffect(() => {
     if (from && to) {
       if (from.id === to.id) {
-        Alert.alert("You're already there!", "FROM and TO are the same location.");
+        setSameLocationInfo(true);
         setTo(null);
         return;
       }
@@ -124,21 +125,14 @@ export default function SearchScreen({ navigation }: Props) {
 
   const needsManualLocation = !from && (locationStatus === 'not_at_park' || locationStatus === 'denied');
 
-  const popularRoutes = React.useMemo(() => {
-    return POPULAR_ROUTE_IDS.map(({ fromId, toId }) => {
-      const fromDest = DESTINATION_MAP[fromId];
-      const toDest = DESTINATION_MAP[toId];
-      const best = getActiveRoutes(fromId, toId)[0];
-      if (!fromDest || !toDest || !best) return null;
-      return { from: fromDest, to: toDest, mode: best.legs[0].mode };
-    }).filter((r): r is { from: Destination; to: Destination; mode: TransportMode } => r !== null);
-  }, []);
+  const quickDestinations = React.useMemo(
+    () => QUICK_DESTINATION_IDS.map(id => DESTINATION_MAP[id]).filter((d): d is Destination => !!d),
+    []
+  );
 
-  const selectPopularRoute = (fromDest: Destination, toDest: Destination) => {
-    addRecent(fromDest);
-    addRecent(toDest);
-    setFrom(fromDest);
-    setTo(toDest);
+  const selectQuickDestination = (dest: Destination) => {
+    addRecent(dest);
+    setTo(dest);
   };
 
   return (
@@ -196,24 +190,30 @@ export default function SearchScreen({ navigation }: Props) {
 
         <TimeBanner timeOverride={timeOverride} onTimeChange={setTimeOverride} />
 
-        {/* Popular routes: gives the planner something to show before any pick is made */}
-        {!to && popularRoutes.length > 0 && (
+        {/* Quick destinations: fills the destination only, reusing whatever
+            "from" is already known — useful no matter where the visitor is,
+            unlike a fixed list of resort->park pairs. */}
+        {!to && quickDestinations.length > 0 && (
           <View style={styles.popularSection}>
-            <Text style={styles.popularTitle}>Popular routes</Text>
-            {popularRoutes.map(pr => (
-              <TouchableOpacity
-                key={`${pr.from.id}-${pr.to.id}`}
-                style={styles.popularRow}
-                onPress={() => selectPopularRoute(pr.from, pr.to)}
-                activeOpacity={0.7}
-              >
-                <View style={[styles.popularDot, { backgroundColor: transportColor(pr.mode) }]} />
-                <Text style={styles.popularText} numberOfLines={1}>
-                  {pr.from.label} <Text style={styles.popularArrow}>›</Text> {pr.to.label}
-                </Text>
-                <Text style={styles.popularMode}>{modeLabel(pr.mode)}</Text>
-              </TouchableOpacity>
-            ))}
+            <Text style={styles.popularTitle}>Quick destinations</Text>
+            <View style={styles.quickGrid}>
+              {quickDestinations.map(dest => {
+                const badge = groupBadgeColors(dest.group);
+                return (
+                  <TouchableOpacity
+                    key={dest.id}
+                    style={styles.quickTile}
+                    onPress={() => selectQuickDestination(dest)}
+                    activeOpacity={0.7}
+                  >
+                    <View style={[styles.quickBadge, { backgroundColor: badge.bg }]}>
+                      <Text style={[styles.quickBadgeText, { color: badge.text }]}>{dest.abbrev}</Text>
+                    </View>
+                    <Text style={styles.quickLabel} numberOfLines={2}>{dest.label}</Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
           </View>
         )}
       </ScrollView>
@@ -265,6 +265,13 @@ export default function SearchScreen({ navigation }: Props) {
           </TouchableOpacity>
         </AppModal>
       )}
+
+      <InfoSheet
+        visible={sameLocationInfo}
+        title="You're already there!"
+        message="Your FROM and TO are the same location."
+        onClose={() => setSameLocationInfo(false)}
+      />
     </View>
   );
 }
@@ -443,36 +450,32 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     marginLeft: 2,
   },
-  popularRow: {
+  quickGrid: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+  },
+  quickTile: {
+    width: 84,
     alignItems: 'center',
-    backgroundColor: Colors.cardBg,
-    borderWidth: 1,
-    borderColor: Colors.cardBorder,
-    borderRadius: 14,
-    paddingHorizontal: 14,
-    paddingVertical: 13,
-    marginBottom: 8,
   },
-  popularDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    marginRight: 12,
+  quickBadge: {
+    width: 56,
+    height: 56,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 6,
   },
-  popularText: {
-    flex: 1,
-    fontSize: 14,
+  quickBadgeText: {
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  quickLabel: {
+    fontSize: 12,
     color: Colors.textPrimary,
     fontWeight: '500',
-  },
-  popularArrow: {
-    color: Colors.textSecondary,
-    fontWeight: '400',
-  },
-  popularMode: {
-    fontSize: 12,
-    color: Colors.textSecondary,
-    marginLeft: 8,
+    textAlign: 'center',
+    lineHeight: 15,
   },
 });

@@ -66,15 +66,31 @@ const LINE_PATHS: Record<string, { d: string; dashed?: boolean }> = {
   'boat-sassagoula': { d: `M ${pt('POFQ')} L ${pt('POR')} L ${pt('OKW')} L ${pt('SS')} L ${pt('DS')}`, dashed: true },
 };
 
+type MapGroup = 'All' | 'Monorail' | 'Skyliner' | 'Boats';
+const MAP_GROUPS: { key: MapGroup; label: string }[] = [
+  { key: 'All',      label: 'All' },
+  { key: 'Monorail', label: 'Monorail' },
+  { key: 'Skyliner', label: 'Skyliner' },
+  { key: 'Boats',    label: 'Boats' },
+];
+
 export default function MapScreen() {
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const live = useLiveStatus();
   const [selected, setSelected] = useState<string | null>(null);
+  const [groupFilter, setGroupFilter] = useState<MapGroup>('All');
+
+  const changeGroupFilter = (g: MapGroup) => {
+    setGroupFilter(g);
+    setSelected(null);
+  };
 
   const mapW = Math.min(width, 520);
   const mapH = mapW * (560 / 360);
-  const mapLines = TRANSIT_LINES.filter(l => LINE_PATHS[l.id]);
+  const mapLines = TRANSIT_LINES.filter(l =>
+    LINE_PATHS[l.id] && (groupFilter === 'All' || l.group === groupFilter)
+  );
   const selectedLine = mapLines.find(l => l.id === selected) ?? null;
   const selectedStatus = selectedLine ? live[selectedLine.id] : null;
 
@@ -87,9 +103,26 @@ export default function MapScreen() {
 
   return (
     <View style={styles.screen}>
-      <LinearGradient colors={Gradients.sky} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={[styles.header, { paddingTop: insets.top + 10 }]}>
-        <Text style={styles.headerTitle}>Transit Map</Text>
-        <Text style={styles.headerSub}>Schematic, not to scale · buses serve all locations</Text>
+      <LinearGradient colors={Gradients.sky} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ paddingTop: insets.top + 10 }}>
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>Transit Map</Text>
+          <Text style={styles.headerSub}>Schematic, not to scale · buses serve all locations</Text>
+        </View>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipsRow}>
+          {MAP_GROUPS.map(g => {
+            const active = groupFilter === g.key;
+            return (
+              <TouchableOpacity
+                key={g.key}
+                style={[styles.chip, active && styles.chipActive]}
+                onPress={() => changeGroupFilter(g.key)}
+                activeOpacity={0.8}
+              >
+                <Text style={[styles.chipText, active && styles.chipTextActive]}>{g.label}</Text>
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
       </LinearGradient>
 
       <ScrollView contentContainerStyle={{ paddingBottom: 24 }}>
@@ -239,6 +272,28 @@ const styles = StyleSheet.create({
     color: 'rgba(255,255,255,0.75)',
     fontSize: 12.5,
     marginTop: 3,
+  },
+  chipsRow: {
+    paddingHorizontal: 20,
+    paddingBottom: 14,
+    gap: 8,
+  },
+  chip: {
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.14)',
+  },
+  chipActive: {
+    backgroundColor: '#fff',
+  },
+  chipText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: 'rgba(255,255,255,0.9)',
+  },
+  chipTextActive: {
+    color: Colors.primaryBlue,
   },
   mapCard: {
     backgroundColor: Colors.cardBg,
