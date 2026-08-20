@@ -12,29 +12,38 @@ import { Colors, StatusColors, Gradients } from '../utils/theme';
 // Schematic property map (not to scale, like any transit diagram).
 // Coordinates live in a 360 × 560 viewBox.
 
-const NODES: Record<string, { x: number; y: number; label: string; kind: 'park' | 'resort' | 'hub' | 'place' }> = {
-  MK:   { x: 100, y: 62,  label: 'Magic Kingdom',    kind: 'park' },
-  CON:  { x: 152, y: 88,  label: 'Contemporary',     kind: 'resort' },
+type NodeKind = 'park' | 'resort' | 'hub' | 'place';
+interface MapNode {
+  x: number; y: number; label: string; kind: NodeKind;
+  abbrev?: string;
+  // Optional label-position override for nodes in visually crowded spots —
+  // default is centered above the node.
+  labelDx?: number; labelDy?: number; anchor?: 'start' | 'middle' | 'end';
+}
+
+const NODES: Record<string, MapNode> = {
+  MK:   { x: 100, y: 62,  label: 'Magic Kingdom',    kind: 'park', abbrev: 'MK' },
+  CON:  { x: 152, y: 88,  label: 'Contemporary',     kind: 'resort', labelDx: 16, labelDy: -3, anchor: 'start' },
   WL:   { x: 190, y: 52,  label: 'Wilderness Lodge', kind: 'resort' },
   FW:   { x: 236, y: 74,  label: 'Fort Wilderness',  kind: 'resort' },
   GF:   { x: 52,  y: 92,  label: 'Grand Floridian',  kind: 'resort' },
   POLY: { x: 58,  y: 136, label: 'Polynesian',       kind: 'resort' },
-  TTC:  { x: 100, y: 152, label: 'TTC',              kind: 'hub' },
-  EP:   { x: 208, y: 296, label: 'EPCOT',            kind: 'park' },
+  TTC:  { x: 100, y: 152, label: 'TTC',              kind: 'hub', labelDx: -14, labelDy: 3, anchor: 'end' },
+  EP:   { x: 208, y: 296, label: 'EPCOT',            kind: 'park', abbrev: 'EP' },
   IG:   { x: 196, y: 330, label: 'Intl Gateway',     kind: 'place' },
-  BW:   { x: 162, y: 352, label: 'BoardWalk',        kind: 'resort' },
-  YBC:  { x: 214, y: 352, label: 'Yacht & Beach',    kind: 'resort' },
-  SD:   { x: 168, y: 380, label: 'Swan / Dolphin',   kind: 'resort' },
-  HS:   { x: 118, y: 424, label: 'Hollywood Studios', kind: 'park' },
-  RIV:  { x: 258, y: 366, label: 'Riviera',          kind: 'resort' },
+  BW:   { x: 162, y: 352, label: 'BoardWalk',        kind: 'resort', labelDx: -10, labelDy: -2, anchor: 'end' },
+  YBC:  { x: 214, y: 352, label: 'Yacht & Beach',    kind: 'resort', labelDx: 10, labelDy: -2, anchor: 'start' },
+  SD:   { x: 168, y: 380, label: 'Swan / Dolphin',   kind: 'resort', labelDx: -10, anchor: 'end' },
+  HS:   { x: 118, y: 424, label: 'Hollywood Studios', kind: 'park', abbrev: 'HS' },
+  RIV:  { x: 258, y: 366, label: 'Riviera',          kind: 'resort', labelDx: 10, anchor: 'start' },
   CBR:  { x: 244, y: 420, label: 'Caribbean Beach',  kind: 'hub' },
   POP:  { x: 296, y: 470, label: 'Pop / Art of Anim.', kind: 'resort' },
-  AK:   { x: 42,  y: 480, label: 'Animal Kingdom',   kind: 'park' },
-  DS:   { x: 314, y: 250, label: 'Disney Springs',   kind: 'park' },
-  SS:   { x: 318, y: 208, label: 'Saratoga Springs', kind: 'resort' },
-  OKW:  { x: 284, y: 192, label: 'Old Key West',     kind: 'resort' },
-  POR:  { x: 300, y: 158, label: 'Port Orleans Riv.', kind: 'resort' },
-  POFQ: { x: 282, y: 128, label: 'Port Orleans FQ',  kind: 'resort' },
+  AK:   { x: 66,  y: 480, label: 'Animal Kingdom',   kind: 'park', abbrev: 'AK' },
+  DS:   { x: 314, y: 250, label: 'Disney Springs',   kind: 'park', abbrev: 'DS', labelDy: 24 },
+  SS:   { x: 318, y: 208, label: 'Saratoga Springs', kind: 'resort', labelDx: -10, anchor: 'end' },
+  OKW:  { x: 284, y: 192, label: 'Old Key West',     kind: 'resort', labelDx: -10, anchor: 'end' },
+  POR:  { x: 300, y: 158, label: 'Port Orleans Riv.', kind: 'resort', labelDx: -10, anchor: 'end' },
+  POFQ: { x: 282, y: 128, label: 'Port Orleans FQ',  kind: 'resort', labelDx: -10, anchor: 'end' },
 };
 
 const n = (id: string) => NODES[id];
@@ -87,10 +96,10 @@ export default function MapScreen() {
         <View style={styles.mapCard}>
           <Svg width={mapW - 24} height={mapH - 24} viewBox="0 0 360 560">
             {/* Water */}
-            <Ellipse cx={102} cy={108} rx={44} ry={38} fill="#DCEBF7" />
-            <Ellipse cx={205} cy={80} rx={52} ry={30} fill="#DCEBF7" />
-            <Ellipse cx={190} cy={358} rx={38} ry={24} fill="#DCEBF7" />
-            <Ellipse cx={300} cy={195} rx={26} ry={52} fill="#DCEBF7" />
+            <Ellipse cx={102} cy={108} rx={44} ry={38} fill="#DCEBF7" stroke="#C7DFEF" strokeWidth={1} />
+            <Ellipse cx={205} cy={80} rx={52} ry={30} fill="#DCEBF7" stroke="#C7DFEF" strokeWidth={1} />
+            <Ellipse cx={190} cy={358} rx={38} ry={24} fill="#DCEBF7" stroke="#C7DFEF" strokeWidth={1} />
+            <Ellipse cx={300} cy={195} rx={26} ry={52} fill="#DCEBF7" stroke="#C7DFEF" strokeWidth={1} />
 
             {/* Transit lines */}
             {mapLines.map(line => {
@@ -106,39 +115,57 @@ export default function MapScreen() {
                     strokeDasharray={p.dashed ? '5,5' : st === 'down' ? '3,4' : undefined}
                     fill="none"
                     strokeLinecap="round"
+                    strokeLinejoin="round"
                   />
                 </G>
               );
             })}
 
             {/* Nodes */}
-            {Object.entries(NODES).map(([id, node]) => (
-              <G key={id}>
-                {node.kind === 'park' ? (
-                  <Rect
-                    x={node.x - 9} y={node.y - 9} width={18} height={18} rx={5}
-                    fill={Colors.primaryBlue}
-                  />
-                ) : node.kind === 'hub' ? (
-                  <>
-                    <Circle cx={node.x} cy={node.y} r={8} fill="#fff" stroke={Colors.textPrimary} strokeWidth={2.5} />
-                    <Circle cx={node.x} cy={node.y} r={3} fill={Colors.textPrimary} />
-                  </>
-                ) : (
-                  <Circle cx={node.x} cy={node.y} r={4.5} fill="#fff" stroke={Colors.textSecondary} strokeWidth={2} />
-                )}
-                <SvgText
-                  x={node.x}
-                  y={node.y - (node.kind === 'park' ? 14 : 10)}
-                  fontSize={node.kind === 'park' ? 10 : 8.5}
-                  fontWeight={node.kind === 'park' ? '700' : '500'}
-                  fill={node.kind === 'park' ? Colors.textPrimary : Colors.textSecondary}
-                  textAnchor="middle"
-                >
-                  {node.label}
-                </SvgText>
-              </G>
-            ))}
+            {Object.entries(NODES).map(([id, node]) => {
+              const defaultDy = node.kind === 'park' ? -16 : -10;
+              const labelX = node.x + (node.labelDx ?? 0);
+              const labelY = node.y + (node.labelDy ?? defaultDy);
+              return (
+                <G key={id}>
+                  {node.kind === 'park' ? (
+                    <>
+                      <Rect
+                        x={node.x - 11} y={node.y - 11} width={22} height={22} rx={6}
+                        fill={Colors.primaryBlue}
+                        stroke="#fff" strokeWidth={1.5}
+                      />
+                      {node.abbrev && (
+                        <SvgText
+                          x={node.x} y={node.y + 3.5}
+                          fontSize={9} fontWeight="700"
+                          fill="#fff" textAnchor="middle"
+                        >
+                          {node.abbrev}
+                        </SvgText>
+                      )}
+                    </>
+                  ) : node.kind === 'hub' ? (
+                    <>
+                      <Circle cx={node.x} cy={node.y} r={8} fill="#fff" stroke={Colors.textPrimary} strokeWidth={2.5} />
+                      <Circle cx={node.x} cy={node.y} r={3} fill={Colors.textPrimary} />
+                    </>
+                  ) : (
+                    <Circle cx={node.x} cy={node.y} r={4.5} fill="#fff" stroke={Colors.textSecondary} strokeWidth={2} />
+                  )}
+                  <SvgText
+                    x={labelX}
+                    y={labelY}
+                    fontSize={node.kind === 'park' ? 10.5 : 8.5}
+                    fontWeight={node.kind === 'park' ? '700' : '500'}
+                    fill={node.kind === 'park' ? Colors.textPrimary : Colors.textSecondary}
+                    textAnchor={node.anchor ?? 'middle'}
+                  >
+                    {node.label}
+                  </SvgText>
+                </G>
+              );
+            })}
           </Svg>
         </View>
 
