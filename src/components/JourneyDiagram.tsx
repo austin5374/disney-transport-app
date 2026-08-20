@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { View, Text, Animated, StyleSheet, ScrollView } from 'react-native';
 import { Route } from '../types';
-import { Colors, transportColor } from '../utils/theme';
+import { Colors, transportColor, groupBadgeColors } from '../utils/theme';
 import { modeLabel } from '../utils/routing';
 import { DESTINATION_MAP } from '../data/destinations';
 
@@ -10,17 +10,11 @@ interface JourneyDiagramProps {
 }
 
 function nodeColor(id: string): string {
-  const parks = ['MK', 'EP', 'HS', 'AK', 'TL', 'BB'];
-  const hubs  = ['TTC', 'CBR', 'RIV', 'CON', 'GF', 'POLY', 'WL', 'FW', 'BWI', 'YC', 'BC', 'SW', 'DO', 'SR', 'AKL', 'DS'];
-  if (parks.includes(id)) return Colors.lightBlueTint;
-  if (hubs.includes(id))  return 'rgba(255,215,0,0.15)';
-  return Colors.waterBg;
+  return groupBadgeColors(DESTINATION_MAP[id]?.group ?? '').bg;
 }
 
 function nodeTextColor(id: string): string {
-  const parks = ['MK', 'EP', 'HS', 'AK', 'TL', 'BB'];
-  if (parks.includes(id)) return Colors.primaryBlue;
-  return Colors.warnText;
+  return groupBadgeColors(DESTINATION_MAP[id]?.group ?? '').text;
 }
 
 export default function JourneyDiagram({ route }: JourneyDiagramProps) {

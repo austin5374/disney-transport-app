@@ -8,7 +8,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { Destination, DestinationGroup } from '../types';
 import { DESTINATIONS } from '../data/destinations';
-import { Colors, Gradients } from '../utils/theme';
+import { Colors, Gradients, groupBadgeColors } from '../utils/theme';
 
 interface DestinationPickerProps {
   visible: boolean;
@@ -100,7 +100,13 @@ export default function DestinationPicker({
                 onPress={() => { onSelect(item); onClose(); setQuery(''); }}
               >
                 <Text style={styles.itemLabel}>{item.label}</Text>
-                <Text style={styles.itemId}>{item.id}</Text>
+                <Text style={[
+                  styles.itemId,
+                  {
+                    backgroundColor: groupBadgeColors(item.group).bg,
+                    color: groupBadgeColors(item.group).text,
+                  },
+                ]}>{item.abbrev}</Text>
               </TouchableOpacity>
             )}
             renderSectionHeader={({ section }) => (
@@ -191,10 +197,10 @@ const styles = StyleSheet.create({
   },
   itemId: {
     fontSize: 12,
-    color: Colors.textPlaceholder,
-    backgroundColor: Colors.lightBlueTint,
+    fontWeight: '600',
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 6,
+    overflow: 'hidden',
   },
 });

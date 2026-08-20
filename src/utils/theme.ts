@@ -82,6 +82,23 @@ export const transportColor = (mode: string): string => {
   }
 };
 
+// Destination badge tiers: parks (blue), water parks (green), everything
+// else — resorts, hubs, entertainment (gold). Single source of truth so the
+// search picker, results, and journey diagram all agree on a place's color.
+export const groupTier = (group: string): 'park' | 'water' | 'hub' => {
+  if (group === 'Parks') return 'park';
+  if (group === 'Water Parks') return 'water';
+  return 'hub';
+};
+
+export const GroupTierColors: Record<'park' | 'water' | 'hub', { bg: string; text: string }> = {
+  park:  { bg: Colors.lightBlueTint,        text: Colors.primaryBlue },
+  water: { bg: Colors.waterBg,              text: Colors.waterText },
+  hub:   { bg: 'rgba(224,169,62,0.16)',     text: Colors.warnText },
+};
+
+export const groupBadgeColors = (group: string) => GroupTierColors[groupTier(group)];
+
 export const Brand = {
   name: 'ParkWays',
   tagline: 'Walt Disney World transit, unofficial',
