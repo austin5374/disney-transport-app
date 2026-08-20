@@ -46,7 +46,7 @@ export interface Route {
   totalRideMinutes: number;
   totalRideRange?: [number, number];
   tags: RouteTag[];
-  timeRestriction?: 'before_10am' | 'before_4pm' | 'after_3pm_only';
+  timeRestriction?: 'before_10am' | 'before_4pm' | 'after_3pm_only' | 'after_10am';
   notes?: string;
   name: string; // human-readable name for the card
 }

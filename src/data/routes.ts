@@ -36,6 +36,14 @@ export const ALL_ROUTES: Route[] = [
   },
 
   {
+    id: 'mk-hs-bus',
+    from: 'MK', to: 'HS', name: 'Bus from Magic Kingdom',
+    legs: [{ mode: 'bus', from: 'MK', to: 'HS', rideMinutes: 25, simRange: [1,20], accessible: true, tip: 'Bus stop is outside the park gates, Transportation Hub area.' }],
+    totalRideMinutes: 25, totalRideRange: [25,40], tags: ['time_restricted'],
+    timeRestriction: 'after_10am',
+    notes: 'Park-to-park buses run from 10am until about 1 hour after the later park\'s closing time (varies daily).',
+  },
+  {
     id: 'mk-hs-before10',
     from: 'MK', to: 'HS', name: 'Walk to Grand Floridian, Bus to Hollywood Studios (before 10am)',
     legs: [
@@ -52,6 +60,14 @@ export const ALL_ROUTES: Route[] = [
     totalRideMinutes: 15, tags: [],
   },
 
+  {
+    id: 'mk-ak-bus',
+    from: 'MK', to: 'AK', name: 'Bus from Magic Kingdom',
+    legs: [{ mode: 'bus', from: 'MK', to: 'AK', rideMinutes: 25, simRange: [1,20], accessible: true }],
+    totalRideMinutes: 25, totalRideRange: [25,40], tags: ['time_restricted'],
+    timeRestriction: 'after_10am',
+    notes: 'Park-to-park buses run from 10am until about 1 hour after the later park\'s closing time (varies daily).',
+  },
   {
     id: 'mk-ak-before10',
     from: 'MK', to: 'AK', name: 'Walk to Polynesian, Bus to Animal Kingdom (before 10am)',
@@ -480,12 +496,28 @@ export const ALL_ROUTES: Route[] = [
     totalRideMinutes: 35, tags: ['water', 'scenic'],
   },
   {
+    id: 'ep-hs-bus',
+    from: 'EP', to: 'HS', name: 'Bus from EPCOT',
+    legs: [{ mode: 'bus', from: 'EP', to: 'HS', rideMinutes: 25, simRange: [1,20], accessible: true, tip: 'Skyliner via Caribbean Beach is usually faster — this is the backup Disney transit option.' }],
+    totalRideMinutes: 25, totalRideRange: [25,45], tags: ['time_restricted'],
+    timeRestriction: 'after_10am',
+    notes: 'Park-to-park buses run from 10am until about 1 hour after the later park\'s closing time (varies daily).',
+  },
+  {
     id: 'ep-hs-minnie',
     from: 'EP', to: 'HS', name: 'Minnie Van (Lyft)',
     legs: [{ mode: 'minnie_van', from: 'EP', to: 'HS', rideMinutes: 12, simRange: [0,0], accessible: true }],
     totalRideMinutes: 12, tags: [],
   },
 
+  {
+    id: 'ep-ak-bus',
+    from: 'EP', to: 'AK', name: 'Bus from EPCOT',
+    legs: [{ mode: 'bus', from: 'EP', to: 'AK', rideMinutes: 30, simRange: [1,20], accessible: true }],
+    totalRideMinutes: 30, totalRideRange: [30,50], tags: ['time_restricted'],
+    timeRestriction: 'after_10am',
+    notes: 'Park-to-park buses run from 10am until about 1 hour after the later park\'s closing time (varies daily).',
+  },
   {
     id: 'ep-ak-before10',
     from: 'EP', to: 'AK', name: 'Friendship Boat to BoardWalk Inn, Bus to Animal Kingdom (before 10am)',
@@ -743,12 +775,28 @@ export const ALL_ROUTES: Route[] = [
     totalRideMinutes: 35, tags: ['water', 'scenic'],
   },
   {
+    id: 'hs-ep-bus',
+    from: 'HS', to: 'EP', name: 'Bus from Hollywood Studios',
+    legs: [{ mode: 'bus', from: 'HS', to: 'EP', rideMinutes: 25, simRange: [1,20], accessible: true, tip: 'Skyliner via Caribbean Beach is usually faster — this is the backup Disney transit option.' }],
+    totalRideMinutes: 25, totalRideRange: [25,45], tags: ['time_restricted'],
+    timeRestriction: 'after_10am',
+    notes: 'Park-to-park buses run from 10am until about 1 hour after the later park\'s closing time (varies daily).',
+  },
+  {
     id: 'hs-ep-minnie',
     from: 'HS', to: 'EP', name: 'Minnie Van (Lyft)',
     legs: [{ mode: 'minnie_van', from: 'HS', to: 'EP', rideMinutes: 12, simRange: [0,0], accessible: true }],
     totalRideMinutes: 12, tags: [],
   },
 
+  {
+    id: 'hs-mk-bus',
+    from: 'HS', to: 'MK', name: 'Bus from Hollywood Studios',
+    legs: [{ mode: 'bus', from: 'HS', to: 'MK', rideMinutes: 25, simRange: [1,20], accessible: true }],
+    totalRideMinutes: 25, totalRideRange: [25,45], tags: ['time_restricted'],
+    timeRestriction: 'after_10am',
+    notes: 'Park-to-park buses run from 10am until about 1 hour after the later park\'s closing time (varies daily).',
+  },
   {
     id: 'hs-mk-before10',
     from: 'HS', to: 'MK', name: 'Friendship Boat to BoardWalk Inn, Bus to Magic Kingdom (before 10am)',
@@ -766,6 +814,14 @@ export const ALL_ROUTES: Route[] = [
     totalRideMinutes: 20, tags: [],
   },
 
+  {
+    id: 'hs-ak-bus',
+    from: 'HS', to: 'AK', name: 'Bus from Hollywood Studios',
+    legs: [{ mode: 'bus', from: 'HS', to: 'AK', rideMinutes: 25, simRange: [1,20], accessible: true }],
+    totalRideMinutes: 25, totalRideRange: [25,45], tags: ['time_restricted'],
+    timeRestriction: 'after_10am',
+    notes: 'Park-to-park buses run from 10am until about 1 hour after the later park\'s closing time (varies daily).',
+  },
   {
     id: 'hs-ak-before10',
     from: 'HS', to: 'AK', name: 'Friendship Boat to BoardWalk Inn, Bus to Animal Kingdom (before 10am)',
@@ -1005,6 +1061,14 @@ export const ALL_ROUTES: Route[] = [
   // ─────────────────────────────────────────────────────────────────────────
 
   {
+    id: 'ak-mk-bus',
+    from: 'AK', to: 'MK', name: 'Bus from Animal Kingdom',
+    legs: [{ mode: 'bus', from: 'AK', to: 'MK', rideMinutes: 25, simRange: [1,20], accessible: true }],
+    totalRideMinutes: 25, totalRideRange: [25,45], tags: ['time_restricted'],
+    timeRestriction: 'after_10am',
+    notes: 'Park-to-park buses run from 10am until about 1 hour after the later park\'s closing time (varies daily).',
+  },
+  {
     id: 'ak-mk-before10',
     from: 'AK', to: 'MK', name: 'Bus to Animal Kingdom Lodge, Bus to Magic Kingdom (before 10am)',
     legs: [
@@ -1022,6 +1086,14 @@ export const ALL_ROUTES: Route[] = [
   },
 
   {
+    id: 'ak-ep-bus',
+    from: 'AK', to: 'EP', name: 'Bus from Animal Kingdom',
+    legs: [{ mode: 'bus', from: 'AK', to: 'EP', rideMinutes: 30, simRange: [1,20], accessible: true }],
+    totalRideMinutes: 30, totalRideRange: [30,50], tags: ['time_restricted'],
+    timeRestriction: 'after_10am',
+    notes: 'Park-to-park buses run from 10am until about 1 hour after the later park\'s closing time (varies daily).',
+  },
+  {
     id: 'ak-ep-before10',
     from: 'AK', to: 'EP', name: 'Bus to Animal Kingdom Lodge, Bus to EPCOT (before 10am)',
     legs: [
@@ -1038,6 +1110,14 @@ export const ALL_ROUTES: Route[] = [
     totalRideMinutes: 20, tags: [],
   },
 
+  {
+    id: 'ak-hs-bus',
+    from: 'AK', to: 'HS', name: 'Bus from Animal Kingdom',
+    legs: [{ mode: 'bus', from: 'AK', to: 'HS', rideMinutes: 25, simRange: [1,20], accessible: true }],
+    totalRideMinutes: 25, totalRideRange: [25,45], tags: ['time_restricted'],
+    timeRestriction: 'after_10am',
+    notes: 'Park-to-park buses run from 10am until about 1 hour after the later park\'s closing time (varies daily).',
+  },
   {
     id: 'ak-hs-before10',
     from: 'AK', to: 'HS', name: 'Bus to Animal Kingdom Lodge, Bus to Hollywood Studios (before 10am)',
