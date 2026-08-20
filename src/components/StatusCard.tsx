@@ -9,16 +9,16 @@ interface StatusCardProps {
   status: LineStatus;
 }
 
-function arrivalsText(line: TransitLine, status: LineStatus): string {
+function arrivalsText(status: LineStatus): string {
   if (status.status === 'down') {
     return status.etaMinutes
       ? `Est. return to service: ${status.etaMinutes} min`
       : 'Return to service time not yet available';
   }
-  if (line.headwayMinutes[1] <= 1) {
+  if (status.headwayMinutes[1] <= 1) {
     return status.status === 'delayed' ? 'Boarding with brief pauses' : 'Boarding continuously';
   }
-  if (status.nextArrivals.length === 0) return `Every ${line.headwayMinutes[0]}–${line.headwayMinutes[1]} min`;
+  if (status.nextArrivals.length === 0) return `Every ${status.headwayMinutes[0]}–${status.headwayMinutes[1]} min`;
   const [a, b] = status.nextArrivals;
   const first = a === 0 ? 'Arriving now' : `Next in ${a} min`;
   return b != null ? `${first} · then ${b} min` : first;
@@ -55,6 +55,12 @@ export default function StatusCard({ line, status }: StatusCardProps) {
           {line.stations.join(' · ')}
         </Text>
 
+        {status.trainsInService != null ? (
+          <Text style={styles.trainCount}>
+            {status.trainsInService} monorail{status.trainsInService === 1 ? '' : 's'} running this beam
+          </Text>
+        ) : null}
+
         {status.detail ? (
           <Text style={[styles.detail, { color: sc.text }]} numberOfLines={2}>
             {status.detail}
@@ -66,7 +72,7 @@ export default function StatusCard({ line, status }: StatusCardProps) {
             styles.arrivals,
             status.status === 'down' ? { color: sc.text } : null,
           ]}>
-            {arrivalsText(line, status)}
+            {arrivalsText(status)}
           </Text>
           {status.status !== 'down' && (
             <View style={styles.crowdWrap}>
@@ -145,6 +151,11 @@ const styles = StyleSheet.create({
   stations: {
     fontSize: 12,
     color: Colors.textSecondary,
+    marginBottom: 4,
+  },
+  trainCount: {
+    fontSize: 11,
+    color: Colors.textPlaceholder,
     marginBottom: 4,
   },
   detail: {

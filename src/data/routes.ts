@@ -36,12 +36,6 @@ export const ALL_ROUTES: Route[] = [
   },
 
   {
-    id: 'mk-hs-bus',
-    from: 'MK', to: 'HS', name: 'Bus from Magic Kingdom',
-    legs: [{ mode: 'bus', from: 'MK', to: 'HS', rideMinutes: 25, simRange: [1,20], accessible: true, tip: 'Bus stop is outside the park gates, Transportation Hub area.' }],
-    totalRideMinutes: 25, totalRideRange: [25,40], tags: [],
-  },
-  {
     id: 'mk-hs-before10',
     from: 'MK', to: 'HS', name: 'Walk to Grand Floridian, Bus to Hollywood Studios (before 10am)',
     legs: [
@@ -58,12 +52,6 @@ export const ALL_ROUTES: Route[] = [
     totalRideMinutes: 15, tags: [],
   },
 
-  {
-    id: 'mk-ak-bus',
-    from: 'MK', to: 'AK', name: 'Bus from Magic Kingdom',
-    legs: [{ mode: 'bus', from: 'MK', to: 'AK', rideMinutes: 25, simRange: [1,20], accessible: true }],
-    totalRideMinutes: 25, totalRideRange: [25,40], tags: [],
-  },
   {
     id: 'mk-ak-before10',
     from: 'MK', to: 'AK', name: 'Walk to Polynesian, Bus to Animal Kingdom (before 10am)',
@@ -82,16 +70,8 @@ export const ALL_ROUTES: Route[] = [
   },
 
   {
-    id: 'mk-ds-bus',
-    from: 'MK', to: 'DS', name: 'Bus from Magic Kingdom',
-    legs: [{ mode: 'bus', from: 'MK', to: 'DS', rideMinutes: 30, simRange: [1,20], accessible: true }],
-    totalRideMinutes: 30, totalRideRange: [30,50], tags: ['time_restricted'],
-    timeRestriction: 'before_4pm',
-    notes: 'Disney Springs buses from parks only run after 4pm.',
-  },
-  {
     id: 'mk-ds-via-gf',
-    from: 'MK', to: 'DS', name: 'Walk to Grand Floridian, Bus to Disney Springs (before 4pm)',
+    from: 'MK', to: 'DS', name: 'Walk to Grand Floridian, Bus to Disney Springs',
     legs: [
       { mode: 'walk', from: 'MK', to: 'GF', rideMinutes: 12, simRange: [0,0], accessible: true },
       { mode: 'bus', from: 'GF', to: 'DS', rideMinutes: 30, simRange: [1,20], accessible: true, walkMinutes: 0, tip: 'Resort buses to Disney Springs run all day, even before 4pm.' },
@@ -121,12 +101,6 @@ export const ALL_ROUTES: Route[] = [
     totalRideMinutes: 20, tags: [],
   },
 
-  {
-    id: 'mk-bb-bus',
-    from: 'MK', to: 'BB', name: 'Bus from Magic Kingdom',
-    legs: [{ mode: 'bus', from: 'MK', to: 'BB', rideMinutes: 25, simRange: [1,20], accessible: true }],
-    totalRideMinutes: 25, totalRideRange: [25,45], tags: [],
-  },
   {
     id: 'mk-bb-minnie',
     from: 'MK', to: 'BB', name: 'Minnie Van (Lyft)',
@@ -506,24 +480,12 @@ export const ALL_ROUTES: Route[] = [
     totalRideMinutes: 35, tags: ['water', 'scenic'],
   },
   {
-    id: 'ep-hs-bus',
-    from: 'EP', to: 'HS', name: 'Bus from EPCOT',
-    legs: [{ mode: 'bus', from: 'EP', to: 'HS', rideMinutes: 25, simRange: [1,20], accessible: true }],
-    totalRideMinutes: 25, totalRideRange: [25,45], tags: [],
-  },
-  {
     id: 'ep-hs-minnie',
     from: 'EP', to: 'HS', name: 'Minnie Van (Lyft)',
     legs: [{ mode: 'minnie_van', from: 'EP', to: 'HS', rideMinutes: 12, simRange: [0,0], accessible: true }],
     totalRideMinutes: 12, tags: [],
   },
 
-  {
-    id: 'ep-ak-bus',
-    from: 'EP', to: 'AK', name: 'Bus from EPCOT',
-    legs: [{ mode: 'bus', from: 'EP', to: 'AK', rideMinutes: 30, simRange: [1,20], accessible: true }],
-    totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
-  },
   {
     id: 'ep-ak-before10',
     from: 'EP', to: 'AK', name: 'Friendship Boat to BoardWalk Inn, Bus to Animal Kingdom (before 10am)',
@@ -542,15 +504,8 @@ export const ALL_ROUTES: Route[] = [
   },
 
   {
-    id: 'ep-ds-bus',
-    from: 'EP', to: 'DS', name: 'Bus from EPCOT',
-    legs: [{ mode: 'bus', from: 'EP', to: 'DS', rideMinutes: 25, simRange: [1,20], accessible: true }],
-    totalRideMinutes: 25, totalRideRange: [25,45], tags: ['time_restricted'],
-    timeRestriction: 'before_4pm',
-  },
-  {
     id: 'ep-ds-before4',
-    from: 'EP', to: 'DS', name: 'Friendship Boat to BoardWalk Inn, Bus to Disney Springs (before 4pm)',
+    from: 'EP', to: 'DS', name: 'Friendship Boat to BoardWalk Inn, Bus to Disney Springs',
     legs: [
       { mode: 'friendship_boat', from: 'EP', to: 'BWI', rideMinutes: 10, simRange: [1,12], accessible: true },
       { mode: 'bus', from: 'BWI', to: 'DS', rideMinutes: 25, simRange: [1,20], accessible: true, walkMinutes: 5 },
@@ -788,24 +743,12 @@ export const ALL_ROUTES: Route[] = [
     totalRideMinutes: 35, tags: ['water', 'scenic'],
   },
   {
-    id: 'hs-ep-bus',
-    from: 'HS', to: 'EP', name: 'Bus from Hollywood Studios',
-    legs: [{ mode: 'bus', from: 'HS', to: 'EP', rideMinutes: 25, simRange: [1,20], accessible: true }],
-    totalRideMinutes: 25, totalRideRange: [25,45], tags: [],
-  },
-  {
     id: 'hs-ep-minnie',
     from: 'HS', to: 'EP', name: 'Minnie Van (Lyft)',
     legs: [{ mode: 'minnie_van', from: 'HS', to: 'EP', rideMinutes: 12, simRange: [0,0], accessible: true }],
     totalRideMinutes: 12, tags: [],
   },
 
-  {
-    id: 'hs-mk-bus',
-    from: 'HS', to: 'MK', name: 'Bus from Hollywood Studios',
-    legs: [{ mode: 'bus', from: 'HS', to: 'MK', rideMinutes: 25, simRange: [1,20], accessible: true }],
-    totalRideMinutes: 25, totalRideRange: [25,45], tags: [],
-  },
   {
     id: 'hs-mk-before10',
     from: 'HS', to: 'MK', name: 'Friendship Boat to BoardWalk Inn, Bus to Magic Kingdom (before 10am)',
@@ -824,12 +767,6 @@ export const ALL_ROUTES: Route[] = [
   },
 
   {
-    id: 'hs-ak-bus',
-    from: 'HS', to: 'AK', name: 'Bus from Hollywood Studios',
-    legs: [{ mode: 'bus', from: 'HS', to: 'AK', rideMinutes: 25, simRange: [1,20], accessible: true }],
-    totalRideMinutes: 25, totalRideRange: [25,45], tags: [],
-  },
-  {
     id: 'hs-ak-before10',
     from: 'HS', to: 'AK', name: 'Friendship Boat to BoardWalk Inn, Bus to Animal Kingdom (before 10am)',
     legs: [
@@ -847,15 +784,8 @@ export const ALL_ROUTES: Route[] = [
   },
 
   {
-    id: 'hs-ds-bus',
-    from: 'HS', to: 'DS', name: 'Bus from Hollywood Studios',
-    legs: [{ mode: 'bus', from: 'HS', to: 'DS', rideMinutes: 25, simRange: [1,20], accessible: true }],
-    totalRideMinutes: 25, totalRideRange: [25,45], tags: ['time_restricted'],
-    timeRestriction: 'before_4pm',
-  },
-  {
     id: 'hs-ds-before4',
-    from: 'HS', to: 'DS', name: 'Friendship Boat to BoardWalk Inn, Bus to Disney Springs (before 4pm)',
+    from: 'HS', to: 'DS', name: 'Friendship Boat to BoardWalk Inn, Bus to Disney Springs',
     legs: [
       { mode: 'friendship_boat', from: 'HS', to: 'BWI', rideMinutes: 15, simRange: [1,12], accessible: true },
       { mode: 'bus', from: 'BWI', to: 'DS', rideMinutes: 25, simRange: [1,20], accessible: true, walkMinutes: 5 },
@@ -980,12 +910,6 @@ export const ALL_ROUTES: Route[] = [
     totalRideMinutes: 10, tags: ['transfer', 'scenic'],
   },
   {
-    id: 'hs-ttc-bus',
-    from: 'HS', to: 'TTC', name: 'Bus from Hollywood Studios',
-    legs: [{ mode: 'bus', from: 'HS', to: 'TTC', rideMinutes: 37, simRange: [1,20], accessible: true }],
-    totalRideMinutes: 37, totalRideRange: [37,57], tags: [],
-  },
-  {
     id: 'hs-con-bus',
     from: 'HS', to: 'CON', name: 'Bus from Hollywood Studios',
     legs: [{ mode: 'bus', from: 'HS', to: 'CON', rideMinutes: 37, simRange: [1,20], accessible: true }],
@@ -1081,12 +1005,6 @@ export const ALL_ROUTES: Route[] = [
   // ─────────────────────────────────────────────────────────────────────────
 
   {
-    id: 'ak-mk-bus',
-    from: 'AK', to: 'MK', name: 'Bus from Animal Kingdom',
-    legs: [{ mode: 'bus', from: 'AK', to: 'MK', rideMinutes: 25, simRange: [1,20], accessible: true }],
-    totalRideMinutes: 25, totalRideRange: [25,45], tags: [],
-  },
-  {
     id: 'ak-mk-before10',
     from: 'AK', to: 'MK', name: 'Bus to Animal Kingdom Lodge, Bus to Magic Kingdom (before 10am)',
     legs: [
@@ -1103,12 +1021,6 @@ export const ALL_ROUTES: Route[] = [
     totalRideMinutes: 20, tags: [],
   },
 
-  {
-    id: 'ak-ep-bus',
-    from: 'AK', to: 'EP', name: 'Bus from Animal Kingdom',
-    legs: [{ mode: 'bus', from: 'AK', to: 'EP', rideMinutes: 30, simRange: [1,20], accessible: true }],
-    totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
-  },
   {
     id: 'ak-ep-before10',
     from: 'AK', to: 'EP', name: 'Bus to Animal Kingdom Lodge, Bus to EPCOT (before 10am)',
@@ -1127,12 +1039,6 @@ export const ALL_ROUTES: Route[] = [
   },
 
   {
-    id: 'ak-hs-bus',
-    from: 'AK', to: 'HS', name: 'Bus from Animal Kingdom',
-    legs: [{ mode: 'bus', from: 'AK', to: 'HS', rideMinutes: 25, simRange: [1,20], accessible: true }],
-    totalRideMinutes: 25, totalRideRange: [25,45], tags: [],
-  },
-  {
     id: 'ak-hs-before10',
     from: 'AK', to: 'HS', name: 'Bus to Animal Kingdom Lodge, Bus to Hollywood Studios (before 10am)',
     legs: [
@@ -1150,15 +1056,8 @@ export const ALL_ROUTES: Route[] = [
   },
 
   {
-    id: 'ak-ds-bus',
-    from: 'AK', to: 'DS', name: 'Bus from Animal Kingdom',
-    legs: [{ mode: 'bus', from: 'AK', to: 'DS', rideMinutes: 30, simRange: [1,20], accessible: true }],
-    totalRideMinutes: 30, totalRideRange: [30,50], tags: ['time_restricted'],
-    timeRestriction: 'before_4pm',
-  },
-  {
     id: 'ak-ds-before4',
-    from: 'AK', to: 'DS', name: 'Bus to Animal Kingdom Lodge, Bus to Disney Springs (before 4pm)',
+    from: 'AK', to: 'DS', name: 'Bus to Animal Kingdom Lodge, Bus to Disney Springs',
     legs: [
       { mode: 'bus', from: 'AK', to: 'AKL', rideMinutes: 10, simRange: [1,20], accessible: true },
       { mode: 'bus', from: 'AKL', to: 'DS', rideMinutes: 30, simRange: [1,20], accessible: true, walkMinutes: 5 },

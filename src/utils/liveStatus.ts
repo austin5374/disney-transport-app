@@ -18,6 +18,8 @@ export interface LineStatus {
   nextArrivals: number[];        // minutes until next departures (0 = boarding)
   crowd: CrowdLevel;
   updatedAt: number;
+  headwayMinutes: [number, number]; // effective headway (monorail: derived from trainsInService)
+  trainsInService: number | null;   // monorail only — how many trains are running this beam
 }
 
 interface InternalLineState {
@@ -26,6 +28,7 @@ interface InternalLineState {
   restoreAt: number | null;      // epoch ms when a disruption clears
   arrivalTimestamps: number[];   // epoch ms of upcoming departures
   crowd: CrowdLevel;
+  trainsInService: number | null;
 }
 
 const TICK_MS = 20_000;
@@ -33,6 +36,29 @@ const TICK_MS = 20_000;
 const rand = (min: number, max: number) => Math.random() * (max - min) + min;
 const randInt = (min: number, max: number) => Math.round(rand(min, max));
 const pick = <T,>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
+
+// ─── Monorail headway model ──────────────────────────────────────────────────
+// Each monorail line ("beam") runs a fixed number of trains at a time, and
+// headway follows directly from that count rather than being a flat range.
+//   EPCOT line:   always 2 trains  → 8–10 min headway
+//   Express line: 3 trains → 3–4 min · 4 trains → 2–3 min
+//   Resort line:  3 trains → 8–9 min · 4 trains (typical) → 4–5 min
+function rollTrainsInService(lineId: string): number | null {
+  if (lineId === 'mono-epcot') return 2;
+  if (lineId === 'mono-express') return Math.random() < 0.5 ? 3 : 4;
+  if (lineId === 'mono-resort') return Math.random() < 0.7 ? 4 : 3;
+  return null;
+}
+
+function monorailHeadway(lineId: string, trains: number): [number, number] {
+  if (lineId === 'mono-epcot') return [8, 10];
+  if (lineId === 'mono-express') return trains >= 4 ? [2, 3] : [3, 4];
+  return trains >= 4 ? [4, 5] : [8, 9]; // mono-resort
+}
+
+function effectiveHeadway(line: TransitLine, trains: number | null): [number, number] {
+  return trains != null ? monorailHeadway(line.id, trains) : line.headwayMinutes;
+}
 
 // ─── Disruption copy ─────────────────────────────────────────────────────────
 
@@ -102,8 +128,8 @@ function rollCrowd(): CrowdLevel {
   return r < 0.7 ? 'light' : r < 0.95 ? 'moderate' : 'heavy';
 }
 
-function seedArrivals(line: TransitLine, from = Date.now()): number[] {
-  const [minH, maxH] = line.headwayMinutes;
+function seedArrivals(headway: [number, number], from = Date.now()): number[] {
+  const [minH, maxH] = headway;
   if (maxH <= 1) return []; // continuous loading (Skyliner)
   const first = from + rand(0.3, maxH) * 60_000;
   const second = first + rand(Math.max(minH, 3), maxH) * 60_000;
@@ -127,11 +153,13 @@ function applyDisruption(line: TransitLine, s: InternalLineState, kind: ServiceS
 function initState() {
   const now = Date.now();
   for (const line of TRANSIT_LINES) {
+    const trainsInService = rollTrainsInService(line.id);
     state.set(line.id, {
       status: 'operating',
       detail: null,
       restoreAt: null,
-      arrivalTimestamps: seedArrivals(line, now),
+      trainsInService,
+      arrivalTimestamps: seedArrivals(effectiveHeadway(line, trainsInService), now),
       crowd: rollCrowd(),
     });
   }
@@ -147,10 +175,12 @@ function tick() {
   for (const line of TRANSIT_LINES) {
     const s = state.get(line.id)!;
 
+    const headway = effectiveHeadway(line, s.trainsInService);
+
     // Clear expired disruptions
     if (s.restoreAt && now >= s.restoreAt) {
       applyDisruption(line, s, 'operating');
-      s.arrivalTimestamps = seedArrivals(line, now);
+      s.arrivalTimestamps = seedArrivals(headway, now);
     }
 
     // Random new disruptions (rare per tick; steady-state ≈ 2-3 advisories
@@ -164,7 +194,7 @@ function tick() {
     // Advance the arrival board
     if (s.status !== 'down') {
       s.arrivalTimestamps = s.arrivalTimestamps.filter(t => t > now - 30_000);
-      const [minH, maxH] = line.headwayMinutes;
+      const [minH, maxH] = headway;
       const delayFactor = s.status === 'delayed' ? 1.6 : 1;
       while (s.arrivalTimestamps.length < 2 && maxH > 1) {
         const base = s.arrivalTimestamps.length
@@ -200,6 +230,8 @@ function publish() {
         .slice(0, 2),
       crowd: s.crowd,
       updatedAt: lastUpdated,
+      headwayMinutes: effectiveHeadway(line, s.trainsInService),
+      trainsInService: s.trainsInService,
     };
   }
   snapshot = next;

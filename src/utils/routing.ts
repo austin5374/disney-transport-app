@@ -135,9 +135,10 @@ export function getActiveRoutes(from: string, to: string, timeOverride?: Date): 
   }
 
   let routes = directRoutes(from, to, timeOverride);
+  const hasRealRoute = routes.some(r => r.legs.every(l => l.mode !== 'minnie_van'));
 
-  if (routes.length === 0) {
-    routes = synthesizeViaHub(from, to, timeOverride);
+  if (!hasRealRoute) {
+    routes = [...routes, ...synthesizeViaHub(from, to, timeOverride)];
     if (!routes.some(r => r.legs.some(l => l.mode === 'minnie_van'))) {
       routes = [...routes, minnieVanFallback(from, to)];
     }

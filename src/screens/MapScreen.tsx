@@ -150,14 +150,17 @@ export default function MapScreen() {
             </Text>
             <Text style={styles.selectedDetail}>
               {selectedStatus.detail ??
-                (selectedLine.headwayMinutes[1] <= 1
+                (selectedStatus.headwayMinutes[1] <= 1
                   ? 'Boarding continuously'
                   : selectedStatus.nextArrivals.length
                     ? `Next departure in ${selectedStatus.nextArrivals[0]} min`
-                    : `Every ${selectedLine.headwayMinutes[0]}–${selectedLine.headwayMinutes[1]} min`)}
+                    : `Every ${selectedStatus.headwayMinutes[0]}–${selectedStatus.headwayMinutes[1]} min`)}
               {selectedStatus.status === 'down' && selectedStatus.etaMinutes ? ` — est. ${selectedStatus.etaMinutes} min` : ''}
             </Text>
             <Text style={styles.selectedHours}>Service: {selectedLine.serviceHours}</Text>
+            {selectedStatus.trainsInService != null && (
+              <Text style={styles.selectedHours}>{selectedStatus.trainsInService} monorails running this beam</Text>
+            )}
           </View>
         )}
 
