@@ -64,6 +64,7 @@ export default function JourneyDiagram({ route }: JourneyDiagramProps) {
 
   const hasTransfer = route.tags.includes('transfer');
   const transferIndex = stops.length > 2 ? 1 : -1;
+  const transferColor = transportColor(route.legs[0]?.mode ?? 'bus');
 
   return (
     <View style={styles.container}>
@@ -86,9 +87,9 @@ export default function JourneyDiagram({ route }: JourneyDiagramProps) {
                 <Text style={styles.nodeLabel} numberOfLines={2}>{label}</Text>
 
                 {isTransfer && (
-                  <Animated.View style={[styles.transferDot, { transform: [{ scale: pulseAnim }] }]} />
+                  <Animated.View style={[styles.transferDot, { backgroundColor: transferColor, transform: [{ scale: pulseAnim }] }]} />
                 )}
-                {isTransfer && <Text style={styles.transferLabel}>transfer</Text>}
+                {isTransfer && <Text style={[styles.transferLabel, { color: transferColor }]}>transfer</Text>}
               </Animated.View>
 
               {/* Line to next node */}
@@ -114,7 +115,7 @@ export default function JourneyDiagram({ route }: JourneyDiagramProps) {
 
       {hasTransfer && (
         <View style={styles.transferNote}>
-          <View style={[styles.transferDotSmall, { backgroundColor: transportColor(route.legs[0]?.mode ?? 'bus') }]} />
+          <View style={[styles.transferDotSmall, { backgroundColor: transferColor }]} />
           <Text style={styles.transferNoteText}>
             Transfer at {DESTINATION_MAP[stops[transferIndex]]?.label ?? stops[transferIndex]}. Follow signs for your next transport
           </Text>
@@ -168,12 +169,10 @@ const styles = StyleSheet.create({
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: Colors.skyliner,
     marginTop: 4,
   },
   transferLabel: {
     fontSize: 8,
-    color: Colors.skyliner,
     marginTop: 2,
   },
   lineWrap: {

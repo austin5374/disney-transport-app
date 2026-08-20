@@ -43,7 +43,7 @@ export const Colors = {
   // Gold accent
   gold:          '#E0A93E',
   // Transport colors
-  skyliner:      '#7F77DD',
+  skyliner:      '#1E96A8',
   bus:           '#639922',
   monorailExpress:'#E8554D',
   monorailResort: '#F2A93B',
@@ -51,7 +51,7 @@ export const Colors = {
   ferryBoat:      '#378ADD',
   waterTaxi:      '#378ADD',
   friendshipBoat: '#2E9E8F',
-  sassagoula:     '#8A6FBF',
+  sassagoula:     '#8C5A3C',
   walk:           '#9C9BAE',
   minnieVan:      '#D85A30',
 };

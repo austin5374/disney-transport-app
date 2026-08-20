@@ -63,7 +63,7 @@ export const TRANSIT_LINES: TransitLine[] = [
     headwayMinutes: [0, 1], // continuous loading
     serviceHours: '30 min before earliest park open – park close',
     weatherSensitive: true,
-    color: '#7F77DD',
+    color: '#1E96A8',
   },
   {
     id: 'sky-hs',
@@ -74,7 +74,7 @@ export const TRANSIT_LINES: TransitLine[] = [
     headwayMinutes: [0, 1],
     serviceHours: '1 hr before park open – park close',
     weatherSensitive: true,
-    color: '#B268C2',
+    color: '#D97B29',
   },
   {
     id: 'sky-pop',
@@ -164,7 +164,7 @@ export const TRANSIT_LINES: TransitLine[] = [
     headwayMinutes: [15, 20],
     serviceHours: '10:30 AM – 11:30 PM',
     weatherSensitive: true,
-    color: '#8A6FBF',
+    color: '#8C5A3C',
   },
 
   // ── Bus service groups ────────────────────────────────────────────────────

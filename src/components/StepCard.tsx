@@ -68,18 +68,21 @@ export default function StepCard({ leg, stepNum, totalSteps, state }: StepCardPr
   const isCurrent  = state === 'current';
   const isUpcoming = state === 'upcoming';
   const isMinnie   = leg.mode === 'minnie_van';
+  const accentColor = transportColor(leg.mode);
 
   return (
     <View style={[
       styles.card,
       isDone     && styles.cardDone,
       isCurrent  && styles.cardCurrent,
+      isCurrent  && { borderColor: accentColor },
     ]}>
       {/* Step label */}
       <Text style={[
         styles.stepLabel,
         isDone    && styles.stepLabelDone,
         isCurrent && styles.stepLabelCurrent,
+        isCurrent && { color: accentColor },
       ]}>
         Step {stepNum} of {totalSteps}{isDone ? ' · complete' : isCurrent ? ' · now' : ''}
       </Text>
@@ -140,7 +143,6 @@ const styles = StyleSheet.create({
     opacity: 0.45,
   },
   cardCurrent: {
-    borderColor: Colors.skyliner,
     borderWidth: 1.5,
   },
   stepLabel: {
@@ -152,7 +154,6 @@ const styles = StyleSheet.create({
     color: Colors.textPlaceholder,
   },
   stepLabelCurrent: {
-    color: Colors.skyliner,
     fontWeight: '500',
   },
   instructionRow: {
