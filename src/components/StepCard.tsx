@@ -3,7 +3,10 @@ import { View, Text, StyleSheet } from 'react-native';
 import { Leg } from '../types';
 import { Colors, transportColor } from '../utils/theme';
 import { modeLabel } from '../utils/routing';
+import { DESTINATION_MAP } from '../data/destinations';
 import LiveArrival from './LiveArrival';
+
+const placeLabel = (id: string) => DESTINATION_MAP[id]?.label ?? id;
 
 interface StepCardProps {
   leg: Leg;
@@ -34,21 +37,21 @@ function modeIcon(mode: string): string {
 
 function instructionTitle(leg: Leg): string {
   switch (leg.mode) {
-    case 'skyliner':         return `Board Skyliner at ${leg.from}`;
-    case 'bus':              return `Board Bus at ${leg.from}`;
-    case 'monorail_express': return `Board Express Monorail at ${leg.from}`;
-    case 'monorail_resort':  return `Board Resort Monorail at ${leg.from}`;
-    case 'monorail_epcot':   return `Board EPCOT Monorail at ${leg.from}`;
-    case 'ferry_ttc_mk':     return `Board Ferry Boat at ${leg.from}`;
-    case 'friendship_boat':  return `Board Friendship Boat at ${leg.from}`;
-    case 'sassagoula_boat':  return `Board Sassagoula River Cruise at ${leg.from}`;
-    case 'water_taxi_gold':  return `Board Gold Flag Water Launch at ${leg.from}`;
-    case 'water_taxi_red':   return `Board Red Flag Water Launch at ${leg.from}`;
-    case 'water_taxi_green': return `Board Green Flag Water Launch at ${leg.from}`;
-    case 'water_taxi_blue':  return `Board Blue Flag Water Launch at ${leg.from}`;
-    case 'walk':             return `Walk to ${leg.to} (~${leg.rideMinutes} min)`;
+    case 'skyliner':         return `Board Skyliner at ${placeLabel(leg.from)}`;
+    case 'bus':              return `Board Bus at ${placeLabel(leg.from)}`;
+    case 'monorail_express': return `Board Express Monorail at ${placeLabel(leg.from)}`;
+    case 'monorail_resort':  return `Board Resort Monorail at ${placeLabel(leg.from)}`;
+    case 'monorail_epcot':   return `Board EPCOT Monorail at ${placeLabel(leg.from)}`;
+    case 'ferry_ttc_mk':     return `Board Ferry Boat at ${placeLabel(leg.from)}`;
+    case 'friendship_boat':  return `Board Friendship Boat at ${placeLabel(leg.from)}`;
+    case 'sassagoula_boat':  return `Board Sassagoula River Cruise at ${placeLabel(leg.from)}`;
+    case 'water_taxi_gold':  return `Board Gold Flag Water Launch at ${placeLabel(leg.from)}`;
+    case 'water_taxi_red':   return `Board Red Flag Water Launch at ${placeLabel(leg.from)}`;
+    case 'water_taxi_green': return `Board Green Flag Water Launch at ${placeLabel(leg.from)}`;
+    case 'water_taxi_blue':  return `Board Blue Flag Water Launch at ${placeLabel(leg.from)}`;
+    case 'walk':             return `Walk to ${placeLabel(leg.to)} (~${leg.rideMinutes} min)`;
     case 'minnie_van':       return `Book Minnie Van via Lyft`;
-    default:                 return `Travel to ${leg.to}`;
+    default:                 return `Travel to ${placeLabel(leg.to)}`;
   }
 }
 
@@ -82,7 +85,7 @@ export default function StepCard({ leg, stepNum, totalSteps, state }: StepCardPr
           </Text>
           {leg.mode !== 'walk' && leg.mode !== 'minnie_van' && (
             <Text style={[styles.subDetail, isDone && styles.faded]}>
-              Ride time: {leg.rideMinutes} min · Destination: {leg.to}
+              Ride time: {leg.rideMinutes} min · Destination: {placeLabel(leg.to)}
             </Text>
           )}
         </View>
@@ -98,7 +101,7 @@ export default function StepCard({ leg, stepNum, totalSteps, state }: StepCardPr
       {/* Live arrival — current step only */}
       {isCurrent && !isMinnie && (
         <View style={styles.arrivalRow}>
-          <LiveArrival mode={leg.mode} />
+          <LiveArrival mode={leg.mode} from={leg.from} to={leg.to} />
         </View>
       )}
 

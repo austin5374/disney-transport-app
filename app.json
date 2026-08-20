@@ -1,26 +1,30 @@
 {
   "expo": {
-    "name": "Disney Transport",
-    "slug": "disney-transport-app",
-    "version": "1.0.0",
+    "name": "ParkWays",
+    "slug": "parkways-wdw-transit",
+    "version": "2.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.disneyworld.transport",
+      "bundleIdentifier": "com.parkways.wdwtransit",
       "infoPlist": {
-        "NSLocationWhenInUseUsageDescription": "Used to detect which Disney park or resort you are currently at."
+        "NSLocationWhenInUseUsageDescription": "Used to detect which park or resort area you are currently at."
       }
     },
     "android": {
-      "package": "com.disneyworld.transport",
+      "package": "com.parkways.wdwtransit",
       "permissions": ["ACCESS_FINE_LOCATION", "ACCESS_COARSE_LOCATION"]
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "single"
     },
     "plugins": [
       [
         "expo-location",
         {
-          "locationWhenInUsePermission": "Used to detect which Disney park or resort you are at."
+          "locationWhenInUsePermission": "Used to detect which park or resort area you are at."
         }
       ]
     ]

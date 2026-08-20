@@ -42,12 +42,13 @@ export default function DestinationPicker({
     }
     const groups: DestinationGroup[] = [
       'Parks', 'Water Parks', 'Transportation', 'Entertainment',
-      'Deluxe MK Area', 'Deluxe EPCOT Area', 'Moderate Resorts',
-      'Value Resorts', 'DVC / Other',
+      'Deluxe MK Area', 'Deluxe EPCOT Area', 'Deluxe AK Area',
+      'Moderate Resorts', 'Value Resorts', 'DVC / Other',
     ];
     const result: { title: string; data: Destination[] }[] = [];
-    if (recent.length > 0) {
-      result.push({ title: 'Recent', data: recent.filter(d => d.id !== excludeId) });
+    const recentVisible = recent.filter(d => d.id !== excludeId);
+    if (recentVisible.length > 0) {
+      result.push({ title: 'Recent', data: recentVisible });
     }
     for (const g of groups) {
       const data = filtered.filter(d => d.group === g);

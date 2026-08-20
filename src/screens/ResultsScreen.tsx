@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RouteProp } from '@react-navigation/native';
@@ -8,7 +8,6 @@ import { getActiveRoutes, applyFilters } from '../utils/routing';
 import AppHeader from '../components/AppHeader';
 import TimeBanner from '../components/TimeBanner';
 import RouteCard from '../components/RouteCard';
-import BottomNav from '../components/BottomNav';
 
 type Props = {
   navigation: StackNavigationProp<RootStackParamList, 'Results'>;
@@ -16,13 +15,15 @@ type Props = {
 };
 
 export default function ResultsScreen({ navigation, route: navRoute }: Props) {
-  const { from, to, filters, timeOverride } = navRoute.params;
-  const timeDate = timeOverride ? new Date(timeOverride) : undefined;
+  const { from, to, filters, timeOverride: initialTimeOverride } = navRoute.params;
+  const [timeDate, setTimeDate] = useState<Date | null>(
+    initialTimeOverride ? new Date(initialTimeOverride) : null
+  );
 
   const routes = useMemo(() => {
-    const active = getActiveRoutes(from.id, to.id, timeDate);
+    const active = getActiveRoutes(from.id, to.id, timeDate ?? undefined);
     return applyFilters(active, filters);
-  }, [from.id, to.id, timeOverride, filters]);
+  }, [from.id, to.id, timeDate, filters]);
 
   const hasWaterRoutes = routes.some(r => r.tags.includes('water'));
   const showWaterNudge = !filters.noWater && hasWaterRoutes;
@@ -34,13 +35,13 @@ export default function ResultsScreen({ navigation, route: navRoute }: Props) {
         onBack={() => navigation.goBack()}
         title={`${routes.length} route${routes.length !== 1 ? 's' : ''} to ${to.label}`}
         subtitle={`${from.label} → ${to.label}`}
-        timeOverride={timeDate ?? null}
-        onResetTime={() => {}}
+        timeOverride={timeDate}
+        onResetTime={() => setTimeDate(null)}
       />
 
       <TimeBanner
-        timeOverride={timeDate ?? null}
-        onTimeChange={() => {}}
+        timeOverride={timeDate}
+        onTimeChange={setTimeDate}
       />
 
       <ScrollView contentContainerStyle={styles.scroll}>
@@ -77,10 +78,10 @@ export default function ResultsScreen({ navigation, route: navRoute }: Props) {
                 isBest={isBest}
                 isScenic={isScenic}
                 onPress={() => navigation.navigate('Detail', {
-                  routeId: r.id, from, to, timeOverride,
+                  routeData: r, from, to, timeOverride: timeDate?.toISOString(),
                 })}
                 onSteps={() => navigation.navigate('Detail', {
-                  routeId: r.id, from, to, timeOverride,
+                  routeData: r, from, to, timeOverride: timeDate?.toISOString(),
                 })}
               />
             );
@@ -98,7 +99,6 @@ export default function ResultsScreen({ navigation, route: navRoute }: Props) {
         <View style={{ height: 20 }} />
       </ScrollView>
 
-      <BottomNav activeTab={3} />
     </View>
   );
 }

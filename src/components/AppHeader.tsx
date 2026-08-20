@@ -30,12 +30,12 @@ export default function AppHeader({
 
         <View style={styles.titleArea}>
           <Text style={showBack ? styles.pageTitleWhite : styles.appTitle} numberOfLines={1}>
-            {title ?? 'Disney Transport'}
+            {title ?? 'Trip Planner'}
           </Text>
           {subtitle ? (
             <Text style={styles.subtitle} numberOfLines={1}>{subtitle}</Text>
           ) : !showBack ? (
-            <Text style={styles.subtitle}>Walt Disney World Resort</Text>
+            <Text style={styles.subtitle}>Get anywhere on property</Text>
           ) : null}
         </View>
 

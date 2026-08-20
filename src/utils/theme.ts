@@ -1,19 +1,30 @@
 export const Colors = {
-  // Primary
-  primaryBlue:   '#0B6FAB',
-  lightBlueTint: '#E8F3FB',
-  blueBorder:    '#B3D4EF',
+  // Primary brand — deep indigo, deliberately distinct from Disney's blue
+  primaryBlue:   '#4F46A5',
+  primaryDark:   '#3B3480',
+  lightBlueTint: '#EDEBFA',
+  blueBorder:    '#C9C4EE',
   // Backgrounds
-  pageBg:        '#F0F4F8',
+  pageBg:        '#F2F2F7',
   cardBg:        '#FFFFFF',
-  cardBorder:    '#E0E8F0',
-  divider:       '#EEF3F7',
+  cardBorder:    '#E4E3EE',
+  divider:       '#EEEDF4',
   // Text
-  textPrimary:   '#1A2A35',
-  textSecondary: '#7A8A99',
-  textPlaceholder:'#9BA8B5',
-  // Status
-  liveGreen:     '#27AE60',
+  textPrimary:   '#1C1B2E',
+  textSecondary: '#75748A',
+  textPlaceholder:'#9C9BAE',
+  // Live status
+  liveGreen:     '#1F9D55',
+  statusOperating:      '#1F9D55',
+  statusOperatingBg:    '#E7F6EC',
+  statusOperatingBorder:'#B7E2C6',
+  statusDelayed:        '#B97509',
+  statusDelayedBg:      '#FDF3E1',
+  statusDelayedBorder:  '#F0CE8B',
+  statusDown:           '#C43D3D',
+  statusDownBg:         '#FBEAEA',
+  statusDownBorder:     '#EDBABA',
+  // Warnings / accents
   warnText:      '#7B5800',
   warnBg:        '#FFF8E1',
   warnBorder:    '#FFD54F',
@@ -21,20 +32,26 @@ export const Colors = {
   waterText:     '#1D6B52',
   waterBg:       '#EAF4F0',
   waterBorder:   '#A8D8C8',
-  // Gold
-  gold:          '#FFD700',
+  // Gold accent
+  gold:          '#E0A93E',
   // Transport colors
   skyliner:      '#7F77DD',
   bus:           '#639922',
-  monorailExpress:'#0B6FAB',
-  monorailResort: '#EF9F27',
-  monorailEpcot:  '#EF9F27',
+  monorailExpress:'#E8554D',
+  monorailResort: '#F2A93B',
+  monorailEpcot:  '#4C9F70',
   ferryBoat:      '#378ADD',
   waterTaxi:      '#378ADD',
-  friendshipBoat: '#378ADD',
-  sassagoula:     '#378ADD',
-  walk:           '#9BA8B5',
+  friendshipBoat: '#2E9E8F',
+  sassagoula:     '#8A6FBF',
+  walk:           '#9C9BAE',
   minnieVan:      '#D85A30',
+};
+
+export const StatusColors = {
+  operating: { text: Colors.statusOperating, bg: Colors.statusOperatingBg, border: Colors.statusOperatingBorder },
+  delayed:   { text: Colors.statusDelayed,   bg: Colors.statusDelayedBg,   border: Colors.statusDelayedBorder },
+  down:      { text: Colors.statusDown,      bg: Colors.statusDownBg,      border: Colors.statusDownBorder },
 };
 
 export const transportColor = (mode: string): string => {
@@ -55,6 +72,11 @@ export const transportColor = (mode: string): string => {
     case 'minnie_van':       return Colors.minnieVan;
     default:                 return Colors.textSecondary;
   }
+};
+
+export const Brand = {
+  name: 'ParkWays',
+  tagline: 'Walt Disney World transit, unofficial',
 };
 
 export const Spacing = {

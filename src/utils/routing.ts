@@ -1,26 +1,149 @@
-import { Route, ActiveFilters, TransportMode } from '../types';
+import { Route, ActiveFilters, TransportMode, Leg } from '../types';
 import { ALL_ROUTES } from '../data/routes';
+import { DESTINATION_MAP } from '../data/destinations';
 
 // ─── Time rules engine ───────────────────────────────────────────────────────
 
-export function getActiveRoutes(from: string, to: string, timeOverride?: Date): Route[] {
+// Destinations that share transport with an adjacent location and have no
+// route entries of their own. BoardWalk (the district) is served by BoardWalk
+// Inn's stops; Swan Reserve shares the Swan/Dolphin bus loop and boat dock.
+const DEST_ALIAS: Record<string, string> = {
+  BW: 'BWI',
+  SR: 'SW',
+};
+
+function timeValid(r: Route, timeOverride?: Date): boolean {
   const now = timeOverride ?? new Date();
-  const hour = now.getHours();
-  const minute = now.getMinutes();
-  const totalMinutes = hour * 60 + minute;
+  const totalMinutes = now.getHours() * 60 + now.getMinutes();
+  if (r.timeRestriction === 'before_10am' && totalMinutes >= 600) return false;
+  if (r.timeRestriction === 'before_4pm'  && totalMinutes >= 960) return false;
+  if (r.timeRestriction === 'after_3pm_only' && totalMinutes < 900) return false;
+  return true;
+}
 
-  const before10am = totalMinutes < 600;  // 10:00 AM
-  const before4pm  = totalMinutes < 960;  // 4:00 PM
-  const before3pm  = totalMinutes < 900;  // 3:00 PM (Blue Flag water taxi)
+function destLabel(id: string): string {
+  return DESTINATION_MAP[id]?.label ?? id;
+}
 
+function nameForLegs(legs: Leg[]): string {
+  return legs
+    .map(l => l.mode === 'walk'
+      ? `Walk to ${destLabel(l.to)}`
+      : `${modeLabel(l.mode)} to ${destLabel(l.to)}`)
+    .join(', ');
+}
+
+// Reverse an existing route so a pair defined one way also works the other way.
+function mirrorRoute(r: Route): Route {
+  const legs: Leg[] = [...r.legs].reverse().map((l, i) => ({
+    mode: l.mode,
+    from: l.to,
+    to: l.from,
+    rideMinutes: l.rideMinutes,
+    simRange: l.simRange,
+    accessible: l.accessible,
+    ...(i > 0 ? { walkMinutes: 3 } : {}),
+  }));
+  return {
+    id: `${r.id}-rev`,
+    from: r.to,
+    to: r.from,
+    legs,
+    totalRideMinutes: r.totalRideMinutes,
+    totalRideRange: r.totalRideRange,
+    tags: r.tags,
+    timeRestriction: r.timeRestriction,
+    name: nameForLegs(legs),
+  };
+}
+
+function directRoutes(from: string, to: string, timeOverride?: Date): Route[] {
+  const explicit = ALL_ROUTES.filter(r => r.from === from && r.to === to && timeValid(r, timeOverride));
+  if (explicit.length > 0) return explicit;
   return ALL_ROUTES
-    .filter(r => r.from === from && r.to === to)
-    .filter(r => {
-      if (r.timeRestriction === 'before_10am' && !before10am) return false;
-      if (r.timeRestriction === 'before_4pm'  && !before4pm)  return false;
-      if (r.timeRestriction === 'after_3pm_only' && before3pm) return false;
-      return true;
+    .filter(r => r.from === to && r.to === from && timeValid(r, timeOverride))
+    .map(mirrorRoute);
+}
+
+// Compose a two-segment journey through a major transfer hub — mirrors how
+// guests actually connect between two resorts (bus to a park or Disney
+// Springs, then transfer).
+const TRANSFER_HUBS = ['DS', 'MK', 'EP', 'HS', 'AK', 'CBR', 'TTC'];
+
+function bestSegment(from: string, to: string, timeOverride?: Date): Route | null {
+  const candidates = directRoutes(from, to, timeOverride)
+    .filter(r => r.legs.every(l => l.mode !== 'minnie_van'))
+    .filter(r => !r.timeRestriction)
+    .filter(r => r.legs.length <= 2);
+  if (candidates.length === 0) return null;
+  return candidates.reduce((a, b) => (a.totalRideMinutes <= b.totalRideMinutes ? a : b));
+}
+
+function synthesizeViaHub(from: string, to: string, timeOverride?: Date): Route[] {
+  const options: Route[] = [];
+  for (const hub of TRANSFER_HUBS) {
+    if (hub === from || hub === to) continue;
+    const a = bestSegment(from, hub, timeOverride);
+    const b = bestSegment(hub, to, timeOverride);
+    if (!a || !b) continue;
+    if (a.legs.length + b.legs.length > 3) continue;
+    const legs: Leg[] = [
+      ...a.legs,
+      { ...b.legs[0], walkMinutes: 5 },
+      ...b.legs.slice(1),
+    ];
+    const totalRideMinutes = legs.reduce((sum, l) => sum + l.rideMinutes, 0);
+    options.push({
+      id: `synth-${from}-${hub}-${to}`,
+      from, to, legs, totalRideMinutes,
+      tags: ['transfer'],
+      name: nameForLegs(legs),
+      notes: `Transfer at ${destLabel(hub)}.`,
     });
+  }
+  options.sort((x, y) => x.totalRideMinutes - y.totalRideMinutes);
+  // Keep alternates only if they're competitive with the best option
+  return options.slice(0, 2).filter((r, i) => i === 0 || r.totalRideMinutes <= options[0].totalRideMinutes + 20);
+}
+
+function minnieVanFallback(from: string, to: string): Route {
+  return {
+    id: `minnie-${from}-${to}`,
+    from, to,
+    legs: [{ mode: 'minnie_van', from, to, rideMinutes: 18, simRange: [0, 0], accessible: true }],
+    totalRideMinutes: 18,
+    tags: [],
+    name: 'Minnie Van (Lyft)',
+  };
+}
+
+export function getActiveRoutes(from: string, to: string, timeOverride?: Date): Route[] {
+  const origFrom = from, origTo = to;
+  from = DEST_ALIAS[from] ?? from;
+  to = DEST_ALIAS[to] ?? to;
+  // Aliased neighbors (e.g. BoardWalk ↔ BoardWalk Inn) are a short walk apart
+  if (from === to) {
+    if (origFrom === origTo) return [];
+    return [{
+      id: `walk-${origFrom}-${origTo}`,
+      from: origFrom, to: origTo,
+      legs: [{ mode: 'walk', from: origFrom, to: origTo, rideMinutes: 3, simRange: [0, 0], accessible: true }],
+      totalRideMinutes: 3,
+      tags: ['walk_only'],
+      name: `Walk to ${destLabel(origTo)} (~3 min)`,
+    }];
+  }
+
+  let routes = directRoutes(from, to, timeOverride);
+
+  if (routes.length === 0) {
+    routes = synthesizeViaHub(from, to, timeOverride);
+    if (!routes.some(r => r.legs.some(l => l.mode === 'minnie_van'))) {
+      routes = [...routes, minnieVanFallback(from, to)];
+    }
+  }
+
+  return routes;
 }
 
 // ─── Filter + sort logic ─────────────────────────────────────────────────────

@@ -1,8 +1,9 @@
 import React, { useEffect, useRef } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Animated } from 'react-native';
 import { Route } from '../types';
-import { Colors, transportColor } from '../utils/theme';
-import { modeLabel } from '../utils/routing';
+import { Colors, StatusColors } from '../utils/theme';
+import { lineForLeg } from '../data/lines';
+import { useLiveStatus, ServiceStatus } from '../utils/liveStatus';
 import TransportChip from './TransportChip';
 import LiveArrival from './LiveArrival';
 
@@ -39,9 +40,23 @@ export default function RouteCard({
     ]).start();
   }, []);
 
+  const live = useLiveStatus();
+
   const isWater = route.tags.includes('water');
   const isBefore10 = route.tags.includes('before_10am_only') || route.tags.includes('time_restricted');
   const firstLeg = route.legs[0];
+
+  // Worst live disruption across this route's legs
+  let disruption: { status: ServiceStatus; name: string } | null = null;
+  for (const leg of route.legs) {
+    const line = lineForLeg(leg.mode, leg.from, leg.to);
+    const st = line ? live[line.id] : null;
+    if (st && st.status !== 'operating') {
+      if (!disruption || st.status === 'down') {
+        disruption = { status: st.status, name: line!.shortName };
+      }
+    }
+  }
 
   const borderStyle = isBest
     ? { borderColor: Colors.primaryBlue, borderWidth: 1.5 }
@@ -85,6 +100,22 @@ export default function RouteCard({
             <Text style={styles.badgeBefore10Text}>Before 10am route</Text>
           </View>
         )}
+        {disruption && (
+          <View style={[
+            styles.badge,
+            {
+              backgroundColor: StatusColors[disruption.status].bg,
+              borderWidth: 1,
+              borderColor: StatusColors[disruption.status].border,
+            },
+          ]}>
+            <Text style={[styles.badgeBestText, { color: StatusColors[disruption.status].text }]}>
+              {disruption.status === 'down'
+                ? `${disruption.name} temporarily down`
+                : `${disruption.name} delays`}
+            </Text>
+          </View>
+        )}
 
         {/* Header row */}
         <View style={styles.headerRow}>
@@ -112,7 +143,7 @@ export default function RouteCard({
 
         {/* Bottom row */}
         <View style={styles.bottomRow}>
-          {firstLeg && <LiveArrival mode={firstLeg.mode} compact />}
+          {firstLeg && <LiveArrival mode={firstLeg.mode} from={firstLeg.from} to={firstLeg.to} compact />}
           <TouchableOpacity onPress={onSteps} style={styles.stepsLink} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
             <Text style={styles.stepsText}>Steps ›</Text>
           </TouchableOpacity>

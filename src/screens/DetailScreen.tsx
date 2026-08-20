@@ -1,14 +1,12 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RouteProp } from '@react-navigation/native';
 import { RootStackParamList } from '../types';
 import { Colors } from '../utils/theme';
-import { ALL_ROUTES } from '../data/routes';
 import AppHeader from '../components/AppHeader';
 import JourneyDiagram from '../components/JourneyDiagram';
 import StepCard from '../components/StepCard';
-import BottomNav from '../components/BottomNav';
 
 type Props = {
   navigation: StackNavigationProp<RootStackParamList, 'Detail'>;
@@ -16,28 +14,15 @@ type Props = {
 };
 
 export default function DetailScreen({ navigation, route: navRoute }: Props) {
-  const { routeId, from, to, timeOverride } = navRoute.params;
+  const { routeData, from, to, timeOverride } = navRoute.params;
   const timeDate = timeOverride ? new Date(timeOverride) : undefined;
-
-  const routeData = useMemo(
-    () => ALL_ROUTES.find(r => r.id === routeId),
-    [routeId]
-  );
-
-  if (!routeData) {
-    return (
-      <View style={styles.screen}>
-        <AppHeader showBack onBack={() => navigation.goBack()} title="Route not found" />
-      </View>
-    );
-  }
 
   const timeStr = routeData.totalRideRange
     ? `${routeData.totalRideRange[0]}–${routeData.totalRideRange[1]} min`
     : `${routeData.totalRideMinutes} min`;
 
-  // For MVP: step 2 is "current", step 1 is "done" if multi-leg, all others upcoming
-  const currentStep = routeData.legs.length > 1 ? 1 : 0;
+  // The journey starts at step 1; nothing is pre-completed
+  const currentStep = 0;
 
   const getStepState = (i: number): 'done' | 'current' | 'upcoming' => {
     if (i < currentStep) return 'done';
@@ -57,11 +42,6 @@ export default function DetailScreen({ navigation, route: navRoute }: Props) {
       />
 
       <ScrollView contentContainerStyle={styles.scroll}>
-        {/* Progress bar */}
-        <View style={styles.progressBar}>
-          <View style={[styles.progressFill, { width: `${Math.round((currentStep / routeData.legs.length) * 100)}%` }]} />
-        </View>
-
         {/* Journey diagram */}
         <JourneyDiagram route={routeData} />
 
@@ -88,7 +68,6 @@ export default function DetailScreen({ navigation, route: navRoute }: Props) {
         <View style={{ height: 20 }} />
       </ScrollView>
 
-      <BottomNav activeTab={3} />
     </View>
   );
 }

@@ -24,10 +24,11 @@ export const DESTINATIONS: Destination[] = [
   { id: 'YC',   label: 'Yacht Club Resort',           group: 'Deluxe EPCOT Area',  abbrev: 'YC'  },
   { id: 'BC',   label: 'Beach Club Resort',           group: 'Deluxe EPCOT Area',  abbrev: 'BC'  },
   { id: 'BWI',  label: 'BoardWalk Inn',               group: 'Deluxe EPCOT Area',  abbrev: 'BWI' },
-  { id: 'AKL',  label: 'Animal Kingdom Lodge',        group: 'Deluxe EPCOT Area',  abbrev: 'AKL' },
   { id: 'SW',   label: 'Swan Hotel',                  group: 'Deluxe EPCOT Area',  abbrev: 'SW'  },
   { id: 'DO',   label: 'Dolphin Hotel',               group: 'Deluxe EPCOT Area',  abbrev: 'DO'  },
   { id: 'SR',   label: 'Swan Reserve',                group: 'Deluxe EPCOT Area',  abbrev: 'SR'  },
+  // Deluxe AK Area
+  { id: 'AKL',  label: 'Animal Kingdom Lodge',        group: 'Deluxe AK Area',     abbrev: 'AKL' },
   // Moderate Resorts
   { id: 'CBR',  label: 'Caribbean Beach Resort',      group: 'Moderate Resorts',   abbrev: 'CBR' },
   { id: 'COR',  label: 'Coronado Springs',            group: 'Moderate Resorts',   abbrev: 'COR' },

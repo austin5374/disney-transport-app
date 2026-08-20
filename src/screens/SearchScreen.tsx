@@ -13,7 +13,6 @@ import AppHeader from '../components/AppHeader';
 import TimeBanner from '../components/TimeBanner';
 import FilterPills from '../components/FilterPills';
 import DestinationPicker from '../components/DestinationPicker';
-import BottomNav from '../components/BottomNav';
 
 type Props = { navigation: StackNavigationProp<RootStackParamList, 'Search'> };
 
@@ -138,14 +137,13 @@ export default function SearchScreen({ navigation }: Props) {
 
         {/* Info card */}
         <View style={styles.infoCard}>
-          <Text style={styles.infoTitle}>✨ Real-time routing</Text>
+          <Text style={styles.infoTitle}>✨ Live-aware routing</Text>
           <Text style={styles.infoBody}>
-            Routes are automatically adjusted based on current time — buses, water taxis, and monorails follow their actual operating schedules.
+            Routes adjust to the time of day and current service status — a delayed or down line is flagged right on its route card. Check the Status tab for the full board.
           </Text>
         </View>
       </ScrollView>
 
-      <BottomNav activeTab={0} />
 
       {/* Pickers */}
       <DestinationPicker

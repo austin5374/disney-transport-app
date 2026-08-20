@@ -1,79 +1,64 @@
-# 🏰 Disney Transport App
+# ParkWays 🚝
 
-A Walt Disney World guest transportation app that helps you find the best way to get between any two Disney locations — with live simulated arrival times, smart time-aware routing, and a My Disney Experience-inspired design.
+A Walt Disney World transportation app I built to see if I could model an entire theme park's transit system — monorails, the Skyliner gondolas, boats, buses, all of it — and make it feel like a real live app instead of a static map.
 
----
+**[Try the live demo →](https://disney-transport-app.vercel.app)** (no install, just click)
 
-## 📱 Try it on your phone (easiest way)
+![status](https://img.shields.io/badge/status-demo-blue) ![stack](https://img.shields.io/badge/stack-Expo%20%2B%20React%20Native-4F46A5)
 
-> **⚠️ Important — iPhone users:** This app requires the **Expo Go beta**, not the regular App Store version. The standard version won't work.
+## What it does
 
-**Step 1 — Install Expo Go beta via TestFlight:**
-👉 **[Install Expo Go Beta (TestFlight)](https://testflight.apple.com/join/GZJxxfUU)**
+WDW doesn't publish a public transit API, so Disney apps that try to show "live" bus/monorail status don't really exist outside the official My Disney Experience app. I wanted to build the experience anyway — so everything here is simulated, but built to *behave* like a real live system, not just hardcoded placeholder text.
 
-Open that link on your iPhone, tap "Install", and wait for it to download. TestFlight is Apple's official beta testing platform — it's safe and free.
+- **Live status board** — all 19 real transit lines (3 monorail lines, 3 Skyliner lines, 7 boat routes, 6 bus groups) with Operating/Delayed/Down states that actually drift over time. There's a shared "simulation engine" (`src/utils/liveStatus.ts`) that ticks every 20 seconds, so if the Skyliner is down on the status board, it's *also* down on the map and in the trip planner. One source of truth, not three different mock states.
+- **Trip planner** — pick any two of the 33 parks/resorts/hubs and it finds you a route. I precomputed and hand-wrote routing data for all 1,056 possible directed pairs, with a fallback engine that synthesizes a route through a transfer hub (or suggests Minnie Van/rideshare) for pairs that don't have a direct connection, so it's never a dead end.
+- **Time-aware routing** — some routes only make sense at certain times (park-to-park buses don't run before 10am, Disney Springs buses from parks only run after 4pm, the Blue Flag boat launch only runs in the evening). The planner actually enforces these instead of just listing every route all the time.
+- **Transit map** — an SVG schematic of the monorail/Skyliner/boat network (not to scale, like every transit map ever). Tap a line to highlight it and see its live status.
+- **"Use my location"** — geofences the real WDW park/resort coordinates so if you grant location access, it can guess where you are and pre-fill the trip planner.
 
-**Step 2 — Run the app** using the instructions below, then scan the QR code with the Expo Go beta app.
+## Why it's simulated (and why that's the interesting part)
 
----
+Disney has no public transportation API, so I couldn't just call a real endpoint. Instead I built a fake one — a client-side store that generates plausible disruptions ("Suspended for lightning in the area — est. 16 min"), weighted random status transitions, arrival countdowns based on real timestamps, and time-of-day crowd levels (morning rush, post-fireworks exodus). It's `useSyncExternalStore`-based so every screen subscribes to the same state and nothing gets out of sync. Basically the goal was: could I fake a live backend well enough that it *feels* real for a few minutes of poking around?
 
-## 🚀 Run it yourself
+The actual route network (which lines exist, where they stop, roughly how long they take) is modeled on the real WDW transportation system.
 
-You'll need [Node.js](https://nodejs.org) installed (just download and run the installer — pick the "LTS" version).
+## Stack
 
-Then open **Terminal** (Mac) or **Command Prompt** (Windows) and run these commands one at a time:
+- [Expo](https://expo.dev) + React Native (SDK 57 / RN 0.83), also runs in a browser via react-native-web
+- TypeScript, strict-ish — `tsc --noEmit` passes clean
+- [React Navigation](https://reactnavigation.org) v7 (bottom tabs + native stack)
+- [react-native-svg](https://github.com/software-mansion/react-native-svg) for the hand-drawn transit map
+- No backend, no database — it's all client-side state, which is what makes the "live" part a fun problem (see above)
+
+## Run it yourself
 
 ```bash
-# 1. Download the project
 git clone https://github.com/austin5374/disney-transport-app.git
-
-# 2. Go into the folder
 cd disney-transport-app
-
-# 3. Install dependencies
 npm install --legacy-peer-deps
 
-# 4. Start the app
-npx expo start --clear
+npx expo start --web       # opens in your browser
+npx expo start             # scan the QR code with Expo Go on your phone
 ```
 
-A QR code will appear. Scan it with the **Expo Go beta** app (TestFlight link above) and the app will open.
+(`--legacy-peer-deps` because some of the Expo/RN peer dependency ranges are a little behind React 19 — nothing broken, just noisy without the flag.)
+
+## Project structure
+
+```
+src/
+  screens/       Status, Map, Planner (Search → Results → Detail), More
+  components/    cards, pickers, the map legend, live-arrival pills, etc.
+  data/          the 19 transit lines, 33 destinations, and 400+ hand-written routes
+  utils/
+    liveStatus.ts   the shared simulation engine
+    routing.ts      route lookup, filtering, hub-transfer synthesis, geofencing
+```
+
+## Disclaimer
+
+This is an unofficial fan project — not affiliated with, endorsed by, or sponsored by The Walt Disney Company. All status/wait-time/arrival data is simulated. Disney park, resort, and attraction names are used only to describe the real transportation network this app is modeled on.
 
 ---
 
-## ✨ Features
-
-- **Smart routing** between all Walt Disney World parks, resorts, and entertainment districts
-- **Live arrival simulation** — pulsing green dot shows next bus/monorail/gondola arrival, tap to refresh
-- **Time-aware** — automatically adjusts routes before 10am (no park-to-park buses), before 4pm (Disney Springs limits), and after 3pm (Blue Flag water taxis)
-- **Filter options** — Fastest first, Scenic routes, No water, Accessible, No transfer
-- **Journey diagram** — animated node-and-line diagram showing your full route
-- **Step-by-step cards** — done / current / upcoming states with contextual tips
-- **My Disney Experience aesthetic** — Disney blue headers, white cards, familiar layout
-
----
-
-## 🗺️ What's covered
-
-Every Disney World transport route including:
-- 🚌 Disney Buses (all resorts and parks)
-- 🚝 Monorail (Express, Resort loop, EPCOT)
-- 🚡 Disney Skyliner gondola (CBR hub network)
-- ⛵ Friendship Boats (Crescent Lake)
-- 🚢 Ferry Boat (TTC ↔ Magic Kingdom)
-- 🛥️ Water Taxis (Gold/Red/Green/Blue flag launches)
-- 🚣 Sassagoula River Cruise (Disney Springs area)
-- 🚶 Walking paths (Contemporary, EPCOT resorts, etc.)
-- 🚗 Minnie Van via Lyft
-
----
-
-## 🛠️ Built with
-
-- [React Native](https://reactnative.dev) + [Expo](https://expo.dev)
-- [React Navigation](https://reactnavigation.org)
-- TypeScript
-
----
-
-*All transport data sourced from official Disney documentation and verified community sources. This is an unofficial fan-made app and is not affiliated with The Walt Disney Company.*
+Built by [Austin](https://github.com/austin5374) — feedback/issues welcome.

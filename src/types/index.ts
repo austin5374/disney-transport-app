@@ -84,6 +84,7 @@ export type DestinationGroup =
   | 'Entertainment'
   | 'Deluxe MK Area'
   | 'Deluxe EPCOT Area'
+  | 'Deluxe AK Area'
   | 'Moderate Resorts'
   | 'Value Resorts'
   | 'DVC / Other';
@@ -98,7 +99,7 @@ export type RootStackParamList = {
     timeOverride?: string; // ISO string
   };
   Detail: {
-    routeId: string;
+    routeData: Route;
     from: Destination;
     to: Destination;
     timeOverride?: string;

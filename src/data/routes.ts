@@ -481,7 +481,7 @@ export const ALL_ROUTES: Route[] = [
       { mode: 'monorail_epcot', from: 'EP', to: 'TTC', rideMinutes: 12, simRange: [1,10], accessible: true },
       { mode: 'ferry_ttc_mk', from: 'TTC', to: 'MK', rideMinutes: 12, simRange: [1,5], accessible: true, walkMinutes: 3, tip: 'Scenic ferry option. Boards at TTC boat dock.' },
     ],
-    totalRideMinutes: 26, tags: ['water', 'transfer', 'scenic'],
+    totalRideMinutes: 27, tags: ['water', 'transfer', 'scenic'],
   },
   {
     id: 'ep-mk-minnie',
@@ -959,7 +959,7 @@ export const ALL_ROUTES: Route[] = [
       { mode: 'skyliner', from: 'HS', to: 'CBR', rideMinutes: 5, simRange: [0,0], accessible: true },
       { mode: 'skyliner', from: 'CBR', to: 'RIV', rideMinutes: 4, simRange: [0,0], accessible: true, walkMinutes: 3 },
     ],
-    totalRideMinutes: 10, tags: ['transfer', 'scenic'],
+    totalRideMinutes: 9, tags: ['transfer', 'scenic'],
   },
   {
     id: 'hs-pop-skyliner',
@@ -1891,7 +1891,7 @@ export const ALL_ROUTES: Route[] = [
       { mode: 'skyliner', from: 'RIV', to: 'CBR', rideMinutes: 4, simRange: [0,0], accessible: true },
       { mode: 'skyliner', from: 'CBR', to: 'HS', rideMinutes: 5, simRange: [0,0], accessible: true, walkMinutes: 3 },
     ],
-    totalRideMinutes: 10, tags: ['transfer', 'scenic'],
+    totalRideMinutes: 9, tags: ['transfer', 'scenic'],
   },
   {
     id: 'riv-cbr-skyliner',
@@ -1906,7 +1906,7 @@ export const ALL_ROUTES: Route[] = [
       { mode: 'skyliner', from: 'RIV', to: 'CBR', rideMinutes: 4, simRange: [0,0], accessible: true },
       { mode: 'skyliner', from: 'CBR', to: 'POP', rideMinutes: 5, simRange: [0,0], accessible: true, walkMinutes: 3 },
     ],
-    totalRideMinutes: 10, tags: ['transfer', 'scenic'],
+    totalRideMinutes: 9, tags: ['transfer', 'scenic'],
   },
   {
     id: 'riv-mk-bus',
@@ -2004,7 +2004,7 @@ export const ALL_ROUTES: Route[] = [
       { mode: 'skyliner', from: 'POP', to: 'CBR', rideMinutes: 5, simRange: [0,0], accessible: true },
       { mode: 'skyliner', from: 'CBR', to: 'RIV', rideMinutes: 4, simRange: [0,0], accessible: true, walkMinutes: 3 },
     ],
-    totalRideMinutes: 10, tags: ['transfer', 'scenic'],
+    totalRideMinutes: 9, tags: ['transfer', 'scenic'],
   },
   {
     id: 'pop-mk-bus',
