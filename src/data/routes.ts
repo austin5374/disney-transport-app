@@ -86,6 +86,13 @@ export const ALL_ROUTES: Route[] = [
   },
 
   {
+    id: 'mk-ds-after4-bus',
+    from: 'MK', to: 'DS', name: 'Bus direct to Disney Springs',
+    legs: [{ mode: 'bus', from: 'MK', to: 'DS', rideMinutes: 20, simRange: [1,20], accessible: true, tip: 'Direct park-to-Disney Springs bus, no transfer needed. Starts running mid-afternoon.' }],
+    totalRideMinutes: 20, totalRideRange: [20,40], tags: [],
+    timeRestriction: 'after_4pm_only',
+  },
+  {
     id: 'mk-ds-via-gf',
     from: 'MK', to: 'DS', name: 'Walk to Grand Floridian, Bus to Disney Springs',
     legs: [
@@ -93,7 +100,7 @@ export const ALL_ROUTES: Route[] = [
       { mode: 'bus', from: 'GF', to: 'DS', rideMinutes: 30, simRange: [1,20], accessible: true, walkMinutes: 0, tip: 'Runs all day, not tied to a specific time.' },
     ],
     totalRideMinutes: 42, totalRideRange: [42,62], tags: ['transfer'],
-    notes: 'Disney Springs bus access is limited to resort guests, or guests with a park or dining reservation there.',
+    notes: 'A direct Disney Springs bus also runs from the park starting mid-afternoon — usually faster once it\'s running.',
   },
   {
     id: 'mk-ds-minnie',
@@ -111,7 +118,7 @@ export const ALL_ROUTES: Route[] = [
       { mode: 'bus', from: 'DS', to: 'TL', rideMinutes: 10, simRange: [1,20], accessible: true, walkMinutes: 5, tip: 'Typhoon Lagoon bus departs from Disney Springs bus loop.' },
     ],
     totalRideMinutes: 52, totalRideRange: [52,80], tags: ['transfer'],
-    notes: 'Disney Springs bus access is limited to resort guests, or guests with a park or dining reservation there.',
+    notes: 'Disney Springs is open to all park guests, no resort stay required.',
   },
   {
     id: 'mk-tl-minnie',
@@ -539,6 +546,13 @@ export const ALL_ROUTES: Route[] = [
   },
 
   {
+    id: 'ep-ds-after4-bus',
+    from: 'EP', to: 'DS', name: 'Bus direct to Disney Springs',
+    legs: [{ mode: 'bus', from: 'EP', to: 'DS', rideMinutes: 20, simRange: [1,20], accessible: true, tip: 'Direct park-to-Disney Springs bus, no transfer needed. Starts running mid-afternoon.' }],
+    totalRideMinutes: 20, totalRideRange: [20,40], tags: [],
+    timeRestriction: 'after_4pm_only',
+  },
+  {
     id: 'ep-ds-before4',
     from: 'EP', to: 'DS', name: 'Friendship Boat to BoardWalk Inn, Bus to Disney Springs',
     legs: [
@@ -546,7 +560,7 @@ export const ALL_ROUTES: Route[] = [
       { mode: 'bus', from: 'BWI', to: 'DS', rideMinutes: 25, simRange: [1,20], accessible: true, walkMinutes: 5 },
     ],
     totalRideMinutes: 35, totalRideRange: [35,57], tags: ['water', 'transfer'],
-    notes: 'Disney Springs bus access is limited to resort guests, or guests with a park or dining reservation there.',
+    notes: 'A direct Disney Springs bus also runs from the park starting mid-afternoon — usually faster once it\'s running.',
   },
   {
     id: 'ep-ds-minnie',
@@ -564,7 +578,7 @@ export const ALL_ROUTES: Route[] = [
       { mode: 'bus', from: 'DS', to: 'TL', rideMinutes: 10, simRange: [1,20], accessible: true, walkMinutes: 5 },
     ],
     totalRideMinutes: 45, totalRideRange: [45,70], tags: ['water', 'transfer'],
-    notes: 'Disney Springs bus access is limited to resort guests, or guests with a park or dining reservation there.',
+    notes: 'Disney Springs is open to all park guests, no resort stay required.',
   },
   {
     id: 'ep-tl-minnie',
@@ -846,6 +860,13 @@ export const ALL_ROUTES: Route[] = [
   },
 
   {
+    id: 'hs-ds-after4-bus',
+    from: 'HS', to: 'DS', name: 'Bus direct to Disney Springs',
+    legs: [{ mode: 'bus', from: 'HS', to: 'DS', rideMinutes: 20, simRange: [1,20], accessible: true, tip: 'Direct park-to-Disney Springs bus, no transfer needed. Starts running mid-afternoon.' }],
+    totalRideMinutes: 20, totalRideRange: [20,40], tags: [],
+    timeRestriction: 'after_4pm_only',
+  },
+  {
     id: 'hs-ds-before4',
     from: 'HS', to: 'DS', name: 'Friendship Boat to BoardWalk Inn, Bus to Disney Springs',
     legs: [
@@ -853,7 +874,7 @@ export const ALL_ROUTES: Route[] = [
       { mode: 'bus', from: 'BWI', to: 'DS', rideMinutes: 25, simRange: [1,20], accessible: true, walkMinutes: 5 },
     ],
     totalRideMinutes: 40, totalRideRange: [40,62], tags: ['water', 'transfer'],
-    notes: 'Disney Springs bus access is limited to resort guests, or guests with a park or dining reservation there.',
+    notes: 'A direct Disney Springs bus also runs from the park starting mid-afternoon — usually faster once it\'s running.',
   },
   {
     id: 'hs-ds-minnie',
@@ -871,7 +892,7 @@ export const ALL_ROUTES: Route[] = [
       { mode: 'bus', from: 'DS', to: 'TL', rideMinutes: 10, simRange: [1,20], accessible: true, walkMinutes: 5 },
     ],
     totalRideMinutes: 50, totalRideRange: [50,75], tags: ['water', 'transfer'],
-    notes: 'Disney Springs bus access is limited to resort guests, or guests with a park or dining reservation there.',
+    notes: 'Disney Springs is open to all park guests, no resort stay required.',
   },
   {
     id: 'hs-tl-minnie',
@@ -1145,6 +1166,13 @@ export const ALL_ROUTES: Route[] = [
   },
 
   {
+    id: 'ak-ds-after4-bus',
+    from: 'AK', to: 'DS', name: 'Bus direct to Disney Springs',
+    legs: [{ mode: 'bus', from: 'AK', to: 'DS', rideMinutes: 25, simRange: [1,20], accessible: true, tip: 'Direct park-to-Disney Springs bus, no transfer needed. Starts running mid-afternoon.' }],
+    totalRideMinutes: 25, totalRideRange: [25,45], tags: [],
+    timeRestriction: 'after_4pm_only',
+  },
+  {
     id: 'ak-ds-before4',
     from: 'AK', to: 'DS', name: 'Bus to Animal Kingdom Lodge, Bus to Disney Springs',
     legs: [
@@ -1152,7 +1180,7 @@ export const ALL_ROUTES: Route[] = [
       { mode: 'bus', from: 'AKL', to: 'DS', rideMinutes: 30, simRange: [1,20], accessible: true, walkMinutes: 5 },
     ],
     totalRideMinutes: 40, totalRideRange: [40,65], tags: ['transfer'],
-    notes: 'Disney Springs bus access is limited to resort guests, or guests with a park or dining reservation there.',
+    notes: 'A direct Disney Springs bus also runs from the park starting mid-afternoon — usually faster once it\'s running.',
   },
   {
     id: 'ak-ds-minnie',
@@ -1177,7 +1205,7 @@ export const ALL_ROUTES: Route[] = [
       { mode: 'bus', from: 'DS', to: 'TL', rideMinutes: 10, simRange: [1,20], accessible: true, walkMinutes: 5 },
     ],
     totalRideMinutes: 50, totalRideRange: [50,80], tags: ['transfer'],
-    notes: 'Disney Springs bus access is limited to resort guests, or guests with a park or dining reservation there.',
+    notes: 'Disney Springs is open to all park guests, no resort stay required.',
   },
   {
     id: 'ak-tl-minnie',
@@ -1254,10 +1282,17 @@ export const ALL_ROUTES: Route[] = [
   },
 
   {
+    id: 'ds-ep-after4-bus',
+    from: 'DS', to: 'EP', name: 'Bus direct to EPCOT',
+    legs: [{ mode: 'bus', from: 'DS', to: 'EP', rideMinutes: 20, simRange: [1,20], accessible: true, tip: 'Direct Disney Springs-to-park bus, no transfer needed. Starts running mid-afternoon.' }],
+    totalRideMinutes: 20, totalRideRange: [20,40], tags: [],
+    timeRestriction: 'after_4pm_only',
+  },
+  {
     id: 'ds-ep-skyliner',
     from: 'DS', to: 'EP', name: 'Bus to Caribbean Beach, Skyliner to EPCOT',
     legs: [
-      { mode: 'bus', from: 'DS', to: 'CBR', rideMinutes: 20, simRange: [1,20], accessible: true, tip: 'No direct bus to EPCOT from DS. CBR Skyliner is the smartest connection.' },
+      { mode: 'bus', from: 'DS', to: 'CBR', rideMinutes: 20, simRange: [1,20], accessible: true, tip: 'Before the direct Disney Springs bus starts running, CBR Skyliner is the smartest connection.' },
       { mode: 'skyliner', from: 'CBR', to: 'EP', rideMinutes: 12, simRange: [0,0], accessible: true, walkMinutes: 5, tip: 'Skyliner drops at EPCOT International Gateway.' },
     ],
     totalRideMinutes: 32, totalRideRange: [32,52], tags: ['transfer', 'scenic'],
@@ -1269,6 +1304,13 @@ export const ALL_ROUTES: Route[] = [
     totalRideMinutes: 15, tags: [],
   },
 
+  {
+    id: 'ds-hs-after4-bus',
+    from: 'DS', to: 'HS', name: 'Bus direct to Hollywood Studios',
+    legs: [{ mode: 'bus', from: 'DS', to: 'HS', rideMinutes: 20, simRange: [1,20], accessible: true, tip: 'Direct Disney Springs-to-park bus, no transfer needed. Starts running mid-afternoon.' }],
+    totalRideMinutes: 20, totalRideRange: [20,40], tags: [],
+    timeRestriction: 'after_4pm_only',
+  },
   {
     id: 'ds-hs-skyliner',
     from: 'DS', to: 'HS', name: 'Bus to Caribbean Beach, Skyliner to Hollywood Studios',
@@ -1285,6 +1327,13 @@ export const ALL_ROUTES: Route[] = [
     totalRideMinutes: 15, tags: [],
   },
 
+  {
+    id: 'ds-ak-after4-bus',
+    from: 'DS', to: 'AK', name: 'Bus direct to Animal Kingdom',
+    legs: [{ mode: 'bus', from: 'DS', to: 'AK', rideMinutes: 25, simRange: [1,20], accessible: true, tip: 'Direct Disney Springs-to-park bus, no transfer needed. Starts running mid-afternoon.' }],
+    totalRideMinutes: 25, totalRideRange: [25,45], tags: [],
+    timeRestriction: 'after_4pm_only',
+  },
   {
     id: 'ds-ak-via-cor',
     from: 'DS', to: 'AK', name: 'Bus to Coronado Springs, Bus to Animal Kingdom',
@@ -1426,7 +1475,7 @@ export const ALL_ROUTES: Route[] = [
       { mode: 'walk', from: 'GF', to: 'MK', rideMinutes: 12, simRange: [0,0], accessible: true },
     ],
     totalRideMinutes: 52, totalRideRange: [52,80], tags: ['transfer'],
-    notes: 'Disney Springs bus access is limited to resort guests, or guests with a park or dining reservation there.',
+    notes: 'Disney Springs is open to all park guests, no resort stay required.',
   },
   {
     id: 'tl-mk-minnie',
