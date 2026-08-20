@@ -114,15 +114,11 @@ export default function SearchScreen({ navigation }: Props) {
     setRecent(prev => [dest, ...prev.filter(d => d.id !== dest.id)].slice(0, 5));
   };
 
-  const needsManualLocation = !from && (locationStatus === 'not_at_park' || locationStatus === 'denied');
-
   const fromText = from
     ? from.label
     : locationStatus === 'checking'
       ? 'Locating you…'
-      : needsManualLocation
-        ? 'Location unavailable — tap to set manually'
-        : 'Set your starting point';
+      : 'Walt Disney World Location';
 
   const swapFromTo = () => {
     const prevFrom = from;
@@ -146,7 +142,7 @@ export default function SearchScreen({ navigation }: Props) {
             "from" row bolted on underneath. */}
         <View style={styles.tripCard}>
           <View style={styles.tripIcons}>
-            <View style={[styles.tripDot, needsManualLocation && styles.tripDotWarning]} />
+            <View style={styles.tripDot} />
             <View style={styles.tripConnector} />
             <Ionicons
               name="location"
@@ -160,7 +156,7 @@ export default function SearchScreen({ navigation }: Props) {
               <TouchableOpacity style={styles.tripFieldTap} onPress={() => setFromPickerOpen(true)} activeOpacity={0.7}>
                 <Text style={styles.tripLabel}>From</Text>
                 <Text
-                  style={[styles.tripValue, !from && (needsManualLocation ? styles.tripValueWarning : styles.tripValuePlaceholder)]}
+                  style={[styles.tripValue, !from && styles.tripValuePlaceholder]}
                   numberOfLines={1}
                 >
                   {fromText}
@@ -321,9 +317,6 @@ const styles = StyleSheet.create({
     borderColor: Colors.primaryBlue,
     backgroundColor: Colors.cardBg,
   },
-  tripDotWarning: {
-    borderColor: Colors.statusDown,
-  },
   tripConnector: {
     flex: 1,
     width: 0,
@@ -357,10 +350,6 @@ const styles = StyleSheet.create({
   tripValuePlaceholder: {
     color: Colors.textSecondary,
     fontWeight: '400',
-  },
-  tripValueWarning: {
-    color: Colors.statusDown,
-    fontWeight: '500',
   },
   tripDivider: {
     height: 1,
