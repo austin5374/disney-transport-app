@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
-  View, Text, TouchableOpacity, StyleSheet, Alert, Modal, ScrollView,
+  View, Text, TouchableOpacity, StyleSheet, Alert, ScrollView,
 } from 'react-native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import * as Location from 'expo-location';
@@ -14,6 +14,7 @@ import AppHeader from '../components/AppHeader';
 import TimeBanner from '../components/TimeBanner';
 import FilterPills from '../components/FilterPills';
 import DestinationPicker from '../components/DestinationPicker';
+import AppModal from '../components/AppModal';
 
 type Props = { navigation: StackNavigationProp<RootStackParamList, 'Search'> };
 
@@ -225,7 +226,7 @@ export default function SearchScreen({ navigation }: Props) {
 
       {/* Geofence confirmation sheet */}
       {geoSheet && (
-        <Modal transparent animationType="slide" onRequestClose={() => setGeoSheet(null)}>
+        <AppModal transparent animationType="slide" onRequestClose={() => setGeoSheet(null)}>
           <TouchableOpacity
             style={styles.geoOverlay}
             activeOpacity={1}
@@ -251,7 +252,7 @@ export default function SearchScreen({ navigation }: Props) {
               </View>
             </View>
           </TouchableOpacity>
-        </Modal>
+        </AppModal>
       )}
     </View>
   );

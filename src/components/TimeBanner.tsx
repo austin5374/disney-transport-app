@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Modal, Platform } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Platform } from 'react-native';
+import AppModal from './AppModal';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Colors } from '../utils/theme';
@@ -49,7 +50,7 @@ export default function TimeBanner({ timeOverride, onTimeChange }: TimeBannerPro
       </View>
 
       {showPicker && (
-        <Modal transparent animationType="slide" onRequestClose={() => setShowPicker(false)}>
+        <AppModal transparent animationType="slide" onRequestClose={() => setShowPicker(false)}>
           <TouchableOpacity
             style={styles.modalOverlay}
             activeOpacity={1}
@@ -77,7 +78,7 @@ export default function TimeBanner({ timeOverride, onTimeChange }: TimeBannerPro
               />
             </View>
           </TouchableOpacity>
-        </Modal>
+        </AppModal>
       )}
     </>
   );

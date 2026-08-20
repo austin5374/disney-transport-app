@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { TRANSIT_LINES, LineGroup } from '../data/lines';
 import { useLiveStatus, refreshLiveStatus } from '../utils/liveStatus';
-import { Colors, Brand, Gradients } from '../utils/theme';
+import { Colors, Gradients } from '../utils/theme';
 import StatusCard from '../components/StatusCard';
 import BusTimesPanel from '../components/BusTimesPanel';
 
@@ -44,9 +44,6 @@ export default function StatusScreen() {
   const [clock, setClock] = useState(Date.now());
   const scrollY = useRef(new Animated.Value(0)).current;
 
-  const brandOpacity = scrollY.interpolate({ inputRange: [0, 36], outputRange: [1, 0], extrapolate: 'clamp' });
-  const brandHeight = scrollY.interpolate({ inputRange: [0, 36], outputRange: [23, 0], extrapolate: 'clamp' });
-  const brandMarginBottom = scrollY.interpolate({ inputRange: [0, 36], outputRange: [6, 0], extrapolate: 'clamp' });
   const subOpacity = scrollY.interpolate({ inputRange: [0, 28], outputRange: [1, 0], extrapolate: 'clamp' });
   const subHeight = scrollY.interpolate({ inputRange: [0, 28], outputRange: [19, 0], extrapolate: 'clamp' });
   const subMarginTop = scrollY.interpolate({ inputRange: [0, 28], outputRange: [3, 0], extrapolate: 'clamp' });
@@ -78,9 +75,6 @@ export default function StatusScreen() {
       {/* Header — shrinks as the list scrolls */}
       <LinearGradient colors={Gradients.sky} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
         <Animated.View style={[styles.header, { paddingTop: insets.top + 10, paddingBottom: headerPaddingBottom }]}>
-          <Animated.Text style={[styles.brand, { opacity: brandOpacity, height: brandHeight, marginBottom: brandMarginBottom }]}>
-            {Brand.name}
-          </Animated.Text>
           <Animated.Text style={[styles.headerTitle, { fontSize: titleFontSize }]}>
             Transportation Status
           </Animated.Text>
@@ -160,14 +154,6 @@ const styles = StyleSheet.create({
   header: {
     paddingHorizontal: 20,
     paddingBottom: 16,
-  },
-  brand: {
-    color: 'rgba(255,255,255,0.85)',
-    fontSize: 13,
-    fontWeight: '700',
-    letterSpacing: 1.2,
-    textTransform: 'uppercase',
-    marginBottom: 6,
   },
   headerTitle: {
     color: '#fff',

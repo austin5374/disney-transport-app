@@ -1,8 +1,9 @@
 import React, { useState, useMemo } from 'react';
 import {
-  Modal, View, Text, TextInput, TouchableOpacity,
+  View, Text, TextInput, TouchableOpacity,
   SectionList, StyleSheet, KeyboardAvoidingView, Platform,
 } from 'react-native';
+import AppModal from './AppModal';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -60,7 +61,7 @@ export default function DestinationPicker({
   }, [filtered, recent, excludeId, query]);
 
   return (
-    <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
+    <AppModal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
         <View style={[styles.container, { paddingTop: insets.top }]}>
           {/* Header */}
@@ -119,7 +120,7 @@ export default function DestinationPicker({
           />
         </View>
       </KeyboardAvoidingView>
-    </Modal>
+    </AppModal>
   );
 }
 

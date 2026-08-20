@@ -29,7 +29,6 @@ export default function MoreScreen() {
   return (
     <View style={styles.screen}>
       <LinearGradient colors={Gradients.sky} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={[styles.header, { paddingTop: insets.top + 10 }]}>
-        <Text style={styles.brand}>{Brand.name}</Text>
         <Text style={styles.headerTitle}>About</Text>
       </LinearGradient>
 
@@ -81,14 +80,6 @@ const styles = StyleSheet.create({
   header: {
     paddingHorizontal: 20,
     paddingBottom: 14,
-  },
-  brand: {
-    color: 'rgba(255,255,255,0.85)',
-    fontSize: 13,
-    fontWeight: '700',
-    letterSpacing: 1.2,
-    textTransform: 'uppercase',
-    marginBottom: 6,
   },
   headerTitle: {
     color: '#fff',

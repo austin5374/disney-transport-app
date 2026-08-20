@@ -7,7 +7,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Path, Circle, Rect, Ellipse, Text as SvgText, G } from 'react-native-svg';
 import { TRANSIT_LINES, TransitLine } from '../data/lines';
 import { useLiveStatus, STATUS_LABEL } from '../utils/liveStatus';
-import { Colors, StatusColors, Brand, Gradients } from '../utils/theme';
+import { Colors, StatusColors, Gradients } from '../utils/theme';
 
 // Schematic property map (not to scale, like any transit diagram).
 // Coordinates live in a 360 × 560 viewBox.
@@ -79,7 +79,6 @@ export default function MapScreen() {
   return (
     <View style={styles.screen}>
       <LinearGradient colors={Gradients.sky} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={[styles.header, { paddingTop: insets.top + 10 }]}>
-        <Text style={styles.brand}>{Brand.name}</Text>
         <Text style={styles.headerTitle}>Transit Map</Text>
         <Text style={styles.headerSub}>Schematic, not to scale · buses serve all locations</Text>
       </LinearGradient>
@@ -203,14 +202,6 @@ const styles = StyleSheet.create({
   header: {
     paddingHorizontal: 20,
     paddingBottom: 14,
-  },
-  brand: {
-    color: 'rgba(255,255,255,0.85)',
-    fontSize: 13,
-    fontWeight: '700',
-    letterSpacing: 1.2,
-    textTransform: 'uppercase',
-    marginBottom: 6,
   },
   headerTitle: {
     color: '#fff',
