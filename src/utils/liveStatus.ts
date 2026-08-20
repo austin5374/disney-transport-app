@@ -61,6 +61,10 @@ function effectiveHeadway(line: TransitLine, trains: number | null): [number, nu
 }
 
 // ─── Disruption copy ─────────────────────────────────────────────────────────
+// Weather-caused outages (lightning, high wind) are handled separately below
+// so they can be coordinated across a whole area/system at once, instead of
+// each line independently rolling its own "it's storming" outage. These pools
+// are for the ordinary, single-line, non-weather reasons a line goes down.
 
 const DOWN_MESSAGES: Record<string, string[]> = {
   Monorail: [
@@ -69,14 +73,12 @@ const DOWN_MESSAGES: Record<string, string[]> = {
     'Train being cycled out of service',
   ],
   Skyliner: [
-    'Suspended for lightning in the area',
     'Paused for an extended guest boarding',
-    'Suspended for high winds',
+    'Cabin taken out of rotation for cleaning',
   ],
   Boats: [
-    'Docked for weather, high winds on the water',
     'Vessel change in progress',
-    'Docked for lightning in the area',
+    'Docked for routine maintenance',
   ],
   Buses: [
     'Temporary detour, expect longer travel times',
@@ -102,6 +104,76 @@ const DELAY_MESSAGES: Record<string, string[]> = {
     'Delays from traffic on property roads',
   ],
 };
+
+// ─── Coordinated weather outages ─────────────────────────────────────────────
+// Real WDW watercraft and the Skyliner are grouped by the body of water / cable
+// system they actually run on, so a storm cell takes out everything on that
+// system together — never the whole property's boats at once, and never one
+// boat alone while its dock-mates keep running. Monorail is lightning-only
+// (never grounded for wind or rain) and escalates: the EPCOT beam is longest
+// and most exposed, so it goes down first; if the storm continues, the Resort
+// and Express beams go down together right after. All three come back at once
+// once the beam is confirmed clear.
+
+const SEVEN_SEAS_LAGOON_BOATS = ['boat-ferry', 'boat-gold', 'boat-red', 'boat-green', 'boat-blue'];
+const CRESCENT_LAKE_BOATS = ['boat-friendship'];
+const DISNEY_SPRINGS_BOATS = ['boat-sassagoula'];
+const BOAT_ZONES = [SEVEN_SEAS_LAGOON_BOATS, CRESCENT_LAKE_BOATS, DISNEY_SPRINGS_BOATS];
+const SKYLINER_SYSTEM = ['sky-epcot', 'sky-hs', 'sky-pop'];
+
+const BOAT_WEATHER_MESSAGES = ['Docked for lightning in the area', 'Docked for weather, high winds on the water'];
+const SKYLINER_WEATHER_MESSAGES = ['Suspended for lightning in the area', 'Suspended for high winds'];
+const MONORAIL_LIGHTNING_STAGE1 = 'Suspended for lightning in the area — EPCOT Line affected first, its beam runs longest';
+const MONORAIL_LIGHTNING_STAGE2 = 'Lightning in the area, all monorail beams suspended until it clears';
+
+// Puts every line in a group down together on a shared restoreAt, so the
+// existing per-line "clear expired disruption" check in tick() naturally
+// brings the whole group back in the same tick — no separate recovery path
+// needed. Skips lines already down (weather or otherwise) so one event
+// doesn't stomp another already in progress.
+function maybeStartGroupWeather(lineIds: string[], messages: string[], chance: number, durationMinutes: [number, number]) {
+  if (lineIds.some(id => state.get(id)!.status === 'down')) return;
+  if (Math.random() >= chance) return;
+  const restoreAt = Date.now() + randInt(durationMinutes[0], durationMinutes[1]) * 60_000;
+  const message = pick(messages);
+  for (const id of lineIds) {
+    const s = state.get(id)!;
+    s.status = 'down';
+    s.detail = message;
+    s.restoreAt = restoreAt;
+    s.arrivalTimestamps = [];
+  }
+}
+
+function maybeAdvanceMonorailLightning() {
+  const epcot = state.get('mono-epcot')!;
+  const resort = state.get('mono-resort')!;
+  const express = state.get('mono-express')!;
+
+  const stage2 = resort.status === 'down' && resort.detail === MONORAIL_LIGHTNING_STAGE2;
+  if (stage2) return; // already worst-case; shared restoreAt will clear all three together
+
+  const stage1 = epcot.status === 'down' && epcot.detail === MONORAIL_LIGHTNING_STAGE1;
+  if (stage1) {
+    if (Math.random() < 0.05) {
+      const restoreAt = Date.now() + randInt(15, 30) * 60_000;
+      for (const s of [epcot, resort, express]) {
+        s.status = 'down';
+        s.detail = MONORAIL_LIGHTNING_STAGE2;
+        s.restoreAt = restoreAt;
+        s.arrivalTimestamps = [];
+      }
+    }
+    return;
+  }
+
+  if (epcot.status === 'operating' && Math.random() < 0.0025) {
+    epcot.status = 'down';
+    epcot.detail = MONORAIL_LIGHTNING_STAGE1;
+    epcot.restoreAt = Date.now() + randInt(10, 20) * 60_000;
+    epcot.arrivalTimestamps = [];
+  }
+}
 
 // ─── Store ───────────────────────────────────────────────────────────────────
 
@@ -172,6 +244,15 @@ function initState() {
 
 function tick() {
   const now = Date.now();
+
+  // Coordinated weather first, so the per-line loop below sees these lines
+  // already 'down' and skips rolling an independent disruption on top.
+  for (const zone of BOAT_ZONES) {
+    maybeStartGroupWeather(zone, BOAT_WEATHER_MESSAGES, 0.0015, [10, 30]);
+  }
+  maybeStartGroupWeather(SKYLINER_SYSTEM, SKYLINER_WEATHER_MESSAGES, 0.002, [8, 25]);
+  maybeAdvanceMonorailLightning();
+
   for (const line of TRANSIT_LINES) {
     const s = state.get(line.id)!;
 
@@ -282,6 +363,56 @@ export function useLineStatus(lineId: string): LineStatus | undefined {
 
 export function getLastUpdated(): number {
   return lastUpdated;
+}
+
+// ─── Temporary bus bridges ───────────────────────────────────────────────────
+// Derived entirely from monorail/ferry status, not simulated lines of their
+// own — Disney brings up shuttle buses to cover a beam outage, and pulls them
+// once the monorail is running again, so these exist only for as long as
+// their trigger condition holds.
+
+export interface TemporaryBridge {
+  id: string;
+  name: string;
+  stations: string[];
+  note: string;
+}
+
+export function getTemporaryBridges(status: Record<string, LineStatus>): TemporaryBridge[] {
+  const epcotMono = status['mono-epcot'];
+  const resortMono = status['mono-resort'];
+  const expressMono = status['mono-express'];
+  const ferry = status['boat-ferry'];
+  const bridges: TemporaryBridge[] = [];
+
+  if (epcotMono?.status === 'down') {
+    bridges.push({
+      id: 'temp-bus-epcot',
+      name: 'Temporary Bus: TTC ↔ EPCOT',
+      stations: ['Transportation & Ticket Center', 'EPCOT'],
+      note: 'Running while the EPCOT Monorail is down. Ends as soon as monorail service resumes.',
+    });
+  }
+
+  if (resortMono?.status === 'down' && (resortMono.etaMinutes ?? 0) >= 30) {
+    bridges.push({
+      id: 'temp-bus-resort-loop',
+      name: 'Temporary Bus: TTC · Polynesian · Grand Floridian · Contemporary',
+      stations: ['Transportation & Ticket Center', 'Polynesian Village', 'Grand Floridian', 'Contemporary'],
+      note: 'Added because the Resort Monorail outage is expected to run long. Ends as soon as monorail service resumes.',
+    });
+  }
+
+  if (expressMono?.status === 'down' && ferry?.status === 'down') {
+    bridges.push({
+      id: 'temp-bus-mk',
+      name: 'Temporary Bus: TTC ↔ Magic Kingdom',
+      stations: ['Transportation & Ticket Center', 'Magic Kingdom'],
+      note: 'Running while both the Express Monorail and the ferry are down. Ends as soon as monorail service resumes.',
+    });
+  }
+
+  return bridges;
 }
 
 // Status display helpers

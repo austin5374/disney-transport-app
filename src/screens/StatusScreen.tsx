@@ -5,10 +5,11 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { TRANSIT_LINES, LineGroup } from '../data/lines';
-import { useLiveStatus, refreshLiveStatus } from '../utils/liveStatus';
+import { useLiveStatus, refreshLiveStatus, getTemporaryBridges } from '../utils/liveStatus';
 import { Colors, Gradients } from '../utils/theme';
 import StatusCard from '../components/StatusCard';
 import BusTimesPanel from '../components/BusTimesPanel';
+import TemporaryBridgeCard from '../components/TemporaryBridgeCard';
 
 const GROUPS: { key: LineGroup | 'All'; label: string }[] = [
   { key: 'All',      label: 'All' },
@@ -69,6 +70,7 @@ export default function StatusScreen() {
 
   const disrupted = TRANSIT_LINES.filter(l => live[l.id]?.status !== 'operating');
   const updated = new Date(Object.values(live)[0]?.updatedAt ?? clock);
+  const bridges = useMemo(() => getTemporaryBridges(live), [live]);
 
   return (
     <View style={styles.screen}>
@@ -127,6 +129,9 @@ export default function StatusScreen() {
               .map(g => (
                 <View key={g}>
                   <Text style={styles.sectionTitle}>{g}</Text>
+                  {g === 'Buses' && bridges.map(b => (
+                    <TemporaryBridgeCard key={b.id} bridge={b} />
+                  ))}
                   {lines.filter(l => l.group === g).map(l =>
                     live[l.id] ? <StatusCard key={l.id} line={l} status={live[l.id]} /> : null
                   )}
