@@ -5,6 +5,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
 import { Destination, DestinationGroup } from '../types';
 import { DESTINATIONS } from '../data/destinations';
 import { Colors, Gradients } from '../utils/theme';
@@ -72,7 +73,7 @@ export default function DestinationPicker({
 
           {/* Search */}
           <View style={styles.searchWrap}>
-            <Text style={styles.searchIcon}>⌕</Text>
+            <Ionicons name="search" size={16} color={Colors.textPlaceholder} style={{ marginRight: 8 }} />
             <TextInput
               style={styles.searchInput}
               placeholder="Search destinations..."
@@ -83,8 +84,8 @@ export default function DestinationPicker({
               returnKeyType="search"
             />
             {query.length > 0 && (
-              <TouchableOpacity onPress={() => setQuery('')}>
-                <Text style={styles.clearBtn}>✕</Text>
+              <TouchableOpacity onPress={() => setQuery('')} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+                <Ionicons name="close-circle" size={16} color={Colors.textPlaceholder} />
               </TouchableOpacity>
             )}
           </View>
@@ -151,11 +152,6 @@ const styles = StyleSheet.create({
     borderColor: Colors.cardBorder,
     paddingHorizontal: 12,
     height: 44,
-  },
-  searchIcon: {
-    fontSize: 16,
-    color: Colors.textPlaceholder,
-    marginRight: 8,
   },
   searchInput: {
     flex: 1,

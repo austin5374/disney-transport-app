@@ -55,6 +55,7 @@ export default function AppNavigator() {
   return (
     <NavigationContainer>
       <Tab.Navigator
+        initialRouteName="Planner"
         screenOptions={({ route }) => ({
           headerShown: false,
           tabBarActiveTintColor: Colors.primaryBlue,
@@ -70,9 +71,9 @@ export default function AppNavigator() {
           },
         })}
       >
+        <Tab.Screen name="Planner" component={PlannerStack} />
         <Tab.Screen name="Status"  component={StatusScreen} />
         <Tab.Screen name="Map"     component={MapScreen} />
-        <Tab.Screen name="Planner" component={PlannerStack} />
         <Tab.Screen name="More"    component={MoreScreen} />
       </Tab.Navigator>
     </NavigationContainer>

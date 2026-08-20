@@ -238,7 +238,7 @@ export function getTimeBannerMessage(timeOverride?: Date): string | null {
   const timeStr = now.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
 
   if (totalMinutes < 600) {
-    return `⏰ ${timeStr}: before 10am, park-to-park buses aren't running. Routes adjusted.`;
+    return `${timeStr}: before 10am, park-to-park buses aren't running. Routes adjusted.`;
   }
   return null;
 }

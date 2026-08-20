@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Platform } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors, Gradients } from '../utils/theme';
 
@@ -28,7 +29,7 @@ export default function AppHeader({
       <View style={styles.row}>
         {showBack ? (
           <TouchableOpacity onPress={onBack} style={styles.backBtn} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-            <Text style={styles.backArrow}>←</Text>
+            <Ionicons name="chevron-back" size={24} color="#fff" />
           </TouchableOpacity>
         ) : (
           <View style={styles.backPlaceholder} />
@@ -71,11 +72,6 @@ const styles = StyleSheet.create({
   backBtn: {
     width: 36,
     alignItems: 'flex-start',
-  },
-  backArrow: {
-    color: '#fff',
-    fontSize: 22,
-    fontWeight: '500',
   },
   backPlaceholder: {
     width: 36,

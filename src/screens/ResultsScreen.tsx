@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RouteProp } from '@react-navigation/native';
 import { RootStackParamList, Route } from '../types';
@@ -61,7 +62,8 @@ export default function ResultsScreen({ navigation, route: navRoute }: Props) {
                   No direct Disney transport connects these two locations right now.
                 </Text>
                 <View style={styles.minnieCta}>
-                  <Text style={styles.minnieCtaText}>🚗 Try Minnie Van or Uber/Lyft</Text>
+                  <Ionicons name="car" size={16} color={Colors.primaryBlue} />
+                  <Text style={styles.minnieCtaText}>Try Minnie Van or Uber/Lyft</Text>
                 </View>
               </>
             )}
@@ -90,8 +92,9 @@ export default function ResultsScreen({ navigation, route: navRoute }: Props) {
 
         {showWaterNudge && (
           <View style={styles.waterNudge}>
+            <Ionicons name="bulb-outline" size={14} color={Colors.textSecondary} />
             <Text style={styles.waterNudgeText}>
-              💡 Turn on "No water" to hide boat routes and show land-only alternatives
+              Turn on "No water" to hide boat routes and show land-only alternatives
             </Text>
           </View>
         )}
@@ -135,13 +138,14 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   minnieCta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
     marginTop: 16,
     backgroundColor: Colors.lightBlueTint,
     borderRadius: 10,
     paddingHorizontal: 16,
     paddingVertical: 10,
-    borderWidth: 1,
-    borderColor: Colors.blueBorder,
   },
   minnieCtaText: {
     color: Colors.primaryBlue,
@@ -149,17 +153,17 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   waterNudge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
     marginHorizontal: 16,
-    marginTop: 8,
-    padding: 12,
-    backgroundColor: Colors.lightBlueTint,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: Colors.blueBorder,
+    marginTop: 10,
+    paddingHorizontal: 4,
   },
   waterNudgeText: {
+    flex: 1,
     fontSize: 12,
-    color: Colors.primaryBlue,
+    color: Colors.textSecondary,
     lineHeight: 18,
   },
 });

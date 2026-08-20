@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { Leg } from '../types';
 import { Colors, transportColor } from '../utils/theme';
 import { modeLabel } from '../utils/routing';
@@ -15,23 +16,30 @@ interface StepCardProps {
   state: 'done' | 'current' | 'upcoming';
 }
 
-function modeIcon(mode: string): string {
+function ModeIcon({ mode, color }: { mode: string; color: string }) {
   switch (mode) {
-    case 'skyliner':         return '🚡';
-    case 'bus':              return '🚌';
+    case 'skyliner':
+      return <MaterialCommunityIcons name="gondola" size={22} color={color} />;
+    case 'bus':
+      return <Ionicons name="bus" size={22} color={color} />;
     case 'monorail_express':
     case 'monorail_resort':
-    case 'monorail_epcot':   return '🚝';
+    case 'monorail_epcot':
+      return <MaterialCommunityIcons name="train" size={22} color={color} />;
     case 'ferry_ttc_mk':
     case 'friendship_boat':
     case 'sassagoula_boat':
     case 'water_taxi_gold':
     case 'water_taxi_red':
     case 'water_taxi_green':
-    case 'water_taxi_blue':  return '⛵';
-    case 'walk':             return '🚶';
-    case 'minnie_van':       return '🚗';
-    default:                 return '🔄';
+    case 'water_taxi_blue':
+      return <Ionicons name="boat" size={22} color={color} />;
+    case 'walk':
+      return <Ionicons name="walk" size={22} color={color} />;
+    case 'minnie_van':
+      return <Ionicons name="car" size={22} color={color} />;
+    default:
+      return <Ionicons name="navigate" size={22} color={color} />;
   }
 }
 
@@ -78,7 +86,9 @@ export default function StepCard({ leg, stepNum, totalSteps, state }: StepCardPr
 
       {/* Instruction row */}
       <View style={styles.instructionRow}>
-        <Text style={[styles.icon, isDone && styles.faded]}>{modeIcon(leg.mode)}</Text>
+        <View style={[styles.iconWrap, isDone && styles.faded]}>
+          <ModeIcon mode={leg.mode} color={transportColor(leg.mode)} />
+        </View>
         <View style={styles.instructionText}>
           <Text style={[styles.instructionTitle, isDone && styles.faded]}>
             {instructionTitle(leg)}
@@ -107,8 +117,9 @@ export default function StepCard({ leg, stepNum, totalSteps, state }: StepCardPr
 
       {/* Minnie Van book button */}
       {isCurrent && isMinnie && (
-        <View style={styles.arrivalRow}>
-          <Text style={styles.lyftBtn}>📱 Book via Lyft app</Text>
+        <View style={[styles.arrivalRow, styles.lyftRow]}>
+          <Ionicons name="phone-portrait-outline" size={14} color={Colors.primaryBlue} />
+          <Text style={styles.lyftBtn}>Book via Lyft app</Text>
         </View>
       )}
     </View>
@@ -149,8 +160,7 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     gap: 10,
   },
-  icon: {
-    fontSize: 22,
+  iconWrap: {
     marginTop: 1,
   },
   faded: {
@@ -185,6 +195,11 @@ const styles = StyleSheet.create({
   },
   arrivalRow: {
     marginTop: 10,
+  },
+  lyftRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
   },
   lyftBtn: {
     fontSize: 13,

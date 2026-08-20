@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Modal, Platform } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Colors } from '../utils/theme';
 import { getTimeBannerMessage } from '../utils/routing';
@@ -18,25 +19,33 @@ export default function TimeBanner({ timeOverride, onTimeChange }: TimeBannerPro
 
   if (!message && !timeOverride) return null;
 
+  const isAdvisory = !!message;
+
   return (
     <>
-      <View style={styles.banner}>
-        <Text style={styles.bannerText} numberOfLines={2}>
-          {message ?? `Using ${effectiveTime.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`}
+      <View style={[styles.banner, isAdvisory ? styles.bannerAdvisory : styles.bannerNeutral]}>
+        <Ionicons
+          name="time-outline"
+          size={16}
+          color={isAdvisory ? Colors.warnIcon : Colors.textSecondary}
+        />
+        <Text style={[styles.bannerText, isAdvisory && styles.bannerTextAdvisory]} numberOfLines={2}>
+          {message ?? `Showing routes for ${effectiveTime.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`}
         </Text>
-        <View style={styles.actions}>
+        <TouchableOpacity
+          onPress={() => { setPickerValue(timeOverride ?? new Date()); setShowPicker(true); }}
+          hitSlop={{ top: 8, bottom: 8, left: 6, right: 6 }}
+        >
+          <Text style={styles.link}>Change</Text>
+        </TouchableOpacity>
+        {timeOverride && (
           <TouchableOpacity
-            onPress={() => { setPickerValue(timeOverride ?? new Date()); setShowPicker(true); }}
-            style={styles.pill}
+            onPress={() => onTimeChange(null)}
+            hitSlop={{ top: 8, bottom: 8, left: 6, right: 8 }}
           >
-            <Text style={styles.pillText}>Change time</Text>
+            <Ionicons name="close" size={15} color={Colors.textSecondary} />
           </TouchableOpacity>
-          {timeOverride && (
-            <TouchableOpacity onPress={() => onTimeChange(null)} style={[styles.pill, styles.resetPill]}>
-              <Text style={styles.pillText}>Reset</Text>
-            </TouchableOpacity>
-          )}
-        </View>
+        )}
       </View>
 
       {showPicker && (
@@ -76,42 +85,35 @@ export default function TimeBanner({ timeOverride, onTimeChange }: TimeBannerPro
 
 const styles = StyleSheet.create({
   banner: {
-    backgroundColor: 'rgba(255,200,0,0.12)',
-    borderWidth: 1,
-    borderColor: Colors.gold,
-    marginHorizontal: 16,
-    marginTop: 10,
-    borderRadius: 10,
-    padding: 10,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    gap: 8,
+    marginHorizontal: 16,
+    marginTop: 12,
+    paddingVertical: 9,
+    paddingHorizontal: 12,
+    borderRadius: 10,
+  },
+  bannerNeutral: {
+    backgroundColor: Colors.cardBg,
+    borderWidth: 1,
+    borderColor: Colors.cardBorder,
+  },
+  bannerAdvisory: {
+    backgroundColor: 'rgba(255,179,0,0.08)',
   },
   bannerText: {
-    color: Colors.warnText,
-    fontSize: 12,
     flex: 1,
-    marginRight: 8,
+    fontSize: 12.5,
+    color: Colors.textSecondary,
   },
-  actions: {
-    flexDirection: 'row',
-    gap: 6,
-  },
-  pill: {
-    backgroundColor: 'rgba(255,215,0,0.2)',
-    borderRadius: 10,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderWidth: 1,
-    borderColor: Colors.gold,
-  },
-  resetPill: {
-    backgroundColor: 'rgba(255,255,255,0.4)',
-  },
-  pillText: {
+  bannerTextAdvisory: {
     color: Colors.warnText,
-    fontSize: 11,
-    fontWeight: '500',
+  },
+  link: {
+    fontSize: 12.5,
+    fontWeight: '600',
+    color: Colors.primaryBlue,
   },
   modalOverlay: {
     flex: 1,

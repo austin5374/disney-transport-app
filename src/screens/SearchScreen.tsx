@@ -4,6 +4,7 @@ import {
 } from 'react-native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import * as Location from 'expo-location';
+import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { RootStackParamList, Destination, ActiveFilters } from '../types';
 import { Colors } from '../utils/theme';
@@ -94,7 +95,7 @@ export default function SearchScreen({ navigation }: Props) {
           activeOpacity={0.85}
         >
           <View style={styles.heroIconWrap}>
-            <Text style={styles.heroIcon}>⌕</Text>
+            <Ionicons name="search" size={20} color={Colors.primaryBlue} />
           </View>
           <View style={{ flex: 1 }}>
             <Text style={styles.heroLabel}>Where to?</Text>
@@ -115,7 +116,8 @@ export default function SearchScreen({ navigation }: Props) {
             </Text>
           </TouchableOpacity>
           <TouchableOpacity onPress={handleUseMyLocation} style={styles.locationPill}>
-            <Text style={styles.locationPillText}>⊙ Use my location</Text>
+            <Ionicons name="locate" size={12} color={Colors.primaryBlue} />
+            <Text style={styles.locationPillText}>Use my location</Text>
           </TouchableOpacity>
         </View>
 
@@ -123,14 +125,6 @@ export default function SearchScreen({ navigation }: Props) {
         <FilterPills filters={filters} onChange={setFilters} />
 
         <TimeBanner timeOverride={timeOverride} onTimeChange={setTimeOverride} />
-
-        {/* Info card */}
-        <View style={styles.infoCard}>
-          <Text style={styles.infoTitle}>✨ Live-aware routing</Text>
-          <Text style={styles.infoBody}>
-            Routes adjust to the time of day and current service status. A delayed or down line is flagged right on its route card. Check the Status tab for the full board.
-          </Text>
-        </View>
       </ScrollView>
 
 
@@ -218,11 +212,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginRight: 14,
   },
-  heroIcon: {
-    fontSize: 20,
-    color: Colors.primaryBlue,
-    fontWeight: '700',
-  },
   heroLabel: {
     fontSize: 12,
     color: Colors.textSecondary,
@@ -271,6 +260,9 @@ const styles = StyleSheet.create({
     color: Colors.textSecondary,
   },
   locationPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
     backgroundColor: Colors.lightBlueTint,
     borderRadius: 14,
     paddingHorizontal: 10,
@@ -283,26 +275,6 @@ const styles = StyleSheet.create({
     color: Colors.primaryBlue,
     fontSize: 11,
     fontWeight: '500',
-  },
-  infoCard: {
-    backgroundColor: Colors.lightBlueTint,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: Colors.blueBorder,
-    marginHorizontal: 16,
-    marginTop: 4,
-    padding: 14,
-  },
-  infoTitle: {
-    fontSize: 13,
-    fontWeight: '500',
-    color: Colors.primaryBlue,
-    marginBottom: 4,
-  },
-  infoBody: {
-    fontSize: 12,
-    color: Colors.textSecondary,
-    lineHeight: 18,
   },
   geoOverlay: {
     flex: 1,

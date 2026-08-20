@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RouteProp } from '@react-navigation/native';
 import { RootStackParamList } from '../types';
@@ -61,7 +62,8 @@ export default function DetailScreen({ navigation, route: navRoute }: Props) {
         {/* Notes */}
         {routeData.notes && (
           <View style={styles.notesCard}>
-            <Text style={styles.notesText}>ℹ️ {routeData.notes}</Text>
+            <Ionicons name="information-circle-outline" size={15} color={Colors.textSecondary} />
+            <Text style={styles.notesText}>{routeData.notes}</Text>
           </View>
         )}
 
@@ -101,17 +103,19 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   notesCard: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 8,
     marginHorizontal: 16,
     marginTop: 10,
     padding: 12,
     backgroundColor: Colors.lightBlueTint,
     borderRadius: 10,
-    borderWidth: 1,
-    borderColor: Colors.blueBorder,
   },
   notesText: {
+    flex: 1,
     fontSize: 12,
-    color: Colors.primaryBlue,
+    color: Colors.textSecondary,
     lineHeight: 18,
   },
 });
