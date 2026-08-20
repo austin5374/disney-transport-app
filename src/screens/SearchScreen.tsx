@@ -173,10 +173,10 @@ export default function SearchScreen({ navigation }: Props) {
               {from
                 ? from.label
                 : locationStatus === 'checking'
-                  ? 'Finding you...'
+                  ? 'Locating you…'
                   : needsManualLocation
-                    ? "Can't tell where you are, tap to pick manually"
-                    : 'From: current location or pick...'}
+                    ? 'Location unavailable — tap to set manually'
+                    : 'Set your starting point'}
             </Text>
           </TouchableOpacity>
           <TouchableOpacity onPress={handleUseMyLocation} style={styles.locationPill}>
