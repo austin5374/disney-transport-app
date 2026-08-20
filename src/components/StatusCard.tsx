@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Animated } from 'react-native';
 import { TransitLine } from '../data/lines';
-import { LineStatus, STATUS_LABEL, CROWD_LABEL } from '../utils/liveStatus';
+import { LineStatus, STATUS_LABEL, CROWD_LABEL, formatEtaRange } from '../utils/liveStatus';
 import { Colors, StatusColors } from '../utils/theme';
 
 interface StatusCardProps {
@@ -12,7 +12,7 @@ interface StatusCardProps {
 function arrivalsText(status: LineStatus): string {
   if (status.status === 'down') {
     return status.etaMinutes
-      ? `Est. return to service: ${status.etaMinutes} min`
+      ? `Est. return to service: ${formatEtaRange(status.etaMinutes)}`
       : 'Return to service time not yet available';
   }
   if (status.headwayMinutes[1] <= 1) {

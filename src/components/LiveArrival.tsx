@@ -3,7 +3,7 @@ import { Text, Animated, TouchableOpacity, StyleSheet } from 'react-native';
 import { TransportMode } from '../types';
 import { simulateArrival, hasArrivalSim, modeLabel } from '../utils/routing';
 import { lineForLeg } from '../data/lines';
-import { useLiveStatus, refreshLiveStatus } from '../utils/liveStatus';
+import { useLiveStatus, refreshLiveStatus, formatEtaRange } from '../utils/liveStatus';
 import { Colors } from '../utils/theme';
 
 interface LiveArrivalProps {
@@ -39,7 +39,7 @@ export default function LiveArrival({ mode, from, to, compact }: LiveArrivalProp
 
   if (status?.status === 'down') {
     label = status.etaMinutes
-      ? `${line!.shortName} down · est. ${status.etaMinutes} min`
+      ? `${line!.shortName} down · est. ${formatEtaRange(status.etaMinutes)}`
       : `${line!.shortName} temporarily down`;
     color = Colors.statusDown;
   } else if (status?.status === 'delayed') {

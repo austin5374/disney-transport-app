@@ -69,8 +69,8 @@ function effectiveHeadway(line: TransitLine, trains: number | null): [number, nu
 const DOWN_MESSAGES: Record<string, string[]> = {
   Monorail: [
     'Down for mechanical inspection',
-    'Track switching issue near TTC, crews on scene',
-    'Train being cycled out of service',
+    'Down for a maintenance issue',
+    'Temporarily out of service',
   ],
   Skyliner: [
     'Paused for an extended guest boarding',
@@ -416,6 +416,18 @@ export function getTemporaryBridges(status: Record<string, LineStatus>): Tempora
 }
 
 // Status display helpers
+
+// Disney is deliberately vague about outages in guest-facing communication —
+// never a live ticking countdown to the exact minute. This buckets the
+// precise internal restoreAt into a rounded window for display, while the
+// exact number underneath still drives things like the 30-minute bridge
+// threshold above.
+export function formatEtaRange(minutes: number): string {
+  if (minutes < 10) return 'under 10 min';
+  const lower = Math.floor(minutes / 10) * 10;
+  return `${lower}–${lower + 10} min`;
+}
+
 export const STATUS_LABEL: Record<ServiceStatus, string> = {
   operating: 'Operating',
   delayed: 'Delayed',

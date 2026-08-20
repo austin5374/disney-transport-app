@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Path, Circle, Rect, Ellipse, Text as SvgText, G } from 'react-native-svg';
 import { TRANSIT_LINES, TransitLine } from '../data/lines';
-import { useLiveStatus, STATUS_LABEL } from '../utils/liveStatus';
+import { useLiveStatus, STATUS_LABEL, formatEtaRange } from '../utils/liveStatus';
 import { Colors, StatusColors, Gradients } from '../utils/theme';
 
 // Schematic property map (not to scale, like any transit diagram).
@@ -215,7 +215,7 @@ export default function MapScreen() {
                   : selectedStatus.nextArrivals.length
                     ? `Next departure in ${selectedStatus.nextArrivals[0]} min`
                     : `Every ${selectedStatus.headwayMinutes[0]}–${selectedStatus.headwayMinutes[1]} min`)}
-              {selectedStatus.status === 'down' && selectedStatus.etaMinutes ? ` · est. ${selectedStatus.etaMinutes} min` : ''}
+              {selectedStatus.status === 'down' && selectedStatus.etaMinutes ? ` · est. ${formatEtaRange(selectedStatus.etaMinutes)}` : ''}
             </Text>
             <Text style={styles.selectedHours}>Service: {selectedLine.serviceHours}</Text>
             {selectedStatus.trainsInService != null && (
