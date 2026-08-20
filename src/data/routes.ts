@@ -2200,8 +2200,14 @@ export const ALL_ROUTES: Route[] = [
   {
     id: 'con-mk-walk',
     from: 'CON', to: 'MK', name: 'Walk to Magic Kingdom (~8 min)',
-    legs: [{ mode: 'walk', from: 'CON', to: 'MK', rideMinutes: 8, simRange: [0,0], accessible: true, tip: 'Always walk. Direct sidewalk path, fastest option. Resort Monorail goes the wrong way from here (14 min loop).' }],
-    totalRideMinutes: 8, tags: ['walk_only', 'no_water_alt'],
+    legs: [{ mode: 'walk', from: 'CON', to: 'MK', rideMinutes: 8, simRange: [0,0], accessible: true, tip: 'Direct sidewalk path, usually the fastest option. The Resort Monorail runs the loop the other way from here, so it takes longer.' }],
+    totalRideMinutes: 8, tags: ['no_water_alt'],
+  },
+  {
+    id: 'con-mk-monorail',
+    from: 'CON', to: 'MK', name: 'Resort Monorail to Magic Kingdom',
+    legs: [{ mode: 'monorail_resort', from: 'CON', to: 'MK', rideMinutes: 14, simRange: [1,5], accessible: true, tip: 'Loop direction from Contemporary runs CON→TTC→POLY→GF→MK, the long way around. Slower than walking, but fully covered.' }],
+    totalRideMinutes: 14, tags: [],
   },
   {
     id: 'con-ttc-monorail',

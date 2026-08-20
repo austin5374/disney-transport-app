@@ -1,8 +1,9 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   View, Text, TouchableOpacity, StyleSheet, Alert, ScrollView,
 } from 'react-native';
 import { StackNavigationProp } from '@react-navigation/stack';
+import { useFocusEffect } from '@react-navigation/native';
 import * as Location from 'expo-location';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -64,6 +65,16 @@ export default function SearchScreen({ navigation }: Props) {
       });
     }
   }, [from, to]);
+
+  // Clear the destination whenever the planner regains focus (e.g. backing
+  // out of Results/Detail), so the screen returns to a fresh "Where to?"
+  // state — with Popular Routes visible — instead of sitting on a stale
+  // completed search with nothing else to show.
+  useFocusEffect(
+    useCallback(() => {
+      setTo(null);
+    }, [])
+  );
 
   const withTimeout = <T,>(promise: Promise<T>, ms: number): Promise<T> =>
     Promise.race([
