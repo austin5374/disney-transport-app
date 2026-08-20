@@ -73,7 +73,7 @@ export default function StepCard({ leg, stepNum, totalSteps, state }: StepCardPr
         isDone    && styles.stepLabelDone,
         isCurrent && styles.stepLabelCurrent,
       ]}>
-        Step {stepNum} of {totalSteps}{isDone ? ' — complete' : isCurrent ? ' — now' : ''}
+        Step {stepNum} of {totalSteps}{isDone ? ' · complete' : isCurrent ? ' · now' : ''}
       </Text>
 
       {/* Instruction row */}
@@ -98,7 +98,7 @@ export default function StepCard({ leg, stepNum, totalSteps, state }: StepCardPr
         </View>
       )}
 
-      {/* Live arrival — current step only */}
+      {/* Live arrival: current step only */}
       {isCurrent && !isMinnie && (
         <View style={styles.arrivalRow}>
           <LiveArrival mode={leg.mode} from={leg.from} to={leg.to} />

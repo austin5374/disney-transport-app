@@ -122,7 +122,7 @@ export default function JourneyDiagram({ route }: JourneyDiagramProps) {
         <View style={styles.transferNote}>
           <View style={[styles.transferDotSmall, { backgroundColor: transportColor(route.legs[0]?.mode ?? 'bus') }]} />
           <Text style={styles.transferNoteText}>
-            Transfer at {DESTINATION_MAP[stops[transferIndex]]?.label ?? stops[transferIndex]} — follow signs for your next transport
+            Transfer at {DESTINATION_MAP[stops[transferIndex]]?.label ?? stops[transferIndex]}. Follow signs for your next transport
           </Text>
         </View>
       )}

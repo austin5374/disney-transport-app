@@ -54,7 +54,7 @@ export default function MoreScreen() {
           <Text style={styles.disclaimerTitle}>Demo notice</Text>
           <Text style={styles.disclaimerBody}>
             This app is a technology demo. All service statuses, wait times, arrival estimates,
-            and crowd levels are simulated — Disney does not publish a public transportation API,
+            and crowd levels are simulated. Disney does not publish a public transportation API,
             so no data here reflects actual operations.{'\n\n'}
             Route structure (monorail lines, Skyliner stations, boat launches, and bus patterns)
             is modeled on the real Walt Disney World transportation network as documented by

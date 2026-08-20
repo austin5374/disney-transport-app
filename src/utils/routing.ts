@@ -66,7 +66,7 @@ function directRoutes(from: string, to: string, timeOverride?: Date): Route[] {
     .map(mirrorRoute);
 }
 
-// Compose a two-segment journey through a major transfer hub — mirrors how
+// Compose a two-segment journey through a major transfer hub, mirroring how
 // guests actually connect between two resorts (bus to a park or Disney
 // Springs, then transfer).
 const TRANSFER_HUBS = ['DS', 'MK', 'EP', 'HS', 'AK', 'CBR', 'TTC'];
@@ -239,7 +239,7 @@ export function getTimeBannerMessage(timeOverride?: Date): string | null {
   const timeStr = now.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
 
   if (totalMinutes < 600) {
-    return `⏰ ${timeStr} — before 10am, park-to-park buses aren't running. Routes adjusted.`;
+    return `⏰ ${timeStr}: before 10am, park-to-park buses aren't running. Routes adjusted.`;
   }
   if (totalMinutes < 960) {
     return `⏰ Disney Springs bus routes limited before 4pm.`;

@@ -11,7 +11,7 @@ export interface TransitLine {
   id: string;
   group: LineGroup;
   mode: TransportMode;
-  name: string;          // e.g. "Monorail — Express Line"
+  name: string;          // e.g. "Monorail: Express Line"
   shortName: string;     // e.g. "Express"
   stations: string[];    // display names in order
   headwayMinutes: [number, number]; // typical min–max between departures
@@ -25,7 +25,7 @@ export const TRANSIT_LINES: TransitLine[] = [
   {
     id: 'mono-express',
     group: 'Monorail', mode: 'monorail_express',
-    name: 'Monorail — Express Line',
+    name: 'Monorail: Express Line',
     shortName: 'Express',
     stations: ['Transportation & Ticket Center', 'Magic Kingdom'],
     headwayMinutes: [4, 7],
@@ -35,7 +35,7 @@ export const TRANSIT_LINES: TransitLine[] = [
   {
     id: 'mono-resort',
     group: 'Monorail', mode: 'monorail_resort',
-    name: 'Monorail — Resort Line',
+    name: 'Monorail: Resort Line',
     shortName: 'Resort Loop',
     stations: ['Transportation & Ticket Center', 'Polynesian Village', 'Grand Floridian', 'Magic Kingdom', 'Contemporary'],
     headwayMinutes: [5, 9],
@@ -45,7 +45,7 @@ export const TRANSIT_LINES: TransitLine[] = [
   {
     id: 'mono-epcot',
     group: 'Monorail', mode: 'monorail_epcot',
-    name: 'Monorail — EPCOT Line',
+    name: 'Monorail: EPCOT Line',
     shortName: 'EPCOT',
     stations: ['Transportation & Ticket Center', 'EPCOT'],
     headwayMinutes: [6, 10],
@@ -57,7 +57,7 @@ export const TRANSIT_LINES: TransitLine[] = [
   {
     id: 'sky-epcot',
     group: 'Skyliner', mode: 'skyliner',
-    name: 'Skyliner — EPCOT Line',
+    name: 'Skyliner: EPCOT Line',
     shortName: 'EPCOT Line',
     stations: ['Caribbean Beach', 'Riviera Resort', 'EPCOT (International Gateway)'],
     headwayMinutes: [0, 1], // continuous loading
@@ -68,7 +68,7 @@ export const TRANSIT_LINES: TransitLine[] = [
   {
     id: 'sky-hs',
     group: 'Skyliner', mode: 'skyliner',
-    name: 'Skyliner — Hollywood Studios Line',
+    name: 'Skyliner: Hollywood Studios Line',
     shortName: 'Studios Line',
     stations: ['Caribbean Beach', 'Hollywood Studios'],
     headwayMinutes: [0, 1],
@@ -79,7 +79,7 @@ export const TRANSIT_LINES: TransitLine[] = [
   {
     id: 'sky-pop',
     group: 'Skyliner', mode: 'skyliner',
-    name: 'Skyliner — Pop Century / Art of Animation Line',
+    name: 'Skyliner: Pop Century / Art of Animation Line',
     shortName: 'Pop / AoA Line',
     stations: ['Caribbean Beach', 'Pop Century & Art of Animation'],
     headwayMinutes: [0, 1],
@@ -103,7 +103,7 @@ export const TRANSIT_LINES: TransitLine[] = [
   {
     id: 'boat-gold',
     group: 'Boats', mode: 'water_taxi_gold',
-    name: 'Resort Launch — Gold Flag',
+    name: 'Resort Launch: Gold Flag',
     shortName: 'Gold Flag',
     stations: ['Magic Kingdom', 'Grand Floridian', 'Polynesian Village'],
     headwayMinutes: [15, 25],
@@ -114,7 +114,7 @@ export const TRANSIT_LINES: TransitLine[] = [
   {
     id: 'boat-red',
     group: 'Boats', mode: 'water_taxi_red',
-    name: 'Resort Launch — Red Flag',
+    name: 'Resort Launch: Red Flag',
     shortName: 'Red Flag',
     stations: ['Magic Kingdom', 'Wilderness Lodge'],
     headwayMinutes: [15, 25],
@@ -125,7 +125,7 @@ export const TRANSIT_LINES: TransitLine[] = [
   {
     id: 'boat-green',
     group: 'Boats', mode: 'water_taxi_green',
-    name: 'Resort Launch — Green Flag',
+    name: 'Resort Launch: Green Flag',
     shortName: 'Green Flag',
     stations: ['Magic Kingdom', 'Fort Wilderness'],
     headwayMinutes: [15, 25],
@@ -136,7 +136,7 @@ export const TRANSIT_LINES: TransitLine[] = [
   {
     id: 'boat-blue',
     group: 'Boats', mode: 'water_taxi_blue',
-    name: 'Resort Launch — Blue Flag',
+    name: 'Resort Launch: Blue Flag',
     shortName: 'Blue Flag',
     stations: ['Wilderness Lodge', 'Fort Wilderness', 'Contemporary'],
     headwayMinutes: [20, 30],
@@ -147,7 +147,7 @@ export const TRANSIT_LINES: TransitLine[] = [
   {
     id: 'boat-friendship',
     group: 'Boats', mode: 'friendship_boat',
-    name: 'Friendship Boats — Crescent Lake',
+    name: 'Friendship Boats: Crescent Lake',
     shortName: 'Friendship',
     stations: ['EPCOT (International Gateway)', 'BoardWalk', 'Yacht & Beach Club', 'Swan & Dolphin', 'Hollywood Studios'],
     headwayMinutes: [15, 20],
@@ -171,7 +171,7 @@ export const TRANSIT_LINES: TransitLine[] = [
   {
     id: 'bus-mk',
     group: 'Buses', mode: 'bus',
-    name: 'Resort Buses — Magic Kingdom',
+    name: 'Resort Buses: Magic Kingdom',
     shortName: 'MK Buses',
     stations: ['All resorts', 'Magic Kingdom'],
     headwayMinutes: [15, 20],
@@ -181,7 +181,7 @@ export const TRANSIT_LINES: TransitLine[] = [
   {
     id: 'bus-ep',
     group: 'Buses', mode: 'bus',
-    name: 'Resort Buses — EPCOT',
+    name: 'Resort Buses: EPCOT',
     shortName: 'EPCOT Buses',
     stations: ['All resorts', 'EPCOT'],
     headwayMinutes: [15, 20],
@@ -191,7 +191,7 @@ export const TRANSIT_LINES: TransitLine[] = [
   {
     id: 'bus-hs',
     group: 'Buses', mode: 'bus',
-    name: 'Resort Buses — Hollywood Studios',
+    name: 'Resort Buses: Hollywood Studios',
     shortName: 'Studios Buses',
     stations: ['All resorts', 'Hollywood Studios'],
     headwayMinutes: [15, 20],
@@ -201,7 +201,7 @@ export const TRANSIT_LINES: TransitLine[] = [
   {
     id: 'bus-ak',
     group: 'Buses', mode: 'bus',
-    name: 'Resort Buses — Animal Kingdom',
+    name: 'Resort Buses: Animal Kingdom',
     shortName: 'AK Buses',
     stations: ['All resorts', 'Animal Kingdom'],
     headwayMinutes: [15, 20],
@@ -211,7 +211,7 @@ export const TRANSIT_LINES: TransitLine[] = [
   {
     id: 'bus-ds',
     group: 'Buses', mode: 'bus',
-    name: 'Resort Buses — Disney Springs',
+    name: 'Resort Buses: Disney Springs',
     shortName: 'Springs Buses',
     stations: ['All resorts', 'Disney Springs'],
     headwayMinutes: [20, 20],
@@ -221,7 +221,7 @@ export const TRANSIT_LINES: TransitLine[] = [
   {
     id: 'bus-wp',
     group: 'Buses', mode: 'bus',
-    name: 'Resort Buses — Water Parks',
+    name: 'Resort Buses: Water Parks',
     shortName: 'Water Park Buses',
     stations: ['All resorts', 'Typhoon Lagoon & Blizzard Beach'],
     headwayMinutes: [20, 30],

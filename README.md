@@ -1,64 +1,64 @@
 # ParkWays 🚝
 
-A Walt Disney World transportation app I built to see if I could model an entire theme park's transit system — monorails, the Skyliner gondolas, boats, buses, all of it — and make it feel like a real live app instead of a static map.
+This is a Walt Disney World transportation app I built for fun. It shows "live" status for all the monorails, the Skyliner gondolas, boats, and buses, plus a trip planner that tells you how to get from any park/resort to any other one.
 
-**[Try the live demo →](https://disney-transport-app.vercel.app)** (no install, just click)
+**[Try the live demo →](https://disney-transport-app.vercel.app)** (no install needed, just click)
 
 ![status](https://img.shields.io/badge/status-demo-blue) ![stack](https://img.shields.io/badge/stack-Expo%20%2B%20React%20Native-4F46A5)
 
 ## What it does
 
-WDW doesn't publish a public transit API, so Disney apps that try to show "live" bus/monorail status don't really exist outside the official My Disney Experience app. I wanted to build the experience anyway — so everything here is simulated, but built to *behave* like a real live system, not just hardcoded placeholder text.
+Disney doesn't have a public API for their transportation system, so there's no way to actually pull real bus/monorail data. So instead I built a fake version that updates itself over time, kind of like a simulation, so it at least *feels* like a real live app instead of just static screens.
 
-- **Live status board** — all 19 real transit lines (3 monorail lines, 3 Skyliner lines, 7 boat routes, 6 bus groups) with Operating/Delayed/Down states that actually drift over time. There's a shared "simulation engine" (`src/utils/liveStatus.ts`) that ticks every 20 seconds, so if the Skyliner is down on the status board, it's *also* down on the map and in the trip planner. One source of truth, not three different mock states.
-- **Trip planner** — pick any two of the 33 parks/resorts/hubs and it finds you a route. I precomputed and hand-wrote routing data for all 1,056 possible directed pairs, with a fallback engine that synthesizes a route through a transfer hub (or suggests Minnie Van/rideshare) for pairs that don't have a direct connection, so it's never a dead end.
-- **Time-aware routing** — some routes only make sense at certain times (park-to-park buses don't run before 10am, Disney Springs buses from parks only run after 4pm, the Blue Flag boat launch only runs in the evening). The planner actually enforces these instead of just listing every route all the time.
-- **Transit map** — an SVG schematic of the monorail/Skyliner/boat network (not to scale, like every transit map ever). Tap a line to highlight it and see its live status.
-- **"Use my location"** — geofences the real WDW park/resort coordinates so if you grant location access, it can guess where you are and pre-fill the trip planner.
+- **Live status board**: all 19 real transit lines (monorail, Skyliner, boats, buses) show Operating / Delayed / Down, and the status actually changes on its own every 20 seconds. All the screens read from the same shared state, so if a line goes down on the Status tab, it also shows down on the Map and in the trip planner.
+- **Trip planner**: pick a starting point and a destination (33 options each) and it gives you a route. I wrote out routing data by hand for basically every combination, and if there's no direct route it tries to figure out a path through a transfer point instead of just giving up.
+- **Time-aware routing**: some routes only work at certain times of day (like park-to-park buses only running after 10am), so the planner checks the time and adjusts what it shows you.
+- **Transit map**: a schematic map I drew with SVG. You can tap a line to highlight it and see its status.
+- **"Use my location"**: if you let it, it can guess which park/resort you're at using GPS and auto-fill the trip planner.
 
-## Why it's simulated (and why that's the interesting part)
+## Why everything is fake data
 
-Disney has no public transportation API, so I couldn't just call a real endpoint. Instead I built a fake one — a client-side store that generates plausible disruptions ("Suspended for lightning in the area — est. 16 min"), weighted random status transitions, arrival countdowns based on real timestamps, and time-of-day crowd levels (morning rush, post-fireworks exodus). It's `useSyncExternalStore`-based so every screen subscribes to the same state and nothing gets out of sync. Basically the goal was: could I fake a live backend well enough that it *feels* real for a few minutes of poking around?
+Since there's no real API to hit, I had to fake one myself. There's a file (`src/utils/liveStatus.ts`) that acts like a mini backend, it randomly decides when a line should go down or get delayed, comes up with a reason ("Suspended for lightning in the area"), and counts down realistic wait times. Every screen in the app subscribes to this same state so it all stays in sync. This was honestly the most fun part to build, and also the part I got stuck on the most.
 
-The actual route network (which lines exist, where they stop, roughly how long they take) is modeled on the real WDW transportation system.
+The actual transit lines and route info (which lines exist, roughly how long a ride takes) are based on the real WDW transportation system, I just made up the live status part.
 
 ## Stack
 
-- [Expo](https://expo.dev) + React Native (SDK 57 / RN 0.83), also runs in a browser via react-native-web
-- TypeScript, strict-ish — `tsc --noEmit` passes clean
-- [React Navigation](https://reactnavigation.org) v7 (bottom tabs + native stack)
-- [react-native-svg](https://github.com/software-mansion/react-native-svg) for the hand-drawn transit map
-- No backend, no database — it's all client-side state, which is what makes the "live" part a fun problem (see above)
+- [Expo](https://expo.dev) + React Native, also works in a browser thanks to react-native-web
+- TypeScript (still learning it honestly, but it caught a bunch of bugs while I was building this)
+- [React Navigation](https://reactnavigation.org) for the tabs and screens
+- [react-native-svg](https://github.com/software-mansion/react-native-svg) for the map
+- No backend or database, everything runs on the device/browser
 
-## Run it yourself
+## Running it yourself
 
 ```bash
 git clone https://github.com/austin5374/disney-transport-app.git
 cd disney-transport-app
 npm install --legacy-peer-deps
 
-npx expo start --web       # opens in your browser
+npx expo start --web       # opens it in your browser
 npx expo start             # scan the QR code with Expo Go on your phone
 ```
 
-(`--legacy-peer-deps` because some of the Expo/RN peer dependency ranges are a little behind React 19 — nothing broken, just noisy without the flag.)
+Note: you need the `--legacy-peer-deps` flag because some of the package versions don't fully agree with each other yet. It still works fine, npm just complains without it.
 
-## Project structure
+## How it's organized
 
 ```
 src/
-  screens/       Status, Map, Planner (Search → Results → Detail), More
-  components/    cards, pickers, the map legend, live-arrival pills, etc.
-  data/          the 19 transit lines, 33 destinations, and 400+ hand-written routes
+  screens/       the main pages (Status, Map, Planner, More)
+  components/    smaller reusable pieces like cards and pickers
+  data/          all the transit lines, destinations, and routes
   utils/
-    liveStatus.ts   the shared simulation engine
-    routing.ts      route lookup, filtering, hub-transfer synthesis, geofencing
+    liveStatus.ts   the fake "live" simulation
+    routing.ts      figures out routes between two places
 ```
 
 ## Disclaimer
 
-This is an unofficial fan project — not affiliated with, endorsed by, or sponsored by The Walt Disney Company. All status/wait-time/arrival data is simulated. Disney park, resort, and attraction names are used only to describe the real transportation network this app is modeled on.
+This is just a fan project I made for practice, it's not affiliated with or endorsed by Disney in any way. All the live status/wait times are made up. Disney park and resort names are only used so people know what the app is actually referring to.
 
 ---
 
-Built by [Austin](https://github.com/austin5374) — feedback/issues welcome.
+Made by [Austin](https://github.com/austin5374). Still learning, so feedback is always welcome!

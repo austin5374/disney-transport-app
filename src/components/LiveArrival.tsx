@@ -39,13 +39,13 @@ export default function LiveArrival({ mode, from, to, compact }: LiveArrivalProp
 
   if (status?.status === 'down') {
     label = status.etaMinutes
-      ? `${line!.shortName} down — est. ${status.etaMinutes} min`
+      ? `${line!.shortName} down · est. ${status.etaMinutes} min`
       : `${line!.shortName} temporarily down`;
     color = Colors.statusDown;
   } else if (status?.status === 'delayed') {
     const next = status.nextArrivals[0];
     label = next != null && line!.headwayMinutes[1] > 1
-      ? `Delays — next in ~${next} min`
+      ? `Delays · next in ~${next} min`
       : 'Running with delays';
     color = Colors.statusDelayed;
   } else if (status && line) {

@@ -1,5 +1,5 @@
 export const Colors = {
-  // Primary brand — deep indigo, deliberately distinct from Disney's blue
+  // Primary brand: deep indigo, deliberately distinct from Disney's blue
   primaryBlue:   '#4F46A5',
   primaryDark:   '#3B3480',
   lightBlueTint: '#EDEBFA',

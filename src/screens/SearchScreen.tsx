@@ -139,7 +139,7 @@ export default function SearchScreen({ navigation }: Props) {
         <View style={styles.infoCard}>
           <Text style={styles.infoTitle}>✨ Live-aware routing</Text>
           <Text style={styles.infoBody}>
-            Routes adjust to the time of day and current service status — a delayed or down line is flagged right on its route card. Check the Status tab for the full board.
+            Routes adjust to the time of day and current service status. A delayed or down line is flagged right on its route card. Check the Status tab for the full board.
           </Text>
         </View>
       </ScrollView>

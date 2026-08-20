@@ -19,7 +19,7 @@ export interface LineStatus {
   crowd: CrowdLevel;
   updatedAt: number;
   headwayMinutes: [number, number]; // effective headway (monorail: derived from trainsInService)
-  trainsInService: number | null;   // monorail only — how many trains are running this beam
+  trainsInService: number | null;   // monorail only: how many trains are running this beam
 }
 
 interface InternalLineState {
@@ -65,7 +65,7 @@ function effectiveHeadway(line: TransitLine, trains: number | null): [number, nu
 const DOWN_MESSAGES: Record<string, string[]> = {
   Monorail: [
     'Down for mechanical inspection',
-    'Track switching issue near TTC — crews on scene',
+    'Track switching issue near TTC, crews on scene',
     'Train being cycled out of service',
   ],
   Skyliner: [
@@ -74,19 +74,19 @@ const DOWN_MESSAGES: Record<string, string[]> = {
     'Suspended for high winds',
   ],
   Boats: [
-    'Docked for weather — high winds on the water',
+    'Docked for weather, high winds on the water',
     'Vessel change in progress',
     'Docked for lightning in the area',
   ],
   Buses: [
-    'Temporary detour — expect longer travel times',
-    'Service interruption — additional buses en route',
+    'Temporary detour, expect longer travel times',
+    'Service interruption, additional buses en route',
   ],
 };
 
 const DELAY_MESSAGES: Record<string, string[]> = {
   Monorail: [
-    'Trains running at reduced speed — expect longer waits',
+    'Trains running at reduced speed, expect longer waits',
     'Brief boarding delays due to platform crowding',
   ],
   Skyliner: [
@@ -94,11 +94,11 @@ const DELAY_MESSAGES: Record<string, string[]> = {
     'Moving at reduced speed due to gusty winds',
   ],
   Boats: [
-    'Running behind schedule — heavy guest volume',
+    'Running behind schedule, heavy guest volume',
     'Minor delays while vessels are repositioned',
   ],
   Buses: [
-    'Longer waits due to high demand — extra buses being added',
+    'Longer waits due to high demand, extra buses being added',
     'Delays from traffic on property roads',
   ],
 };

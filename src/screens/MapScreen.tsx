@@ -80,7 +80,7 @@ export default function MapScreen() {
       <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
         <Text style={styles.brand}>{Brand.name}</Text>
         <Text style={styles.headerTitle}>Transit Map</Text>
-        <Text style={styles.headerSub}>Schematic — not to scale · buses serve all locations</Text>
+        <Text style={styles.headerSub}>Schematic, not to scale · buses serve all locations</Text>
       </View>
 
       <ScrollView contentContainerStyle={{ paddingBottom: 24 }}>
@@ -146,7 +146,7 @@ export default function MapScreen() {
         {selectedLine && selectedStatus && (
           <View style={[styles.selectedCard, { borderColor: StatusColors[selectedStatus.status].border, backgroundColor: StatusColors[selectedStatus.status].bg }]}>
             <Text style={[styles.selectedName, { color: StatusColors[selectedStatus.status].text }]}>
-              {selectedLine.name} — {STATUS_LABEL[selectedStatus.status]}
+              {selectedLine.name} · {STATUS_LABEL[selectedStatus.status]}
             </Text>
             <Text style={styles.selectedDetail}>
               {selectedStatus.detail ??
@@ -155,7 +155,7 @@ export default function MapScreen() {
                   : selectedStatus.nextArrivals.length
                     ? `Next departure in ${selectedStatus.nextArrivals[0]} min`
                     : `Every ${selectedStatus.headwayMinutes[0]}–${selectedStatus.headwayMinutes[1]} min`)}
-              {selectedStatus.status === 'down' && selectedStatus.etaMinutes ? ` — est. ${selectedStatus.etaMinutes} min` : ''}
+              {selectedStatus.status === 'down' && selectedStatus.etaMinutes ? ` · est. ${selectedStatus.etaMinutes} min` : ''}
             </Text>
             <Text style={styles.selectedHours}>Service: {selectedLine.serviceHours}</Text>
             {selectedStatus.trainsInService != null && (
@@ -186,7 +186,7 @@ export default function MapScreen() {
           );
         })}
         <Text style={styles.busNote}>
-          Bus routes are not drawn — resort buses connect every resort to every park and Disney Springs.
+          Bus routes are not drawn. Resort buses connect every resort to every park and Disney Springs.
           See the Status tab for bus service levels.
         </Text>
       </ScrollView>

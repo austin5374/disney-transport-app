@@ -23,7 +23,7 @@ export const ALL_ROUTES: Route[] = [
     id: 'mk-ep-monorail',
     from: 'MK', to: 'EP', name: 'Express Monorail to TTC, EPCOT Monorail to EPCOT',
     legs: [
-      { mode: 'monorail_express', from: 'MK', to: 'TTC', rideMinutes: 8, simRange: [1,4], accessible: true, tip: 'Exit at TTC and follow signs to EPCOT Monorail — it is a short walk across the platform.' },
+      { mode: 'monorail_express', from: 'MK', to: 'TTC', rideMinutes: 8, simRange: [1,4], accessible: true, tip: 'Exit at TTC and follow signs to EPCOT Monorail. It\'s a short walk across the platform.' },
       { mode: 'monorail_epcot', from: 'TTC', to: 'EP', rideMinutes: 12, simRange: [1,10], accessible: true, walkMinutes: 2, tip: 'EPCOT Monorail drops you at the main entrance to EPCOT.' },
     ],
     totalRideMinutes: 22, tags: ['transfer'],
@@ -72,7 +72,7 @@ export const ALL_ROUTES: Route[] = [
     id: 'mk-ak-before10',
     from: 'MK', to: 'AK', name: 'Walk to Polynesian, Bus to Animal Kingdom (before 10am)',
     legs: [
-      { mode: 'walk', from: 'MK', to: 'POLY', rideMinutes: 25, simRange: [0,0], accessible: true, tip: 'Walk via the GF path to Polynesian. It\'s a long 25-minute walk — consider Minnie Van instead.' },
+      { mode: 'walk', from: 'MK', to: 'POLY', rideMinutes: 25, simRange: [0,0], accessible: true, tip: 'Walk via the GF path to Polynesian. It\'s a long 25-minute walk. Consider Minnie Van instead.' },
       { mode: 'bus', from: 'POLY', to: 'AK', rideMinutes: 30, simRange: [1,20], accessible: true, walkMinutes: 0 },
     ],
     totalRideMinutes: 55, totalRideRange: [55,75], tags: ['before_10am_only', 'transfer', 'time_restricted'],
@@ -133,7 +133,7 @@ export const ALL_ROUTES: Route[] = [
   {
     id: 'mk-con-monorail',
     from: 'MK', to: 'CON', name: 'Resort Monorail to Contemporary',
-    legs: [{ mode: 'monorail_resort', from: 'MK', to: 'CON', rideMinutes: 3, simRange: [1,5], accessible: true, tip: 'Walking is almost always faster — skip the wait and just walk the 7–10 min path.' }],
+    legs: [{ mode: 'monorail_resort', from: 'MK', to: 'CON', rideMinutes: 3, simRange: [1,5], accessible: true, tip: 'Walking is almost always faster. Skip the wait and just walk the 7–10 min path.' }],
     totalRideMinutes: 3, tags: [],
   },
 
@@ -172,7 +172,7 @@ export const ALL_ROUTES: Route[] = [
   {
     id: 'mk-wl-bus',
     from: 'MK', to: 'WL', name: 'Bus from Magic Kingdom to Wilderness Lodge',
-    legs: [{ mode: 'bus', from: 'MK', to: 'WL', rideMinutes: 7, simRange: [1,20], accessible: true, tip: 'Bus drops directly at WL — not TTC. A fast and reliable non-water option.' }],
+    legs: [{ mode: 'bus', from: 'MK', to: 'WL', rideMinutes: 7, simRange: [1,20], accessible: true, tip: 'Bus drops directly at WL, not TTC. A fast and reliable non-water option.' }],
     totalRideMinutes: 7, totalRideRange: [7,27], tags: ['no_water_alt'],
   },
 
@@ -325,7 +325,7 @@ export const ALL_ROUTES: Route[] = [
   {
     id: 'ttc-poly-walk',
     from: 'TTC', to: 'POLY', name: 'Walk to Polynesian Village (~6 min)',
-    legs: [{ mode: 'walk', from: 'TTC', to: 'POLY', rideMinutes: 6, simRange: [0,0], accessible: true, tip: 'Always walk this one — Polynesian is the closest thing to TTC. No monorail needed.' }],
+    legs: [{ mode: 'walk', from: 'TTC', to: 'POLY', rideMinutes: 6, simRange: [0,0], accessible: true, tip: 'Always walk this one. Polynesian is the closest thing to TTC. No monorail needed.' }],
     totalRideMinutes: 6, tags: ['walk_only', 'no_water_alt'],
   },
 
@@ -397,7 +397,7 @@ export const ALL_ROUTES: Route[] = [
     from: 'TTC', to: 'BWI', name: 'EPCOT Monorail to EPCOT, walk to BoardWalk Inn',
     legs: [
       { mode: 'monorail_epcot', from: 'TTC', to: 'EP', rideMinutes: 12, simRange: [1,10], accessible: true },
-      { mode: 'walk', from: 'EP', to: 'BWI', rideMinutes: 6, simRange: [0,0], accessible: true, walkMinutes: 0, tip: 'Exit via International Gateway — BoardWalk Inn is directly adjacent.' },
+      { mode: 'walk', from: 'EP', to: 'BWI', rideMinutes: 6, simRange: [0,0], accessible: true, walkMinutes: 0, tip: 'Exit via International Gateway. BoardWalk Inn is directly adjacent.' },
     ],
     totalRideMinutes: 18, tags: ['transfer'],
   },
@@ -459,7 +459,7 @@ export const ALL_ROUTES: Route[] = [
     id: 'ep-mk-monorail',
     from: 'EP', to: 'MK', name: 'EPCOT Monorail to TTC, Express Monorail to Magic Kingdom',
     legs: [
-      { mode: 'monorail_epcot', from: 'EP', to: 'TTC', rideMinutes: 12, simRange: [1,10], accessible: true, tip: 'Transfer at TTC — short walk between monorail platforms.' },
+      { mode: 'monorail_epcot', from: 'EP', to: 'TTC', rideMinutes: 12, simRange: [1,10], accessible: true, tip: 'Transfer at TTC, a short walk between monorail platforms.' },
       { mode: 'monorail_express', from: 'TTC', to: 'MK', rideMinutes: 8, simRange: [1,4], accessible: true, walkMinutes: 2 },
     ],
     totalRideMinutes: 22, tags: ['transfer'],
@@ -491,14 +491,14 @@ export const ALL_ROUTES: Route[] = [
   },
   {
     id: 'ep-hs-friendship',
-    from: 'EP', to: 'HS', name: 'Friendship Boat — full Crescent Lake route',
+    from: 'EP', to: 'HS', name: 'Friendship Boat: full Crescent Lake route',
     legs: [{ mode: 'friendship_boat', from: 'EP', to: 'HS', rideMinutes: 35, simRange: [1,12], accessible: true, tip: 'Longest but most scenic option. Stops at BWI, YC/BC, Swan/Dolphin before HS.' }],
     totalRideMinutes: 35, tags: ['water', 'scenic'],
   },
   {
     id: 'ep-hs-bus',
     from: 'EP', to: 'HS', name: 'Bus from EPCOT',
-    legs: [{ mode: 'bus', from: 'EP', to: 'HS', rideMinutes: 25, simRange: [1,20], accessible: true, tip: 'Skyliner via Caribbean Beach is usually faster — this is the backup Disney transit option.' }],
+    legs: [{ mode: 'bus', from: 'EP', to: 'HS', rideMinutes: 25, simRange: [1,20], accessible: true, tip: 'Skyliner via Caribbean Beach is usually faster. This is the backup Disney transit option.' }],
     totalRideMinutes: 25, totalRideRange: [25,45], tags: ['time_restricted'],
     timeRestriction: 'after_10am',
     notes: 'Park-to-park buses run from 10am until about 1 hour after the later park\'s closing time (varies daily).',
@@ -592,7 +592,7 @@ export const ALL_ROUTES: Route[] = [
   {
     id: 'ep-bwi-boat',
     from: 'EP', to: 'BWI', name: 'Friendship Boat to BoardWalk Inn',
-    legs: [{ mode: 'friendship_boat', from: 'EP', to: 'BWI', rideMinutes: 10, simRange: [1,12], accessible: true, tip: 'Walking is faster — boat makes several stops.' }],
+    legs: [{ mode: 'friendship_boat', from: 'EP', to: 'BWI', rideMinutes: 10, simRange: [1,12], accessible: true, tip: 'Walking is faster, the boat makes several stops.' }],
     totalRideMinutes: 10, tags: ['water', 'scenic'],
   },
 
@@ -611,7 +611,7 @@ export const ALL_ROUTES: Route[] = [
   {
     id: 'ep-bc-walk',
     from: 'EP', to: 'BC', name: 'Walk via International Gateway (~9 min)',
-    legs: [{ mode: 'walk', from: 'EP', to: 'BC', rideMinutes: 9, simRange: [0,0], accessible: true, tip: 'Exit via International Gateway — Beach Club is right there.' }],
+    legs: [{ mode: 'walk', from: 'EP', to: 'BC', rideMinutes: 9, simRange: [0,0], accessible: true, tip: 'Exit via International Gateway. Beach Club is right there.' }],
     totalRideMinutes: 9, tags: ['walk_only', 'no_water_alt'],
   },
 
@@ -666,7 +666,7 @@ export const ALL_ROUTES: Route[] = [
     from: 'EP', to: 'POLY', name: 'EPCOT Monorail to TTC, walk to Polynesian',
     legs: [
       { mode: 'monorail_epcot', from: 'EP', to: 'TTC', rideMinutes: 12, simRange: [1,10], accessible: true },
-      { mode: 'walk', from: 'TTC', to: 'POLY', rideMinutes: 6, simRange: [0,0], accessible: true, walkMinutes: 0, tip: 'Do NOT take Resort Monorail — Poly is right next to TTC. Just walk 5–8 min.' },
+      { mode: 'walk', from: 'TTC', to: 'POLY', rideMinutes: 6, simRange: [0,0], accessible: true, walkMinutes: 0, tip: 'Do NOT take Resort Monorail. Poly is right next to TTC. Just walk 5–8 min.' },
     ],
     totalRideMinutes: 18, tags: ['transfer'],
   },
@@ -770,14 +770,14 @@ export const ALL_ROUTES: Route[] = [
   },
   {
     id: 'hs-ep-friendship',
-    from: 'HS', to: 'EP', name: 'Friendship Boat — full Crescent Lake route',
+    from: 'HS', to: 'EP', name: 'Friendship Boat: full Crescent Lake route',
     legs: [{ mode: 'friendship_boat', from: 'HS', to: 'EP', rideMinutes: 35, simRange: [1,12], accessible: true, tip: 'Stops at SW/DO, YC/BC, BWI before EPCOT International Gateway. Scenic but slow.' }],
     totalRideMinutes: 35, tags: ['water', 'scenic'],
   },
   {
     id: 'hs-ep-bus',
     from: 'HS', to: 'EP', name: 'Bus from Hollywood Studios',
-    legs: [{ mode: 'bus', from: 'HS', to: 'EP', rideMinutes: 25, simRange: [1,20], accessible: true, tip: 'Skyliner via Caribbean Beach is usually faster — this is the backup Disney transit option.' }],
+    legs: [{ mode: 'bus', from: 'HS', to: 'EP', rideMinutes: 25, simRange: [1,20], accessible: true, tip: 'Skyliner via Caribbean Beach is usually faster. This is the backup Disney transit option.' }],
     totalRideMinutes: 25, totalRideRange: [25,45], tags: ['time_restricted'],
     timeRestriction: 'after_10am',
     notes: 'Park-to-park buses run from 10am until about 1 hour after the later park\'s closing time (varies daily).',
@@ -1154,7 +1154,7 @@ export const ALL_ROUTES: Route[] = [
   {
     id: 'ak-bb-bus',
     from: 'AK', to: 'BB', name: 'Bus from Animal Kingdom direct to Blizzard Beach',
-    legs: [{ mode: 'bus', from: 'AK', to: 'BB', rideMinutes: 15, simRange: [1,20], accessible: true, tip: 'Very close — direct bus. Most convenient water park access from AK.' }],
+    legs: [{ mode: 'bus', from: 'AK', to: 'BB', rideMinutes: 15, simRange: [1,20], accessible: true, tip: 'Very close, direct bus. Most convenient water park access from AK.' }],
     totalRideMinutes: 15, totalRideRange: [15,35], tags: [],
   },
 
@@ -1324,7 +1324,7 @@ export const ALL_ROUTES: Route[] = [
   {
     id: 'ds-pofq-sassagoula',
     from: 'DS', to: 'POFQ', name: 'Sassagoula River Cruise to Port Orleans French Quarter',
-    legs: [{ mode: 'sassagoula_boat', from: 'DS', to: 'POFQ', rideMinutes: 15, simRange: [1,12], accessible: true, tip: 'Purple flag boat. Scenic river cruise — slower than bus but relaxing.' }],
+    legs: [{ mode: 'sassagoula_boat', from: 'DS', to: 'POFQ', rideMinutes: 15, simRange: [1,12], accessible: true, tip: 'Purple flag boat. Scenic river cruise, slower than bus but relaxing.' }],
     totalRideMinutes: 15, tags: ['water', 'scenic'],
   },
   {
@@ -1363,7 +1363,7 @@ export const ALL_ROUTES: Route[] = [
   {
     id: 'ds-ss-sassagoula',
     from: 'DS', to: 'SS', name: 'Sassagoula River Cruise to Saratoga Springs',
-    legs: [{ mode: 'sassagoula_boat', from: 'DS', to: 'SS', rideMinutes: 15, simRange: [1,12], accessible: true, tip: 'Blue flag — shortest Sassagoula run. SS is right next to DS.' }],
+    legs: [{ mode: 'sassagoula_boat', from: 'DS', to: 'SS', rideMinutes: 15, simRange: [1,12], accessible: true, tip: 'Blue flag, shortest Sassagoula run. SS is right next to DS.' }],
     totalRideMinutes: 15, tags: ['water', 'scenic'],
   },
   {
@@ -1427,7 +1427,7 @@ export const ALL_ROUTES: Route[] = [
   {
     id: 'tl-mk-minnie',
     from: 'TL', to: 'MK', name: 'Minnie Van (Lyft)',
-    legs: [{ mode: 'minnie_van', from: 'TL', to: 'MK', rideMinutes: 25, simRange: [0,0], accessible: true, tip: 'Strongly recommended — Disney transit to MK from TL is very slow (multiple transfers).' }],
+    legs: [{ mode: 'minnie_van', from: 'TL', to: 'MK', rideMinutes: 25, simRange: [0,0], accessible: true, tip: 'Strongly recommended. Disney transit to MK from TL is very slow (multiple transfers).' }],
     totalRideMinutes: 25, tags: [],
   },
   {
@@ -1593,7 +1593,7 @@ export const ALL_ROUTES: Route[] = [
   },
 
   // ─────────────────────────────────────────────────────────────────────────
-  // FROM: YACHT CLUB / BEACH CLUB (YC / BC) — use YC as the canonical from
+  // FROM: YACHT CLUB / BEACH CLUB (YC / BC): use YC as the canonical from
   // ─────────────────────────────────────────────────────────────────────────
 
   {
@@ -1765,7 +1765,7 @@ export const ALL_ROUTES: Route[] = [
   },
 
   // ─────────────────────────────────────────────────────────────────────────
-  // FROM: CARIBBEAN BEACH RESORT (CBR) — Skyliner Hub
+  // FROM: CARIBBEAN BEACH RESORT (CBR): Skyliner Hub
   // ─────────────────────────────────────────────────────────────────────────
 
   {
@@ -1830,7 +1830,7 @@ export const ALL_ROUTES: Route[] = [
     from: 'CBR', to: 'BWI', name: 'Skyliner to EPCOT, walk to BoardWalk Inn',
     legs: [
       { mode: 'skyliner', from: 'CBR', to: 'EP', rideMinutes: 12, simRange: [0,0], accessible: true },
-      { mode: 'walk', from: 'EP', to: 'BWI', rideMinutes: 6, simRange: [0,0], accessible: true, walkMinutes: 0, tip: 'Exit via International Gateway — BWI is immediately adjacent.' },
+      { mode: 'walk', from: 'EP', to: 'BWI', rideMinutes: 6, simRange: [0,0], accessible: true, walkMinutes: 0, tip: 'Exit via International Gateway. BWI is immediately adjacent.' },
     ],
     totalRideMinutes: 18, tags: ['transfer', 'scenic'],
   },
@@ -2057,7 +2057,7 @@ export const ALL_ROUTES: Route[] = [
   {
     id: 'gf-con-monorail',
     from: 'GF', to: 'CON', name: 'Resort Monorail to Contemporary (via MK)',
-    legs: [{ mode: 'monorail_resort', from: 'GF', to: 'CON', rideMinutes: 6, simRange: [1,5], accessible: true, tip: 'GF→MK→CON — two stops in correct loop direction.' }],
+    legs: [{ mode: 'monorail_resort', from: 'GF', to: 'CON', rideMinutes: 6, simRange: [1,5], accessible: true, tip: 'GF→MK→CON, two stops in correct loop direction.' }],
     totalRideMinutes: 6, tags: [],
   },
   {
@@ -2122,7 +2122,7 @@ export const ALL_ROUTES: Route[] = [
   {
     id: 'poly-ttc-walk',
     from: 'POLY', to: 'TTC', name: 'Walk to TTC (~6 min)',
-    legs: [{ mode: 'walk', from: 'POLY', to: 'TTC', rideMinutes: 6, simRange: [0,0], accessible: true, tip: 'Always walk — Poly is right next to TTC. Monorail in this direction takes 17 min (wrong direction). Never take it.' }],
+    legs: [{ mode: 'walk', from: 'POLY', to: 'TTC', rideMinutes: 6, simRange: [0,0], accessible: true, tip: 'Always walk. Poly is right next to TTC. Monorail in this direction takes 17 min (wrong direction). Never take it.' }],
     totalRideMinutes: 6, tags: ['walk_only', 'no_water_alt'],
   },
   {
@@ -2196,7 +2196,7 @@ export const ALL_ROUTES: Route[] = [
   {
     id: 'con-mk-walk',
     from: 'CON', to: 'MK', name: 'Walk to Magic Kingdom (~8 min)',
-    legs: [{ mode: 'walk', from: 'CON', to: 'MK', rideMinutes: 8, simRange: [0,0], accessible: true, tip: 'Always walk. Direct sidewalk path — fastest option. Resort Monorail goes the wrong way from here (14 min loop).' }],
+    legs: [{ mode: 'walk', from: 'CON', to: 'MK', rideMinutes: 8, simRange: [0,0], accessible: true, tip: 'Always walk. Direct sidewalk path, fastest option. Resort Monorail goes the wrong way from here (14 min loop).' }],
     totalRideMinutes: 8, tags: ['walk_only', 'no_water_alt'],
   },
   {
@@ -2284,7 +2284,7 @@ export const ALL_ROUTES: Route[] = [
   {
     id: 'wl-mk-watertaxi',
     from: 'WL', to: 'MK', name: 'Red Flag Water Taxi to Magic Kingdom',
-    legs: [{ mode: 'water_taxi_red', from: 'WL', to: 'MK', rideMinutes: 8, simRange: [1,12], accessible: true, tip: 'Drops directly at MK gates — not TTC. Scenic, relaxing ride. Recommended.' }],
+    legs: [{ mode: 'water_taxi_red', from: 'WL', to: 'MK', rideMinutes: 8, simRange: [1,12], accessible: true, tip: 'Drops directly at MK gates, not TTC. Scenic, relaxing ride. Recommended.' }],
     totalRideMinutes: 8, tags: ['water', 'scenic'],
   },
   {
@@ -2296,7 +2296,7 @@ export const ALL_ROUTES: Route[] = [
   {
     id: 'wl-ep-bus',
     from: 'WL', to: 'EP', name: 'Bus from Wilderness Lodge to EPCOT',
-    legs: [{ mode: 'bus', from: 'WL', to: 'EP', rideMinutes: 20, simRange: [1,20], accessible: true, tip: 'Bus is shared with Fort Wilderness — FW boards first on outbound trips. No boat option to EPCOT from WL.' }],
+    legs: [{ mode: 'bus', from: 'WL', to: 'EP', rideMinutes: 20, simRange: [1,20], accessible: true, tip: 'Bus is shared with Fort Wilderness. FW boards first on outbound trips. No boat option to EPCOT from WL.' }],
     totalRideMinutes: 20, totalRideRange: [20,40], tags: [],
   },
   {
@@ -2357,14 +2357,14 @@ export const ALL_ROUTES: Route[] = [
   {
     id: 'fw-mk-bus',
     from: 'FW', to: 'MK', name: 'Bus from Fort Wilderness to Magic Kingdom',
-    legs: [{ mode: 'bus', from: 'FW', to: 'MK', rideMinutes: 17, simRange: [1,20], accessible: true, tip: 'Take internal FW bus to Outpost Depot first. External bus drops at MK gates — not TTC. A real, always-available option.' }],
+    legs: [{ mode: 'bus', from: 'FW', to: 'MK', rideMinutes: 17, simRange: [1,20], accessible: true, tip: 'Take internal FW bus to Outpost Depot first. External bus drops at MK gates, not TTC. A real, always-available option.' }],
     totalRideMinutes: 17, totalRideRange: [17,37], tags: ['no_water_alt'],
   },
   {
     id: 'fw-ep-bus-monorail',
     from: 'FW', to: 'EP', name: 'Bus to TTC, EPCOT Monorail to EPCOT',
     legs: [
-      { mode: 'bus', from: 'FW', to: 'TTC', rideMinutes: 15, simRange: [1,20], accessible: true, tip: 'FW bus goes to TTC — not directly to EPCOT. Transfer to EPCOT Monorail at TTC.' },
+      { mode: 'bus', from: 'FW', to: 'TTC', rideMinutes: 15, simRange: [1,20], accessible: true, tip: 'FW bus goes to TTC, not directly to EPCOT. Transfer to EPCOT Monorail at TTC.' },
       { mode: 'monorail_epcot', from: 'TTC', to: 'EP', rideMinutes: 12, simRange: [1,10], accessible: true, walkMinutes: 3 },
     ],
     totalRideMinutes: 27, totalRideRange: [27,47], tags: ['transfer'],
@@ -2592,7 +2592,7 @@ export const ALL_ROUTES: Route[] = [
   {
     id: 'ass-mk-bus',
     from: 'ASS', to: 'MK', name: 'Bus from All-Star Sports',
-    legs: [{ mode: 'bus', from: 'ASS', to: 'MK', rideMinutes: 28, simRange: [1,20], accessible: true, tip: 'Sports is the first stop on All-Stars shared bus — shortest wait.' }],
+    legs: [{ mode: 'bus', from: 'ASS', to: 'MK', rideMinutes: 28, simRange: [1,20], accessible: true, tip: 'Sports is the first stop on All-Stars shared bus, shortest wait.' }],
     totalRideMinutes: 28, totalRideRange: [28,48], tags: [],
   },
   {
@@ -2743,7 +2743,7 @@ export const ALL_ROUTES: Route[] = [
   {
     id: 'ss-ds-sassagoula',
     from: 'SS', to: 'DS', name: 'Sassagoula River Cruise to Disney Springs',
-    legs: [{ mode: 'sassagoula_boat', from: 'SS', to: 'DS', rideMinutes: 15, simRange: [1,12], accessible: true, tip: 'Blue flag — shortest Sassagoula run. SS is adjacent to DS.' }],
+    legs: [{ mode: 'sassagoula_boat', from: 'SS', to: 'DS', rideMinutes: 15, simRange: [1,12], accessible: true, tip: 'Blue flag, shortest Sassagoula run. SS is adjacent to DS.' }],
     totalRideMinutes: 15, tags: ['water', 'scenic'],
   },
   {

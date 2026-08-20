@@ -119,7 +119,7 @@ export default function StatusScreen() {
               ))}
 
             <Text style={styles.footnote}>
-              Unofficial demo — all status and arrival data is simulated. Not affiliated with
+              Unofficial demo. All status and arrival data is simulated. Not affiliated with
               or endorsed by The Walt Disney Company.
             </Text>
           </>
