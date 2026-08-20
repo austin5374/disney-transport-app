@@ -1,9 +1,10 @@
 import React, { useMemo, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Modal, FlatList } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { DESTINATIONS } from '../data/destinations';
 import { useLiveStatus } from '../utils/liveStatus';
-import { Colors, StatusColors } from '../utils/theme';
+import { Colors, StatusColors, Gradients } from '../utils/theme';
 
 // MDE-style "next bus times from your resort" board: pick a resort, see the
 // estimated next departure to each park destination. Estimates are derived
@@ -77,12 +78,12 @@ export default function BusTimesPanel() {
 
       <Modal visible={pickerOpen} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setPickerOpen(false)}>
         <View style={styles.pickerContainer}>
-          <View style={styles.pickerHeader}>
+          <LinearGradient colors={Gradients.sky} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.pickerHeader}>
             <Text style={styles.pickerTitle}>Choose your resort</Text>
             <TouchableOpacity onPress={() => setPickerOpen(false)}>
               <Text style={styles.pickerCancel}>Cancel</Text>
             </TouchableOpacity>
-          </View>
+          </LinearGradient>
           <FlatList
             data={RESORTS}
             keyExtractor={r => r.id}
@@ -160,7 +161,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: Colors.primaryBlue,
     paddingHorizontal: 16,
     paddingVertical: 14,
   },

@@ -90,9 +90,10 @@ export const ALL_ROUTES: Route[] = [
     from: 'MK', to: 'DS', name: 'Walk to Grand Floridian, Bus to Disney Springs',
     legs: [
       { mode: 'walk', from: 'MK', to: 'GF', rideMinutes: 12, simRange: [0,0], accessible: true },
-      { mode: 'bus', from: 'GF', to: 'DS', rideMinutes: 30, simRange: [1,20], accessible: true, walkMinutes: 0, tip: 'Resort buses to Disney Springs run all day, even before 4pm.' },
+      { mode: 'bus', from: 'GF', to: 'DS', rideMinutes: 30, simRange: [1,20], accessible: true, walkMinutes: 0, tip: 'Runs all day, not tied to a specific time.' },
     ],
     totalRideMinutes: 42, totalRideRange: [42,62], tags: ['transfer'],
+    notes: 'Disney Springs bus access is limited to resort guests, or guests with a park or dining reservation there.',
   },
   {
     id: 'mk-ds-minnie',
@@ -103,12 +104,14 @@ export const ALL_ROUTES: Route[] = [
 
   {
     id: 'mk-tl-bus',
-    from: 'MK', to: 'TL', name: 'Bus to Disney Springs, transfer to Typhoon Lagoon',
+    from: 'MK', to: 'TL', name: 'Walk to Grand Floridian, Bus to Disney Springs, Bus to Typhoon Lagoon',
     legs: [
-      { mode: 'bus', from: 'MK', to: 'DS', rideMinutes: 30, simRange: [1,20], accessible: true, tip: 'After 4pm only from MK directly. Before 4pm route through GF.' },
+      { mode: 'walk', from: 'MK', to: 'GF', rideMinutes: 12, simRange: [0,0], accessible: true },
+      { mode: 'bus', from: 'GF', to: 'DS', rideMinutes: 30, simRange: [1,20], accessible: true, walkMinutes: 0 },
       { mode: 'bus', from: 'DS', to: 'TL', rideMinutes: 10, simRange: [1,20], accessible: true, walkMinutes: 5, tip: 'Typhoon Lagoon bus departs from Disney Springs bus loop.' },
     ],
-    totalRideMinutes: 40, totalRideRange: [40,65], tags: ['transfer'],
+    totalRideMinutes: 52, totalRideRange: [52,80], tags: ['transfer'],
+    notes: 'Disney Springs bus access is limited to resort guests, or guests with a park or dining reservation there.',
   },
   {
     id: 'mk-tl-minnie',
@@ -543,6 +546,7 @@ export const ALL_ROUTES: Route[] = [
       { mode: 'bus', from: 'BWI', to: 'DS', rideMinutes: 25, simRange: [1,20], accessible: true, walkMinutes: 5 },
     ],
     totalRideMinutes: 35, totalRideRange: [35,57], tags: ['water', 'transfer'],
+    notes: 'Disney Springs bus access is limited to resort guests, or guests with a park or dining reservation there.',
   },
   {
     id: 'ep-ds-minnie',
@@ -553,12 +557,14 @@ export const ALL_ROUTES: Route[] = [
 
   {
     id: 'ep-tl-bus',
-    from: 'EP', to: 'TL', name: 'Bus to Disney Springs, transfer to Typhoon Lagoon',
+    from: 'EP', to: 'TL', name: 'Friendship Boat to BoardWalk Inn, Bus to Disney Springs, Bus to Typhoon Lagoon',
     legs: [
-      { mode: 'bus', from: 'EP', to: 'DS', rideMinutes: 25, simRange: [1,20], accessible: true },
+      { mode: 'friendship_boat', from: 'EP', to: 'BWI', rideMinutes: 10, simRange: [1,12], accessible: true },
+      { mode: 'bus', from: 'BWI', to: 'DS', rideMinutes: 25, simRange: [1,20], accessible: true, walkMinutes: 5 },
       { mode: 'bus', from: 'DS', to: 'TL', rideMinutes: 10, simRange: [1,20], accessible: true, walkMinutes: 5 },
     ],
-    totalRideMinutes: 35, totalRideRange: [35,60], tags: ['transfer'],
+    totalRideMinutes: 45, totalRideRange: [45,70], tags: ['water', 'transfer'],
+    notes: 'Disney Springs bus access is limited to resort guests, or guests with a park or dining reservation there.',
   },
   {
     id: 'ep-tl-minnie',
@@ -847,6 +853,7 @@ export const ALL_ROUTES: Route[] = [
       { mode: 'bus', from: 'BWI', to: 'DS', rideMinutes: 25, simRange: [1,20], accessible: true, walkMinutes: 5 },
     ],
     totalRideMinutes: 40, totalRideRange: [40,62], tags: ['water', 'transfer'],
+    notes: 'Disney Springs bus access is limited to resort guests, or guests with a park or dining reservation there.',
   },
   {
     id: 'hs-ds-minnie',
@@ -857,12 +864,14 @@ export const ALL_ROUTES: Route[] = [
 
   {
     id: 'hs-tl-bus',
-    from: 'HS', to: 'TL', name: 'Bus to Disney Springs, transfer to Typhoon Lagoon',
+    from: 'HS', to: 'TL', name: 'Friendship Boat to BoardWalk Inn, Bus to Disney Springs, Bus to Typhoon Lagoon',
     legs: [
-      { mode: 'bus', from: 'HS', to: 'DS', rideMinutes: 25, simRange: [1,20], accessible: true },
+      { mode: 'friendship_boat', from: 'HS', to: 'BWI', rideMinutes: 15, simRange: [1,12], accessible: true },
+      { mode: 'bus', from: 'BWI', to: 'DS', rideMinutes: 25, simRange: [1,20], accessible: true, walkMinutes: 5 },
       { mode: 'bus', from: 'DS', to: 'TL', rideMinutes: 10, simRange: [1,20], accessible: true, walkMinutes: 5 },
     ],
-    totalRideMinutes: 35, totalRideRange: [35,60], tags: ['transfer'],
+    totalRideMinutes: 50, totalRideRange: [50,75], tags: ['water', 'transfer'],
+    notes: 'Disney Springs bus access is limited to resort guests, or guests with a park or dining reservation there.',
   },
   {
     id: 'hs-tl-minnie',
@@ -1143,6 +1152,7 @@ export const ALL_ROUTES: Route[] = [
       { mode: 'bus', from: 'AKL', to: 'DS', rideMinutes: 30, simRange: [1,20], accessible: true, walkMinutes: 5 },
     ],
     totalRideMinutes: 40, totalRideRange: [40,65], tags: ['transfer'],
+    notes: 'Disney Springs bus access is limited to resort guests, or guests with a park or dining reservation there.',
   },
   {
     id: 'ak-ds-minnie',
@@ -1160,12 +1170,14 @@ export const ALL_ROUTES: Route[] = [
 
   {
     id: 'ak-tl-bus',
-    from: 'AK', to: 'TL', name: 'Bus to Disney Springs, transfer to Typhoon Lagoon',
+    from: 'AK', to: 'TL', name: 'Bus to Animal Kingdom Lodge, Bus to Disney Springs, Bus to Typhoon Lagoon',
     legs: [
-      { mode: 'bus', from: 'AK', to: 'DS', rideMinutes: 30, simRange: [1,20], accessible: true },
+      { mode: 'bus', from: 'AK', to: 'AKL', rideMinutes: 10, simRange: [1,20], accessible: true },
+      { mode: 'bus', from: 'AKL', to: 'DS', rideMinutes: 30, simRange: [1,20], accessible: true, walkMinutes: 5 },
       { mode: 'bus', from: 'DS', to: 'TL', rideMinutes: 10, simRange: [1,20], accessible: true, walkMinutes: 5 },
     ],
-    totalRideMinutes: 40, totalRideRange: [40,65], tags: ['transfer'],
+    totalRideMinutes: 50, totalRideRange: [50,80], tags: ['transfer'],
+    notes: 'Disney Springs bus access is limited to resort guests, or guests with a park or dining reservation there.',
   },
   {
     id: 'ak-tl-minnie',

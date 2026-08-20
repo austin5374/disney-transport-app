@@ -1,18 +1,26 @@
 export const Colors = {
-  // Primary brand: deep indigo, deliberately distinct from Disney's blue
-  primaryBlue:   '#4F46A5',
-  primaryDark:   '#3B3480',
-  lightBlueTint: '#EDEBFA',
-  blueBorder:    '#C9C4EE',
+  // Primary brand: Disney "sky" blue family, modeled on the MDE app icon's gradient
+  skyTop:        '#4698CA',
+  skyMid:        '#3C7EB8',
+  skyBottom:     '#3773AF',
+  skySparkle:    '#9AD0EC',
+  skyCircle:     '#82ADCD',
+  skySoftDot:    '#96CFE3',
+  skyCloud:      '#94B4CD',
+  skyHighlight:  '#DAE7ED',
+  primaryBlue:   '#3773AF',
+  primaryDark:   '#2C5D82',
+  lightBlueTint: '#DAE7ED',
+  blueBorder:    '#82ADCD',
   // Backgrounds
-  pageBg:        '#F2F2F7',
+  pageBg:        '#F3F8FB',
   cardBg:        '#FFFFFF',
-  cardBorder:    '#E4E3EE',
-  divider:       '#EEEDF4',
+  cardBorder:    '#DCE7EE',
+  divider:       '#E7EFF4',
   // Text
-  textPrimary:   '#1C1B2E',
-  textSecondary: '#75748A',
-  textPlaceholder:'#9C9BAE',
+  textPrimary:   '#182B3A',
+  textSecondary: '#5C7488',
+  textPlaceholder:'#94A9B8',
   // Live status
   liveGreen:     '#1F9D55',
   statusOperating:      '#1F9D55',
@@ -77,6 +85,11 @@ export const transportColor = (mode: string): string => {
 export const Brand = {
   name: 'ParkWays',
   tagline: 'Walt Disney World transit, unofficial',
+};
+
+// Sky gradient used behind headers, modeled on the MDE app icon
+export const Gradients = {
+  sky: [Colors.skyTop, Colors.skyMid, Colors.skyBottom] as const,
 };
 
 export const Spacing = {

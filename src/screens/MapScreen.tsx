@@ -3,10 +3,11 @@ import {
   View, Text, ScrollView, StyleSheet, TouchableOpacity, useWindowDimensions,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Path, Circle, Rect, Ellipse, Text as SvgText, G } from 'react-native-svg';
 import { TRANSIT_LINES, TransitLine } from '../data/lines';
 import { useLiveStatus, STATUS_LABEL } from '../utils/liveStatus';
-import { Colors, StatusColors, Brand } from '../utils/theme';
+import { Colors, StatusColors, Brand, Gradients } from '../utils/theme';
 
 // Schematic property map (not to scale, like any transit diagram).
 // Coordinates live in a 360 × 560 viewBox.
@@ -77,11 +78,11 @@ export default function MapScreen() {
 
   return (
     <View style={styles.screen}>
-      <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
+      <LinearGradient colors={Gradients.sky} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={[styles.header, { paddingTop: insets.top + 10 }]}>
         <Text style={styles.brand}>{Brand.name}</Text>
         <Text style={styles.headerTitle}>Transit Map</Text>
         <Text style={styles.headerSub}>Schematic, not to scale · buses serve all locations</Text>
-      </View>
+      </LinearGradient>
 
       <ScrollView contentContainerStyle={{ paddingBottom: 24 }}>
         <View style={styles.mapCard}>
@@ -200,7 +201,6 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.pageBg,
   },
   header: {
-    backgroundColor: Colors.primaryBlue,
     paddingHorizontal: 20,
     paddingBottom: 14,
   },

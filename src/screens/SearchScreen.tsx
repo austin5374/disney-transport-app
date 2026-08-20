@@ -87,53 +87,42 @@ export default function SearchScreen({ navigation }: Props) {
       />
 
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
-        <TimeBanner timeOverride={timeOverride} onTimeChange={setTimeOverride} />
-
-        {/* Input card */}
-        <View style={styles.inputCard}>
-          {/* FROM */}
-          <View style={styles.inputRow}>
-            <View style={styles.dotCol}>
-              <View style={styles.dotFrom} />
-              <View style={styles.dotLine} />
-            </View>
-            <View style={styles.inputBody}>
-              <Text style={styles.inputLabel}>From</Text>
-              <TouchableOpacity
-                onPress={() => setFromPickerOpen(true)}
-                style={styles.inputTouchable}
-              >
-                <Text style={from ? styles.inputValue : styles.inputPlaceholder}>
-                  {from?.label ?? 'Current location or pick...'}
-                </Text>
-              </TouchableOpacity>
-            </View>
-            <TouchableOpacity onPress={handleUseMyLocation} style={styles.locationPill}>
-              <Text style={styles.locationPillText}>⊙ Use my location</Text>
-            </TouchableOpacity>
+        {/* Hero search: the first thing you should see and tap */}
+        <TouchableOpacity
+          style={styles.heroSearch}
+          onPress={() => setToPickerOpen(true)}
+          activeOpacity={0.85}
+        >
+          <View style={styles.heroIconWrap}>
+            <Text style={styles.heroIcon}>⌕</Text>
           </View>
-
-          <View style={styles.inputDivider} />
-
-          {/* TO */}
-          <View style={styles.inputRow}>
-            <View style={styles.dotCol}>
-              <View style={styles.dotTo} />
-            </View>
-            <TouchableOpacity
-              style={styles.inputBody}
-              onPress={() => setToPickerOpen(true)}
-            >
-              <Text style={styles.inputLabel}>To</Text>
-              <Text style={to ? styles.inputValue : styles.inputPlaceholder}>
-                {to?.label ?? 'Where to?'}
-              </Text>
-            </TouchableOpacity>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.heroLabel}>Where to?</Text>
+            <Text style={to ? styles.heroValue : styles.heroPlaceholder} numberOfLines={1}>
+              {to?.label ?? 'Search parks, resorts, Disney Springs...'}
+            </Text>
           </View>
+        </TouchableOpacity>
+
+        {/* From: secondary, defaults toward current location */}
+        <View style={styles.fromRow}>
+          <View style={styles.fromDotWrap}>
+            <View style={styles.fromDot} />
+          </View>
+          <TouchableOpacity style={styles.fromBody} onPress={() => setFromPickerOpen(true)}>
+            <Text style={from ? styles.fromValue : styles.fromPlaceholder} numberOfLines={1}>
+              {from ? from.label : 'From: current location or pick...'}
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={handleUseMyLocation} style={styles.locationPill}>
+            <Text style={styles.locationPillText}>⊙ Use my location</Text>
+          </TouchableOpacity>
         </View>
 
         {/* Filter pills */}
         <FilterPills filters={filters} onChange={setFilters} />
+
+        <TimeBanner timeOverride={timeOverride} onTimeChange={setTimeOverride} />
 
         {/* Info card */}
         <View style={styles.infoCard}>
@@ -203,63 +192,83 @@ const styles = StyleSheet.create({
   scroll: {
     paddingBottom: 20,
   },
-  inputCard: {
-    backgroundColor: Colors.cardBg,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: Colors.cardBorder,
-    marginHorizontal: 16,
-    marginTop: 14,
-    overflow: 'hidden',
-  },
-  inputRow: {
+  heroSearch: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 14,
-    paddingVertical: 12,
+    backgroundColor: Colors.cardBg,
+    marginHorizontal: 16,
+    marginTop: 16,
+    borderRadius: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    borderWidth: 1,
+    borderColor: Colors.cardBorder,
+    shadowColor: Colors.primaryDark,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.14,
+    shadowRadius: 16,
+    elevation: 4,
   },
-  dotCol: {
-    width: 24,
+  heroIconWrap: {
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    backgroundColor: Colors.lightBlueTint,
     alignItems: 'center',
-    marginRight: 10,
+    justifyContent: 'center',
+    marginRight: 14,
   },
-  dotFrom: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: Colors.primaryBlue,
+  heroIcon: {
+    fontSize: 20,
+    color: Colors.primaryBlue,
+    fontWeight: '700',
   },
-  dotLine: {
-    width: 2,
-    flex: 1,
-    backgroundColor: Colors.cardBorder,
-    marginTop: 3,
-  },
-  dotTo: {
-    width: 12,
-    height: 12,
-    borderRadius: 3,
-    backgroundColor: Colors.liveGreen,
-  },
-  inputBody: {
-    flex: 1,
-  },
-  inputTouchable: {
-    flex: 1,
-  },
-  inputLabel: {
-    fontSize: 11,
+  heroLabel: {
+    fontSize: 12,
     color: Colors.textSecondary,
     marginBottom: 2,
   },
-  inputValue: {
-    fontSize: 15,
+  heroValue: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: Colors.textPrimary,
+  },
+  heroPlaceholder: {
+    fontSize: 17,
+    fontWeight: '600',
+    color: Colors.textPlaceholder,
+  },
+  fromRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginHorizontal: 16,
+    marginTop: 12,
+    paddingHorizontal: 4,
+  },
+  fromDotWrap: {
+    width: 46,
+    alignItems: 'center',
+    marginRight: 14,
+  },
+  fromDot: {
+    width: 9,
+    height: 9,
+    borderRadius: 4.5,
+    borderWidth: 2,
+    borderColor: Colors.primaryBlue,
+    backgroundColor: Colors.cardBg,
+  },
+  fromBody: {
+    flex: 1,
+  },
+  fromValue: {
+    fontSize: 14,
     color: Colors.textPrimary,
     fontWeight: '500',
   },
-  inputPlaceholder: {
-    fontSize: 15,
-    color: Colors.textPlaceholder,
+  fromPlaceholder: {
+    fontSize: 14,
+    color: Colors.textSecondary,
   },
   locationPill: {
     backgroundColor: Colors.lightBlueTint,
@@ -274,11 +283,6 @@ const styles = StyleSheet.create({
     color: Colors.primaryBlue,
     fontSize: 11,
     fontWeight: '500',
-  },
-  inputDivider: {
-    height: 1,
-    backgroundColor: 'rgba(0,0,0,0.06)',
-    marginLeft: 48,
   },
   infoCard: {
     backgroundColor: Colors.lightBlueTint,

@@ -4,9 +4,10 @@ import {
   SectionList, StyleSheet, KeyboardAvoidingView, Platform,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Destination, DestinationGroup } from '../types';
 import { DESTINATIONS } from '../data/destinations';
-import { Colors } from '../utils/theme';
+import { Colors, Gradients } from '../utils/theme';
 
 interface DestinationPickerProps {
   visible: boolean;
@@ -62,12 +63,12 @@ export default function DestinationPicker({
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
         <View style={[styles.container, { paddingTop: insets.top }]}>
           {/* Header */}
-          <View style={styles.header}>
+          <LinearGradient colors={Gradients.sky} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.header}>
             <Text style={styles.headerTitle}>Where to?</Text>
             <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
               <Text style={styles.closeText}>Cancel</Text>
             </TouchableOpacity>
-          </View>
+          </LinearGradient>
 
           {/* Search */}
           <View style={styles.searchWrap}>
@@ -124,7 +125,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: Colors.primaryBlue,
     paddingHorizontal: 16,
     paddingVertical: 14,
   },

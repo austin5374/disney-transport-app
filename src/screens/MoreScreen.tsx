@@ -1,8 +1,9 @@
 import React from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
-import { Colors, Brand } from '../utils/theme';
+import { Colors, Brand, Gradients } from '../utils/theme';
 
 const ROWS: { icon: keyof typeof Ionicons.glyphMap; title: string; body: string }[] = [
   {
@@ -27,10 +28,10 @@ export default function MoreScreen() {
 
   return (
     <View style={styles.screen}>
-      <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
+      <LinearGradient colors={Gradients.sky} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={[styles.header, { paddingTop: insets.top + 10 }]}>
         <Text style={styles.brand}>{Brand.name}</Text>
         <Text style={styles.headerTitle}>About</Text>
-      </View>
+      </LinearGradient>
 
       <ScrollView contentContainerStyle={styles.scroll}>
         <View style={styles.hero}>
@@ -78,7 +79,6 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.pageBg,
   },
   header: {
-    backgroundColor: Colors.primaryBlue,
     paddingHorizontal: 20,
     paddingBottom: 14,
   },

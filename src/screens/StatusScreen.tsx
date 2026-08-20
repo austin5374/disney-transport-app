@@ -3,9 +3,10 @@ import {
   View, Text, ScrollView, StyleSheet, RefreshControl, TouchableOpacity,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
 import { TRANSIT_LINES, LineGroup } from '../data/lines';
 import { useLiveStatus, refreshLiveStatus } from '../utils/liveStatus';
-import { Colors, Brand } from '../utils/theme';
+import { Colors, Brand, Gradients } from '../utils/theme';
 import StatusCard from '../components/StatusCard';
 import BusTimesPanel from '../components/BusTimesPanel';
 
@@ -65,34 +66,36 @@ export default function StatusScreen() {
   return (
     <View style={styles.screen}>
       {/* Header */}
-      <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
-        <Text style={styles.brand}>{Brand.name}</Text>
-        <Text style={styles.headerTitle}>Transportation Status</Text>
-        <Text style={styles.headerSub}>
-          {disrupted.length === 0
-            ? 'All systems operating normally'
-            : `${disrupted.length} ${disrupted.length === 1 ? 'line' : 'lines'} with service advisories`}
-        </Text>
-      </View>
+      <LinearGradient colors={Gradients.sky} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
+        <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
+          <Text style={styles.brand}>{Brand.name}</Text>
+          <Text style={styles.headerTitle}>Transportation Status</Text>
+          <Text style={styles.headerSub}>
+            {disrupted.length === 0
+              ? 'All systems operating normally'
+              : `${disrupted.length} ${disrupted.length === 1 ? 'line' : 'lines'} with service advisories`}
+          </Text>
+        </View>
 
-      {/* Group filter */}
-      <View style={styles.chipsWrap}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipsRow}>
-          {GROUPS.map(g => {
-            const active = group === g.key;
-            return (
-              <TouchableOpacity
-                key={g.key}
-                style={[styles.chip, active && styles.chipActive]}
-                onPress={() => setGroup(g.key)}
-                activeOpacity={0.8}
-              >
-                <Text style={[styles.chipText, active && styles.chipTextActive]}>{g.label}</Text>
-              </TouchableOpacity>
-            );
-          })}
-        </ScrollView>
-      </View>
+        {/* Group filter */}
+        <View style={styles.chipsWrap}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipsRow}>
+            {GROUPS.map(g => {
+              const active = group === g.key;
+              return (
+                <TouchableOpacity
+                  key={g.key}
+                  style={[styles.chip, active && styles.chipActive]}
+                  onPress={() => setGroup(g.key)}
+                  activeOpacity={0.8}
+                >
+                  <Text style={[styles.chipText, active && styles.chipTextActive]}>{g.label}</Text>
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
+        </View>
+      </LinearGradient>
 
       <ScrollView
         contentContainerStyle={styles.scroll}
@@ -136,7 +139,6 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.pageBg,
   },
   header: {
-    backgroundColor: Colors.primaryBlue,
     paddingHorizontal: 20,
     paddingBottom: 16,
   },
@@ -158,9 +160,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
     marginTop: 3,
   },
-  chipsWrap: {
-    backgroundColor: Colors.primaryBlue,
-  },
+  chipsWrap: {},
   chipsRow: {
     paddingHorizontal: 16,
     paddingBottom: 14,

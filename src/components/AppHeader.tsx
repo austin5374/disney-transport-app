@@ -1,7 +1,8 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Platform } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Colors } from '../utils/theme';
+import { Colors, Gradients } from '../utils/theme';
 
 interface AppHeaderProps {
   title?: string;
@@ -18,7 +19,12 @@ export default function AppHeader({
   const insets = useSafeAreaInsets();
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top + 8 }]}>
+    <LinearGradient
+      colors={Gradients.sky}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+      style={[styles.container, { paddingTop: insets.top + 8 }]}
+    >
       <View style={styles.row}>
         {showBack ? (
           <TouchableOpacity onPress={onBack} style={styles.backBtn} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
@@ -49,13 +55,12 @@ export default function AppHeader({
           <View style={styles.backPlaceholder} />
         )}
       </View>
-    </View>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: Colors.primaryBlue,
     paddingHorizontal: 16,
     paddingBottom: 12,
   },

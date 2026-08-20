@@ -16,7 +16,6 @@ function timeValid(r: Route, timeOverride?: Date): boolean {
   const now = timeOverride ?? new Date();
   const totalMinutes = now.getHours() * 60 + now.getMinutes();
   if (r.timeRestriction === 'before_10am' && totalMinutes >= 600) return false;
-  if (r.timeRestriction === 'before_4pm'  && totalMinutes >= 960) return false;
   if (r.timeRestriction === 'after_3pm_only' && totalMinutes < 900) return false;
   if (r.timeRestriction === 'after_10am' && totalMinutes < 600) return false;
   return true;
@@ -240,9 +239,6 @@ export function getTimeBannerMessage(timeOverride?: Date): string | null {
 
   if (totalMinutes < 600) {
     return `⏰ ${timeStr}: before 10am, park-to-park buses aren't running. Routes adjusted.`;
-  }
-  if (totalMinutes < 960) {
-    return `⏰ Disney Springs bus routes limited before 4pm.`;
   }
   return null;
 }
