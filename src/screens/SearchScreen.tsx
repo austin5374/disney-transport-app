@@ -30,15 +30,6 @@ const DEFAULT_FILTERS: ActiveFilters = {
 
 type LocationStatus = 'idle' | 'checking' | 'found' | 'not_at_park' | 'denied';
 
-// One-tap "where to" shortcuts shown before a destination is picked, so the
-// planner never opens on a blank page. Fixed resort->park pairs (the old
-// "Popular routes") only ever helped a visitor already standing at that
-// exact resort — everyone else got routes that didn't apply to them. These
-// tiles fill in just the destination and reuse whatever "from" is already
-// known (current location or a manual pick), so they're useful regardless
-// of where the visitor actually is.
-const QUICK_DESTINATION_IDS = ['MK', 'EP', 'HS', 'AK', 'DS'];
-
 export default function SearchScreen({ navigation }: Props) {
   const insets = useSafeAreaInsets();
   const [from, setFrom]           = useState<Destination | null>(null);
@@ -125,15 +116,21 @@ export default function SearchScreen({ navigation }: Props) {
 
   const needsManualLocation = !from && (locationStatus === 'not_at_park' || locationStatus === 'denied');
 
-  const quickDestinations = React.useMemo(
-    () => QUICK_DESTINATION_IDS.map(id => DESTINATION_MAP[id]).filter((d): d is Destination => !!d),
-    []
-  );
+  const fromText = from
+    ? from.label
+    : locationStatus === 'checking'
+      ? 'Locating you…'
+      : needsManualLocation
+        ? 'Location unavailable — tap to set manually'
+        : 'Set your starting point';
 
-  const selectQuickDestination = (dest: Destination) => {
-    addRecent(dest);
-    setTo(dest);
+  const swapFromTo = () => {
+    const prevFrom = from;
+    setFrom(to);
+    setTo(prevFrom);
   };
+
+  const goToTab = (tab: 'Status' | 'Map') => navigation.getParent()?.navigate(tab as never);
 
   return (
     <View style={styles.screen}>
@@ -143,45 +140,59 @@ export default function SearchScreen({ navigation }: Props) {
       />
 
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
-        {/* Hero search: the first thing you should see and tap */}
-        <TouchableOpacity
-          style={styles.heroSearch}
-          onPress={() => setToPickerOpen(true)}
-          activeOpacity={0.85}
-        >
-          <View style={styles.heroIconWrap}>
-            <Ionicons name="search" size={20} color={Colors.primaryBlue} />
+        {/* Trip card: From and To in one connected control, with a swap
+            button — the standard get-directions layout (Apple/Google Maps),
+            instead of a big "Where to?" search bar with a separate, lesser
+            "from" row bolted on underneath. */}
+        <View style={styles.tripCard}>
+          <View style={styles.tripIcons}>
+            <View style={[styles.tripDot, needsManualLocation && styles.tripDotWarning]} />
+            <View style={styles.tripConnector} />
+            <Ionicons
+              name="location"
+              size={15}
+              color={to ? groupBadgeColors(to.group).text : Colors.textPlaceholder}
+            />
           </View>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.heroLabel}>Where to?</Text>
-            <Text style={to ? styles.heroValue : styles.heroPlaceholder} numberOfLines={1}>
-              {to?.label ?? 'Search parks, resorts, Disney Springs...'}
-            </Text>
-          </View>
-        </TouchableOpacity>
 
-        {/* From: secondary, defaults toward current location */}
-        <View style={styles.fromRow}>
-          <View style={styles.fromDotWrap}>
-            <View style={[styles.fromDot, needsManualLocation && styles.fromDotWarning]} />
+          <View style={styles.tripFields}>
+            <View style={styles.tripFieldRow}>
+              <TouchableOpacity style={styles.tripFieldTap} onPress={() => setFromPickerOpen(true)} activeOpacity={0.7}>
+                <Text style={styles.tripLabel}>From</Text>
+                <Text
+                  style={[styles.tripValue, !from && (needsManualLocation ? styles.tripValueWarning : styles.tripValuePlaceholder)]}
+                  numberOfLines={1}
+                >
+                  {fromText}
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={handleUseMyLocation}
+                style={styles.tripLocateBtn}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              >
+                <Ionicons name="locate" size={16} color={Colors.primaryBlue} />
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.tripDivider} />
+
+            <TouchableOpacity style={styles.tripFieldRow} onPress={() => setToPickerOpen(true)} activeOpacity={0.7}>
+              <View style={styles.tripFieldTap}>
+                <Text style={styles.tripLabel}>To</Text>
+                <Text style={[styles.tripValue, !to && styles.tripValuePlaceholder]} numberOfLines={1}>
+                  {to?.label ?? 'Search parks, resorts, Disney Springs...'}
+                </Text>
+              </View>
+            </TouchableOpacity>
           </View>
-          <TouchableOpacity style={styles.fromBody} onPress={() => setFromPickerOpen(true)}>
-            <Text
-              style={from ? styles.fromValue : needsManualLocation ? styles.fromWarning : styles.fromPlaceholder}
-              numberOfLines={1}
-            >
-              {from
-                ? from.label
-                : locationStatus === 'checking'
-                  ? 'Locating you…'
-                  : needsManualLocation
-                    ? 'Location unavailable — tap to set manually'
-                    : 'Set your starting point'}
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity onPress={handleUseMyLocation} style={styles.locationPill}>
-            <Ionicons name="locate" size={12} color={Colors.primaryBlue} />
-            <Text style={styles.locationPillText}>Use my location</Text>
+
+          <TouchableOpacity
+            onPress={swapFromTo}
+            style={styles.tripSwapBtn}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <Ionicons name="swap-vertical" size={19} color={Colors.primaryBlue} />
           </TouchableOpacity>
         </View>
 
@@ -190,32 +201,27 @@ export default function SearchScreen({ navigation }: Props) {
 
         <TimeBanner timeOverride={timeOverride} onTimeChange={setTimeOverride} />
 
-        {/* Quick destinations: fills the destination only, reusing whatever
-            "from" is already known — useful no matter where the visitor is,
-            unlike a fixed list of resort->park pairs. */}
-        {!to && quickDestinations.length > 0 && (
-          <View style={styles.popularSection}>
-            <Text style={styles.popularTitle}>Quick destinations</Text>
-            <View style={styles.quickGrid}>
-              {quickDestinations.map(dest => {
-                const badge = groupBadgeColors(dest.group);
-                return (
-                  <TouchableOpacity
-                    key={dest.id}
-                    style={styles.quickTile}
-                    onPress={() => selectQuickDestination(dest)}
-                    activeOpacity={0.7}
-                  >
-                    <View style={[styles.quickBadge, { backgroundColor: badge.bg }]}>
-                      <Text style={[styles.quickBadgeText, { color: badge.text }]}>{dest.abbrev}</Text>
-                    </View>
-                    <Text style={styles.quickLabel} numberOfLines={2}>{dest.label}</Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
+        {/* Quick actions: shortcuts to the app's other core views, instead of
+            a directory of destinations that just duplicates the search
+            fields above. */}
+        <View style={styles.actionsSection}>
+          <View style={styles.actionsCard}>
+            <TouchableOpacity style={styles.actionCol} onPress={() => goToTab('Status')} activeOpacity={0.7}>
+              <Ionicons name="pulse-outline" size={22} color={Colors.primaryBlue} />
+              <Text style={styles.actionLabel}>Live Status</Text>
+            </TouchableOpacity>
+            <View style={styles.actionDivider} />
+            <TouchableOpacity style={styles.actionCol} onPress={() => goToTab('Map')} activeOpacity={0.7}>
+              <Ionicons name="map-outline" size={22} color={Colors.primaryBlue} />
+              <Text style={styles.actionLabel}>Transit Map</Text>
+            </TouchableOpacity>
+            <View style={styles.actionDivider} />
+            <TouchableOpacity style={styles.actionCol} onPress={handleUseMyLocation} activeOpacity={0.7}>
+              <Ionicons name="locate-outline" size={22} color={Colors.primaryBlue} />
+              <Text style={styles.actionLabel}>Use My Location</Text>
+            </TouchableOpacity>
           </View>
-        )}
+        </View>
       </ScrollView>
 
 
@@ -284,15 +290,15 @@ const styles = StyleSheet.create({
   scroll: {
     paddingBottom: 20,
   },
-  heroSearch: {
+  tripCard: {
     flexDirection: 'row',
-    alignItems: 'center',
     backgroundColor: Colors.cardBg,
     marginHorizontal: 16,
     marginTop: 16,
     borderRadius: 20,
-    paddingHorizontal: 16,
     paddingVertical: 16,
+    paddingLeft: 18,
+    paddingRight: 8,
     borderWidth: 1,
     borderColor: Colors.cardBorder,
     shadowColor: Colors.primaryDark,
@@ -301,43 +307,13 @@ const styles = StyleSheet.create({
     shadowRadius: 16,
     elevation: 4,
   },
-  heroIconWrap: {
-    width: 46,
-    height: 46,
-    borderRadius: 23,
-    backgroundColor: Colors.lightBlueTint,
+  tripIcons: {
+    width: 16,
     alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 14,
+    paddingTop: 5,
+    paddingBottom: 3,
   },
-  heroLabel: {
-    fontSize: 12,
-    color: Colors.textSecondary,
-    marginBottom: 2,
-  },
-  heroValue: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: Colors.textPrimary,
-  },
-  heroPlaceholder: {
-    fontSize: 17,
-    fontWeight: '600',
-    color: Colors.textPlaceholder,
-  },
-  fromRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginHorizontal: 16,
-    marginTop: 12,
-    paddingHorizontal: 4,
-  },
-  fromDotWrap: {
-    width: 46,
-    alignItems: 'center',
-    marginRight: 14,
-  },
-  fromDot: {
+  tripDot: {
     width: 9,
     height: 9,
     borderRadius: 4.5,
@@ -345,42 +321,67 @@ const styles = StyleSheet.create({
     borderColor: Colors.primaryBlue,
     backgroundColor: Colors.cardBg,
   },
-  fromDotWarning: {
+  tripDotWarning: {
     borderColor: Colors.statusDown,
   },
-  fromBody: {
+  tripConnector: {
     flex: 1,
+    width: 0,
+    marginVertical: 4,
+    borderLeftWidth: 1.5,
+    borderLeftColor: Colors.cardBorder,
+    borderStyle: 'dashed',
   },
-  fromValue: {
-    fontSize: 14,
-    color: Colors.textPrimary,
-    fontWeight: '500',
+  tripFields: {
+    flex: 1,
+    marginLeft: 14,
   },
-  fromPlaceholder: {
-    fontSize: 14,
+  tripFieldRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  tripFieldTap: {
+    flex: 1,
+    paddingVertical: 8,
+  },
+  tripLabel: {
+    fontSize: 11,
     color: Colors.textSecondary,
+    marginBottom: 2,
   },
-  fromWarning: {
-    fontSize: 14,
+  tripValue: {
+    fontSize: 15,
+    color: Colors.textPrimary,
+    fontWeight: '600',
+  },
+  tripValuePlaceholder: {
+    color: Colors.textSecondary,
+    fontWeight: '400',
+  },
+  tripValueWarning: {
     color: Colors.statusDown,
     fontWeight: '500',
   },
-  locationPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    backgroundColor: Colors.lightBlueTint,
-    borderRadius: 14,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderWidth: 1,
-    borderColor: Colors.blueBorder,
-    marginLeft: 8,
+  tripDivider: {
+    height: 1,
+    backgroundColor: Colors.divider,
   },
-  locationPillText: {
-    color: Colors.primaryBlue,
-    fontSize: 11,
-    fontWeight: '500',
+  tripLocateBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: Colors.lightBlueTint,
+  },
+  tripSwapBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    alignSelf: 'center',
+    marginLeft: 6,
   },
   geoOverlay: {
     flex: 1,
@@ -437,45 +438,31 @@ const styles = StyleSheet.create({
     color: Colors.textPrimary,
     fontSize: 15,
   },
-  popularSection: {
+  actionsSection: {
     marginHorizontal: 16,
     marginTop: 20,
   },
-  popularTitle: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: Colors.textSecondary,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    marginBottom: 8,
-    marginLeft: 2,
-  },
-  quickGrid: {
+  actionsCard: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
+    backgroundColor: Colors.cardBg,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: Colors.cardBorder,
+    paddingVertical: 16,
   },
-  quickTile: {
-    width: 84,
+  actionCol: {
+    flex: 1,
     alignItems: 'center',
+    gap: 8,
   },
-  quickBadge: {
-    width: 56,
-    height: 56,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 6,
+  actionDivider: {
+    width: 1,
+    backgroundColor: Colors.divider,
   },
-  quickBadgeText: {
-    fontSize: 15,
-    fontWeight: '700',
-  },
-  quickLabel: {
+  actionLabel: {
     fontSize: 12,
-    color: Colors.textPrimary,
-    fontWeight: '500',
+    color: Colors.primaryBlue,
+    fontWeight: '600',
     textAlign: 'center',
-    lineHeight: 15,
   },
 });

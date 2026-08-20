@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { View, Text, ScrollView, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RouteProp } from '@react-navigation/native';
@@ -29,6 +29,14 @@ export default function ResultsScreen({ navigation, route: navRoute }: Props) {
   const hasWaterRoutes = routes.some(r => r.tags.includes('water'));
   const showWaterNudge = !filters.noWater && hasWaterRoutes;
 
+  // The planner auto-navigates here the instant both fields are filled, so
+  // there's no moment on that screen where both are set and a swap button
+  // would do anything visible. This is where "reverse my trip" actually
+  // belongs — updates this screen's own params in place.
+  const reverseTrip = () => {
+    navigation.setParams({ from: to, to: from });
+  };
+
   return (
     <View style={styles.screen}>
       <AppHeader
@@ -39,6 +47,13 @@ export default function ResultsScreen({ navigation, route: navRoute }: Props) {
         timeOverride={timeDate}
         onResetTime={() => setTimeDate(null)}
       />
+
+      <View style={styles.reverseRow}>
+        <TouchableOpacity style={styles.reverseChip} onPress={reverseTrip} activeOpacity={0.7}>
+          <Ionicons name="swap-vertical" size={13} color={Colors.primaryBlue} />
+          <Text style={styles.reverseChipText}>Reverse trip</Text>
+        </TouchableOpacity>
+      </View>
 
       <TimeBanner
         timeOverride={timeDate}
@@ -110,6 +125,26 @@ const styles = StyleSheet.create({
   screen: {
     flex: 1,
     backgroundColor: Colors.pageBg,
+  },
+  reverseRow: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    paddingHorizontal: 16,
+    paddingTop: 10,
+  },
+  reverseChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    backgroundColor: Colors.lightBlueTint,
+    borderRadius: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+  },
+  reverseChipText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: Colors.primaryBlue,
   },
   scroll: {
     paddingTop: 10,
