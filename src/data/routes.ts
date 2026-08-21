@@ -2,10 +2,8 @@ import { Route } from '../types';
 
 export const ALL_ROUTES: Route[] = [
 
-  // 
   // FROM: MAGIC KINGDOM (MK)
-  //
-{
+  {
     id: 'mk-ttc-ferry',
     from: 'MK', to: 'TTC', name: 'Ferry Boat to TTC',
     legs: [{ mode: 'ferry_ttc_mk', from: 'MK', to: 'TTC', rideMinutes: 12, accessible: true, tip: 'Scenic Seven Seas Lagoon crossing. Boards at the main MK boat dock.' }],
@@ -204,18 +202,7 @@ export const ALL_ROUTES: Route[] = [
     legs: [{ mode: 'bus', from: 'MK', to: 'BWI', rideMinutes: 30, accessible: true }],
     totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
   },
-  {
-    id: 'mk-sw-bus',
-    from: 'MK', to: 'SW', name: 'Bus from Magic Kingdom',
-    legs: [{ mode: 'bus', from: 'MK', to: 'SW', rideMinutes: 30, accessible: true }],
-    totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
-  },
-  {
-    id: 'mk-do-bus',
-    from: 'MK', to: 'DO', name: 'Bus from Magic Kingdom',
-    legs: [{ mode: 'bus', from: 'MK', to: 'DO', rideMinutes: 30, accessible: true }],
-    totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
-  },
+
   {
     id: 'mk-cbr-bus',
     from: 'MK', to: 'CBR', name: 'Bus from Magic Kingdom',
@@ -295,10 +282,21 @@ export const ALL_ROUTES: Route[] = [
     totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
   },
 
-  // 
   // FROM: TTC
-  //
-{
+
+  {
+    id: 'ttc-sw-bus',
+    from: 'TTC', to: 'SW', name: 'Bus to Swan Hotel',
+    legs: [{ mode: 'bus', from: 'TTC', to: 'SW', rideMinutes: 15, accessible: true, tip: 'The TTC bus stop serves the Swan and Dolphin only. It is the one bus route the TTC runs.' }],
+    totalRideMinutes: 15, tags: [],
+  },
+  {
+    id: 'ttc-do-bus',
+    from: 'TTC', to: 'DO', name: 'Bus to Dolphin Hotel',
+    legs: [{ mode: 'bus', from: 'TTC', to: 'DO', rideMinutes: 15, accessible: true, tip: 'The TTC bus stop serves the Swan and Dolphin only. It is the one bus route the TTC runs.' }],
+    totalRideMinutes: 15, tags: [],
+  },
+  {
     id: 'ttc-mk-ferry',
     from: 'TTC', to: 'MK', name: 'Ferry Boat to Magic Kingdom',
     legs: [{ mode: 'ferry_ttc_mk', from: 'TTC', to: 'MK', rideMinutes: 12, accessible: true, tip: 'Scenic Seven Seas Lagoon ferry. Boards at TTC lower level boat dock.' }],
@@ -312,7 +310,7 @@ export const ALL_ROUTES: Route[] = [
     totalRideMinutes: 6, tags: ['walk_only'],
   },
 
-{
+  {
     id: 'ttc-con-minnie',
     from: 'TTC', to: 'CON', name: 'Minnie Van (Lyft)',
     legs: [{ mode: 'minnie_van', from: 'TTC', to: 'CON', rideMinutes: 10, accessible: true }],
@@ -398,16 +396,14 @@ export const ALL_ROUTES: Route[] = [
     ],
     totalRideMinutes: 25, totalRideRange: [25,45], tags: ['transfer'],
   },
-{
+  {
     id: 'ttc-minnie',
     from: 'TTC', to: 'HS', name: 'Minnie Van (Lyft)',
     legs: [{ mode: 'minnie_van', from: 'TTC', to: 'HS', rideMinutes: 25, accessible: true }],
     totalRideMinutes: 25, tags: [],
   },
 
-  // 
   // FROM: EPCOT (EP)
-  //
 
   {
     id: 'ep-mk-monorail',
@@ -719,9 +715,7 @@ export const ALL_ROUTES: Route[] = [
     totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
   },
 
-  // 
   // FROM: HOLLYWOOD STUDIOS (HS)
-  // 
 
   {
     id: 'hs-ep-skyliner',
@@ -1030,9 +1024,7 @@ export const ALL_ROUTES: Route[] = [
     totalRideMinutes: 25, totalRideRange: [25,45], tags: [],
   },
 
-  // 
   // FROM: ANIMAL KINGDOM (AK)
-  // 
 
   {
     id: 'ak-mk-bus',
@@ -1214,9 +1206,7 @@ export const ALL_ROUTES: Route[] = [
     totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
   },
 
-  // 
   // FROM: DISNEY SPRINGS (DS)
-  // 
 
   {
     id: 'ds-mk-minnie',
@@ -1400,9 +1390,7 @@ export const ALL_ROUTES: Route[] = [
     totalRideMinutes: 20, tags: [],
   },
 
-  // 
   // FROM: TYPHOON LAGOON (TL)
-  // 
 
   {
     id: 'tl-ds-bus',
@@ -1450,9 +1438,7 @@ export const ALL_ROUTES: Route[] = [
     totalRideMinutes: 20, tags: [],
   },
 
-  // 
   // FROM: BLIZZARD BEACH (BB)
-  // 
 
   {
     id: 'bb-ak-bus',
@@ -1518,9 +1504,7 @@ export const ALL_ROUTES: Route[] = [
     totalRideMinutes: 20, tags: [],
   },
 
-  // 
   // FROM: BOARDWALK INN (BWI)
-  // 
 
   {
     id: 'bwi-ep-walk',
@@ -1583,9 +1567,7 @@ export const ALL_ROUTES: Route[] = [
     totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
   },
 
-  // 
   // FROM: YACHT CLUB / BEACH CLUB (YC / BC): use YC as the canonical from
-  // 
 
   {
     id: 'yc-ep-walk',
@@ -1653,7 +1635,7 @@ export const ALL_ROUTES: Route[] = [
     legs: [{ mode: 'walk', from: 'YC', to: 'SW', rideMinutes: 7, accessible: true }],
     totalRideMinutes: 7, tags: ['walk_only'],
   },
-{
+  {
     id: 'bc-mk-bus',
     from: 'BC', to: 'MK', name: 'Bus from Beach Club',
     legs: [{ mode: 'bus', from: 'BC', to: 'MK', rideMinutes: 30, accessible: true }],
@@ -1666,9 +1648,20 @@ export const ALL_ROUTES: Route[] = [
     totalRideMinutes: 25, totalRideRange: [25,45], tags: [],
   },
 
-  // 
   // FROM: SWAN / DOLPHIN / SWAN RESERVE (SW / DO / SR)
-  // 
+
+  {
+    id: 'sw-ttc-bus',
+    from: 'SW', to: 'TTC', name: 'Bus to Transportation & Ticket Center',
+    legs: [{ mode: 'bus', from: 'SW', to: 'TTC', rideMinutes: 15, accessible: true, tip: 'Pick up the monorail or the ferry at the TTC to carry on toward Magic Kingdom.' }],
+    totalRideMinutes: 15, tags: [],
+  },
+  {
+    id: 'do-ttc-bus',
+    from: 'DO', to: 'TTC', name: 'Bus to Transportation & Ticket Center',
+    legs: [{ mode: 'bus', from: 'DO', to: 'TTC', rideMinutes: 15, accessible: true, tip: 'Pick up the monorail or the ferry at the TTC to carry on toward Magic Kingdom.' }],
+    totalRideMinutes: 15, tags: [],
+  },
 
   {
     id: 'sw-ep-walk',
@@ -1712,18 +1705,7 @@ export const ALL_ROUTES: Route[] = [
     legs: [{ mode: 'walk', from: 'DO', to: 'HS', rideMinutes: 11, accessible: true }],
     totalRideMinutes: 11, tags: ['walk_only'],
   },
-  {
-    id: 'sw-mk-bus',
-    from: 'SW', to: 'MK', name: 'Bus from Swan',
-    legs: [{ mode: 'bus', from: 'SW', to: 'MK', rideMinutes: 30, accessible: true }],
-    totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
-  },
-  {
-    id: 'do-mk-bus',
-    from: 'DO', to: 'MK', name: 'Bus from Dolphin',
-    legs: [{ mode: 'bus', from: 'DO', to: 'MK', rideMinutes: 30, accessible: true }],
-    totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
-  },
+
   {
     id: 'sw-ak-bus',
     from: 'SW', to: 'AK', name: 'Bus from Swan',
@@ -1749,9 +1731,7 @@ export const ALL_ROUTES: Route[] = [
     totalRideMinutes: 7, tags: ['walk_only'],
   },
 
-  // 
   // FROM: CARIBBEAN BEACH RESORT (CBR): Skyliner Hub
-  // 
 
   {
     id: 'cbr-ep-skyliner',
@@ -1820,9 +1800,7 @@ export const ALL_ROUTES: Route[] = [
     totalRideMinutes: 18, tags: ['transfer', 'scenic'],
   },
 
-  // 
   // FROM: RIVIERA RESORT (RIV)
-  // 
 
   {
     id: 'riv-ep-skyliner',
@@ -1891,9 +1869,7 @@ export const ALL_ROUTES: Route[] = [
     totalRideMinutes: 15, tags: ['transfer', 'scenic'],
   },
 
-  // 
   // FROM: POP CENTURY / ART OF ANIMATION (POP / AOA)
-  // 
 
   {
     id: 'pop-ep-skyliner',
@@ -1981,9 +1957,7 @@ export const ALL_ROUTES: Route[] = [
     totalRideMinutes: 26, tags: ['transfer', 'scenic'],
   },
 
-  // 
   // FROM: GRAND FLORIDIAN (GF)
-  // 
 
   {
     id: 'gf-mk-walk',
@@ -1998,7 +1972,7 @@ export const ALL_ROUTES: Route[] = [
     totalRideMinutes: 8, tags: ['water', 'scenic'],
   },
 
-{
+  {
     id: 'gf-ttc-walk',
     from: 'GF', to: 'TTC', name: 'Walk to Polynesian, then walk to TTC (~17 min)',
     legs: [
@@ -2041,9 +2015,7 @@ export const ALL_ROUTES: Route[] = [
     totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
   },
 
-  // 
   // FROM: POLYNESIAN VILLAGE (POLY)
-  // 
 
   {
     id: 'poly-ttc-walk',
@@ -2051,19 +2023,19 @@ export const ALL_ROUTES: Route[] = [
     legs: [{ mode: 'walk', from: 'POLY', to: 'TTC', rideMinutes: 6, accessible: true, tip: 'Always walk. Poly is right next to TTC. Monorail in this direction takes 17 min (wrong direction). Never take it.' }],
     totalRideMinutes: 6, tags: ['walk_only'],
   },
-{
+  {
     id: 'poly-gf-walk',
     from: 'POLY', to: 'GF', name: 'Walk to Grand Floridian (~12 min)',
     legs: [{ mode: 'walk', from: 'POLY', to: 'GF', rideMinutes: 12, accessible: true }],
     totalRideMinutes: 12, tags: ['walk_only'],
   },
-{
+  {
     id: 'poly-mk-watertaxi',
     from: 'POLY', to: 'MK', name: 'Gold Flag Water Taxi to Magic Kingdom',
     legs: [{ mode: 'water_taxi_gold', from: 'POLY', to: 'MK', rideMinutes: 8, accessible: false, tip: 'Direct from POLY dock.' }],
     totalRideMinutes: 8, tags: ['water', 'scenic'],
   },
-{
+  {
     id: 'poly-ep-walk-monorail',
     from: 'POLY', to: 'EP', name: 'Walk to TTC, EPCOT Monorail to EPCOT',
     legs: [
@@ -2091,9 +2063,7 @@ export const ALL_ROUTES: Route[] = [
     totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
   },
 
-  // 
   // FROM: CONTEMPORARY (CON)
-  // 
 
   {
     id: 'con-mk-walk',
@@ -2102,7 +2072,7 @@ export const ALL_ROUTES: Route[] = [
     totalRideMinutes: 8, tags: [],
   },
 
-{
+  {
     id: 'con-ep-monorail',
     from: 'CON', to: 'EP', name: 'Resort Monorail to TTC, EPCOT Monorail to EPCOT',
     legs: [
@@ -2144,9 +2114,7 @@ export const ALL_ROUTES: Route[] = [
     totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
   },
 
-  // 
   // FROM: WILDERNESS LODGE (WL)
-  // 
 
   {
     id: 'wl-mk-watertaxi',
@@ -2199,9 +2167,7 @@ export const ALL_ROUTES: Route[] = [
     timeRestriction: 'after_3pm_only',
   },
 
-  // 
   // FROM: FORT WILDERNESS (FW)
-  // 
 
   {
     id: 'fw-mk-watertaxi',
@@ -2215,7 +2181,7 @@ export const ALL_ROUTES: Route[] = [
     legs: [{ mode: 'bus', from: 'FW', to: 'MK', rideMinutes: 17, accessible: true, tip: 'Take internal FW bus to Outpost Depot first. External bus drops at MK gates, not TTC. A real, always-available option.' }],
     totalRideMinutes: 17, totalRideRange: [17,37], tags: [],
   },
-{
+  {
     id: 'fw-hs-bus',
     from: 'FW', to: 'HS', name: 'Bus from Fort Wilderness',
     legs: [{ mode: 'bus', from: 'FW', to: 'HS', rideMinutes: 30, accessible: true, tip: 'Take internal FW bus to Outpost Depot, then external bus to HS.' }],
@@ -2253,9 +2219,7 @@ export const ALL_ROUTES: Route[] = [
     totalRideMinutes: 22, tags: [],
   },
 
-  // 
   // FROM: ANIMAL KINGDOM LODGE (AKL)
-  // 
 
   {
     id: 'akl-ak-bus',
@@ -2294,9 +2258,7 @@ export const ALL_ROUTES: Route[] = [
     totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
   },
 
-  // 
   // FROM: CORONADO SPRINGS (COR)
-  // 
 
   {
     id: 'cor-ak-bus',
@@ -2335,9 +2297,7 @@ export const ALL_ROUTES: Route[] = [
     totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
   },
 
-  // 
   // FROM: ALL-STAR RESORTS (ASMo / ASMu / ASS)
-  // 
 
   {
     id: 'asmo-mk-bus',
@@ -2442,9 +2402,7 @@ export const ALL_ROUTES: Route[] = [
     totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
   },
 
-  // 
   // FROM: PORT ORLEANS FRENCH QUARTER (POFQ) & RIVERSIDE (POR)
-  // 
 
   {
     id: 'pofq-ds-sassagoula',
@@ -2540,9 +2498,7 @@ export const ALL_ROUTES: Route[] = [
     totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
   },
 
-  // 
   // FROM: OLD KEY WEST (OKW) & SARATOGA SPRINGS (SS)
-  // 
 
   {
     id: 'okw-ds-sassagoula',

@@ -116,16 +116,30 @@ describe('route graph', () => {
     expect(long).toEqual([]);
   });
 
-  it('never routes a bus to or from the Transportation and Ticket Center', () => {
-    // There is no standing Disney bus station at the TTC. Buses serve it only
-    // while a monorail beam is down, which is modeled as a temporary bridge
-    // in liveStatus rather than as a route in the graph.
-    const ttcBuses = ALL_ROUTES.flatMap(r =>
+  it('only runs the Swan and Dolphin bus out of the Transportation and Ticket Center', () => {
+    // The TTC is not a general bus depot. The one route it runs serves the
+    // Swan and the Dolphin, which is why reaching those two from the Magic
+    // Kingdom side means riding to the TTC and catching a bus there. Any
+    // other TTC bus service is a temporary bridge covering a downed monorail
+    // beam, which lives in liveStatus rather than in the route graph.
+    const SWAN_DOLPHIN = new Set(['SW', 'DO']);
+    const offenders = ALL_ROUTES.flatMap(r =>
       r.legs
         .filter(l => l.mode === 'bus' && (l.from === 'TTC' || l.to === 'TTC'))
+        .filter(l => !SWAN_DOLPHIN.has(l.from === 'TTC' ? l.to : l.from))
         .map(l => `${r.id}: ${l.from} to ${l.to}`)
     );
-    expect(ttcBuses).toEqual([]);
+    expect(offenders).toEqual([]);
+  });
+
+  it('has no direct Magic Kingdom bus to the Swan or Dolphin', () => {
+    const direct = ALL_ROUTES.filter(r =>
+      r.legs.length === 1 &&
+      r.legs[0].mode === 'bus' &&
+      ((r.from === 'MK' && ['SW', 'DO'].includes(r.to)) ||
+       (r.to === 'MK' && ['SW', 'DO'].includes(r.from)))
+    ).map(r => r.id);
+    expect(direct).toEqual([]);
   });
 
   it('has a totalRideRange that brackets totalRideMinutes when present', () => {
