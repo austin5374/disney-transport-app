@@ -8,7 +8,7 @@ interface SectionProps {
   eyebrow?: string;
   /** Large heading inside the section. */
   title?: string;
-  /** Drop the horizontal padding — for full-bleed rows and lists. */
+  /** Drop the horizontal padding. For full-bleed rows and lists. */
   flush?: boolean;
   /** Suppress the gray gutter under this section (for stacked siblings). */
   last?: boolean;
@@ -16,7 +16,7 @@ interface SectionProps {
 }
 
 // The core layout unit. The reference app is a vertical stack of edge-to-edge
-// white blocks separated by a short gray gutter — no rounded cards, no 1px
+// white blocks separated by a short gray gutter. No rounded cards, no 1px
 // borders floating on a tint. Everything in this app renders inside one.
 export default function Section({
   children, eyebrow, title, flush, last, style,

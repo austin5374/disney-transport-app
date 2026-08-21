@@ -3,7 +3,7 @@ import { ALL_ROUTES } from '../data/routes';
 import { DESTINATION_MAP, GEOFENCE_ZONES } from '../data/destinations';
 import { lineForLeg } from '../data/lines';
 
-// ─── Geometry ────────────────────────────────────────────────────────────────
+// Geometry
 
 export function haversineDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
   const R = 6371000; // Earth radius in meters
@@ -16,7 +16,7 @@ export function haversineDistance(lat1: number, lng1: number, lat2: number, lng2
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-// ─── Journey cost model ──────────────────────────────────────────────────────
+// Journey cost model
 // A trip costs wait + ride + walk. Ranking on ride time alone made every paid
 // car ride look faster than transit, because a car has no headway and the old
 // model charged transit nothing for standing at the stop.
@@ -47,7 +47,7 @@ export function transferCount(route: Route): number {
   return Math.max(0, route.legs.filter(l => l.mode !== 'walk').length - 1);
 }
 
-// ─── Time rules engine ───────────────────────────────────────────────────────
+// Time rules engine
 
 // Destinations that share transport with an adjacent location and have no
 // route entries of their own. BoardWalk (the district) is served by BoardWalk
@@ -126,7 +126,7 @@ function directRoutes(from: string, to: string, timeOverride?: Date): Route[] {
   const hasRealExplicit = explicit.some(r => r.legs.every(l => l.mode !== 'minnie_van'));
   if (hasRealExplicit) return explicit;
 
-  // Explicit data for this pair is missing or paid-ride-only — check whether
+  // Explicit data for this pair is missing or paid-ride-only. Check whether
   // the reverse direction has a real route worth mirroring.
   const mirrored = ALL_ROUTES
     .filter(r => r.from === to && r.to === from && timeValid(r, timeOverride))
@@ -168,7 +168,7 @@ function synthesizeViaHub(from: string, to: string, timeOverride?: Date): Route[
       totalRideMinutes: legs.reduce((sum, l) => sum + l.rideMinutes, 0),
       tags: ['transfer'],
       name: nameForLegs(legs),
-      notes: `Transfer at ${destLabel(hub)}. Connection times are estimates — the wait for the second vehicle is included in the journey total.`,
+      notes: `Transfer at ${destLabel(hub)}. The wait for the second vehicle is included in the journey total.`,
     });
   }
   options.sort((x, y) => journeyMinutes(x) - journeyMinutes(y));
@@ -177,7 +177,7 @@ function synthesizeViaHub(from: string, to: string, timeOverride?: Date): Route[
   return options.slice(0, 2).filter((r, i) => i === 0 || journeyMinutes(r) <= journeyMinutes(best) + 20);
 }
 
-// ─── Paid rides ──────────────────────────────────────────────────────────────
+// Paid rides
 // A Minnie Van used to be a flat 18 minutes between any two points on
 // property, which made it the single fastest option on 60% of all pairs and
 // handed a paid car the "Fastest" badge on the app's own results screen.
@@ -241,7 +241,7 @@ export function getActiveRoutes(from: string, to: string, timeOverride?: Date): 
   return routes;
 }
 
-// ─── Filter + sort ───────────────────────────────────────────────────────────
+// Filter + sort
 
 const isPaid  = (r: Route) => r.legs.some(l => l.mode === 'minnie_van');
 const isWater = (r: Route) => r.tags.includes('water');
@@ -294,7 +294,7 @@ export function describeExclusions(all: Route[], filters: ActiveFilters): string
   return reasons;
 }
 
-// ─── Labels ──────────────────────────────────────────────────────────────────
+// Labels
 
 export function modeLabel(mode: TransportMode): string {
   const labels: Record<TransportMode, string> = {
@@ -316,7 +316,7 @@ export function modeLabel(mode: TransportMode): string {
   return labels[mode];
 }
 
-// ─── Time banner ─────────────────────────────────────────────────────────────
+// Time banner
 
 export function getTimeBannerMessage(timeOverride?: Date): string | null {
   const now = timeOverride ?? new Date();
@@ -329,7 +329,7 @@ export function getTimeBannerMessage(timeOverride?: Date): string | null {
   return null;
 }
 
-// ─── Geofence detection ──────────────────────────────────────────────────────
+// Geofence detection
 
 export function detectZone(lat: number, lng: number): string | null {
   let closest: { id: string; dist: number } | null = null;

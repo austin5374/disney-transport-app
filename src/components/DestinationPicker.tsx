@@ -79,7 +79,7 @@ export default function DestinationPicker({
     <AppModal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.flex}>
         <View style={[styles.container, { paddingTop: insets.top }]}>
-          {/* Flat white bar with a close control and a centered title — the
+          {/* Flat white bar with a close control and a centered title. The
               same header shape the reference app's Get Directions sheet uses. */}
           <View style={styles.header}>
             <TouchableOpacity

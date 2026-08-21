@@ -2,7 +2,7 @@ import { useSyncExternalStore } from 'react';
 import { Platform, AppState, AppStateStatus } from 'react-native';
 import { TRANSIT_LINES, TransitLine } from '../data/lines';
 
-// ─── Deterministic live-status engine ────────────────────────────────────────
+// Deterministic live-status engine
 //
 // Every value here is a pure function of (line, wall-clock time). Nothing is
 // stored, nothing is mutated on a timer, and no call to Math.random() appears
@@ -40,7 +40,7 @@ const MINUTE = 60_000;
 /** Disruptions are decided per half-hour window. */
 const EPISODE_MS = 30 * MINUTE;
 
-// ─── Hashing ─────────────────────────────────────────────────────────────────
+// Hashing
 // A stable string hash plus a splitmix-style mixer gives a uniform value in
 // [0, 1) for any key. Same key, same value, on every device and every reload.
 
@@ -67,7 +67,7 @@ const pick = <T,>(arr: T[], ...seed: (string | number)[]): T =>
 const between = (lo: number, hi: number, ...seed: (string | number)[]): number =>
   Math.round(lo + unit(...seed) * (hi - lo));
 
-// ─── Monorail headway model ──────────────────────────────────────────────────
+// Monorail headway model
 // Each beam runs a fixed number of trains, and headway follows from that count
 // rather than being a flat range.
 
@@ -88,7 +88,7 @@ function effectiveHeadway(line: TransitLine, trains: number | null): [number, nu
   return trains != null ? monorailHeadway(line.id, trains) : line.headwayMinutes;
 }
 
-// ─── Disruption copy ─────────────────────────────────────────────────────────
+// Disruption copy
 
 const DOWN_MESSAGES: Record<string, string[]> = {
   Monorail: [
@@ -129,10 +129,10 @@ const DELAY_MESSAGES: Record<string, string[]> = {
   ],
 };
 
-// ─── Coordinated weather ─────────────────────────────────────────────────────
+// Coordinated weather
 // Watercraft and the Skyliner are grouped by the body of water or cable system
 // they actually run on, so a storm cell takes out everything on that system
-// together — never the whole property's boats at once, and never one boat
+// together. Never the whole property's boats at once, and never one boat
 // alone while its dock-mates keep running. Because each group's outage is a
 // function of the same episode key, the coordination is structural rather than
 // something the code has to keep in sync.
@@ -165,7 +165,7 @@ const WEATHER_GROUPS: { key: string; lines: string[]; messages: string[]; chance
 ];
 
 const MONORAIL_LIGHTNING_STAGE1 =
-  'Suspended for lightning in the area — the EPCOT beam runs longest and is affected first';
+  'Suspended for lightning in the area. The EPCOT beam runs longest, so it goes first';
 const MONORAIL_LIGHTNING_STAGE2 =
   'Lightning in the area, all monorail beams suspended until it clears';
 
@@ -266,7 +266,7 @@ function activeDisruption(line: TransitLine, now: number): { detail: string; sta
   return null;
 }
 
-// ─── Arrivals ────────────────────────────────────────────────────────────────
+// Arrivals
 // A fixed schedule per line: departures land on a repeating interval with a
 // per-line phase offset, so countdowns tick down smoothly and never jump
 // backwards on a re-render.
@@ -284,7 +284,7 @@ function nextArrivals(line: TransitLine, headway: [number, number], now: number,
   });
 }
 
-// ─── Crowding ────────────────────────────────────────────────────────────────
+// Crowding
 
 function crowdBaseline(hour: number): CrowdLevel {
   if (hour >= 7 && hour < 11) return 'heavy';    // morning rush to parks
@@ -304,7 +304,7 @@ function crowdFor(lineId: string, now: number): CrowdLevel {
   return r < 0.7 ? 'light' : r < 0.95 ? 'moderate' : 'heavy';
 }
 
-// ─── Snapshot ────────────────────────────────────────────────────────────────
+// Snapshot
 
 function computeLine(line: TransitLine, now: number): LineStatus {
   const episode = Math.floor(now / EPISODE_MS);
@@ -426,7 +426,7 @@ function ensureRunning() {
   if (hasListeners()) startTicker();
 }
 
-// ─── Public API ──────────────────────────────────────────────────────────────
+// Public API
 
 export function getLiveStatus(): Record<string, LineStatus> {
   if (Object.keys(snapshot).length === 0) recompute();
@@ -453,7 +453,7 @@ export function subscribeLine(lineId: string, cb: () => void): () => void {
   };
 }
 
-/** Recompute now. With a clock-derived model there is nothing to re-roll —
+/** Recompute now. With a clock-derived model there is nothing to re-roll.
  *  this just advances countdowns to the current second. */
 export function refreshLiveStatus() {
   recompute();
@@ -475,9 +475,9 @@ export function getLastUpdated(): number {
   return lastUpdated;
 }
 
-// ─── Temporary bus bridges ───────────────────────────────────────────────────
+// Temporary bus bridges
 // Derived entirely from monorail/ferry status, not simulated lines of their
-// own — Disney brings up shuttle buses to cover a beam outage and pulls them
+// own. Disney brings up shuttle buses to cover a beam outage and pulls them
 // once the monorail is running again, so these exist only for as long as
 // their trigger condition holds.
 

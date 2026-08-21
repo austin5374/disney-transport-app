@@ -1,4 +1,4 @@
-// ─── Transport modes ────────────────────────────────────────────────────────
+// Transport modes
 export type TransportMode =
   | 'skyliner'
   | 'bus'
@@ -15,7 +15,7 @@ export type TransportMode =
   | 'walk'
   | 'minnie_van';
 
-// ─── Route tags ─────────────────────────────────────────────────────────────
+// Route tags
 export type RouteTag =
   | 'water'
   | 'walk_only'
@@ -24,7 +24,7 @@ export type RouteTag =
   | 'scenic'
   | 'time_restricted';
 
-// ─── Leg ────────────────────────────────────────────────────────────────────
+// Leg
 export interface Leg {
   mode: TransportMode;
   from: string;
@@ -32,14 +32,14 @@ export interface Leg {
   /** Time aboard the vehicle, excluding any wait or walk. */
   rideMinutes: number;
   /** Walk TO this leg, before boarding. Rendered by StepCard and counted in
-   *  the journey total — previously stored on 55 legs and displayed nowhere,
+   *  the journey total. Previously stored on 55 legs and displayed nowhere,
    *  which is why some route totals did not add up from their own steps. */
   walkMinutes?: number;
   tip?: string;
   accessible: boolean;
 }
 
-// ─── Route ──────────────────────────────────────────────────────────────────
+// Route
 export interface Route {
   id: string;
   from: string;
@@ -53,7 +53,7 @@ export interface Route {
   name: string; // human-readable name for the card
 }
 
-// ─── Filters ────────────────────────────────────────────────────────────────
+// Filters
 // Sort is one three-way choice rather than two mutually-exclusive booleans
 // plus a "fastest first" switch whose off-state changed nothing.
 export type SortMode = 'fastest' | 'transfers' | 'scenic';
@@ -66,7 +66,7 @@ export interface ActiveFilters {
   accessible: boolean;
 }
 
-// ─── Geofence zone ──────────────────────────────────────────────────────────
+// Geofence zone
 export interface GeofenceZone {
   id: string;
   label: string;
@@ -75,12 +75,12 @@ export interface GeofenceZone {
   radiusMeters: number;
 }
 
-// ─── Destination ────────────────────────────────────────────────────────────
+// Destination
 export interface Destination {
   id: string;
   label: string;
   group: DestinationGroup;
-  abbrev: string; // 2–3 char for journey diagram
+  abbrev: string; // 2-3 char for journey diagram
   /** Approximate center of the property, used to estimate drive time for the
    *  paid-ride option. Accurate to roughly a block, which is all a duration
    *  estimate needs. */
@@ -100,7 +100,7 @@ export type DestinationGroup =
   | 'Value Resorts'
   | 'DVC / Other';
 
-// ─── Navigation param types ─────────────────────────────────────────────────
+// Navigation param types
 export type RootStackParamList = {
   /** `reset` is a timestamp bumped by the tab bar's center action to clear
    *  the planner back to a blank form. */

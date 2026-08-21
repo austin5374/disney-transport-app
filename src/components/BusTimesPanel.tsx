@@ -29,7 +29,7 @@ function stopOffset(resortId: string, lineId: string, bucket: number): number {
   let h = 0;
   const key = `${resortId}|${lineId}|${bucket}`;
   for (let i = 0; i < key.length; i++) h = (h * 31 + key.charCodeAt(i)) >>> 0;
-  return h % 14; // 0–13 min offset within the ~15–20 min headway
+  return h % 14; // 0-13 min offset within the ~15-20 min headway
 }
 
 export default function BusTimesPanel() {

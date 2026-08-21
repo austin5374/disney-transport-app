@@ -104,6 +104,29 @@ describe('route graph', () => {
     }
   });
 
+  it('keeps every bus ride at or under 30 minutes', () => {
+    // Nothing on property is a longer bus ride than this. The data used to
+    // carry 105 bus legs above 30 minutes, topping out at 47.
+    const long = ALL_ROUTES.flatMap(r =>
+      r.legs
+        .filter(l => l.mode === 'bus' && l.rideMinutes > 30)
+        .map(l => `${r.id}: ${l.from} to ${l.to} = ${l.rideMinutes} min`)
+    );
+    expect(long).toEqual([]);
+  });
+
+  it('never routes a bus to or from the Transportation and Ticket Center', () => {
+    // There is no standing Disney bus station at the TTC. Buses serve it only
+    // while a monorail beam is down, which is modeled as a temporary bridge
+    // in liveStatus rather than as a route in the graph.
+    const ttcBuses = ALL_ROUTES.flatMap(r =>
+      r.legs
+        .filter(l => l.mode === 'bus' && (l.from === 'TTC' || l.to === 'TTC'))
+        .map(l => `${r.id}: ${l.from} to ${l.to}`)
+    );
+    expect(ttcBuses).toEqual([]);
+  });
+
   it('has a totalRideRange that brackets totalRideMinutes when present', () => {
     for (const r of ALL_ROUTES) {
       if (!r.totalRideRange) continue;

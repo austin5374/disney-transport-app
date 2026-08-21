@@ -19,7 +19,7 @@ function departureText(status: LineStatus, line: TransitLine): string {
     return status.status === 'delayed' ? 'Brief pauses' : 'Continuous';
   }
   if (status.nextArrivals.length === 0) {
-    return `Every ${status.headwayMinutes[0]}–${status.headwayMinutes[1]} min`;
+    return `Every ${status.headwayMinutes[0]}-${status.headwayMinutes[1]} min`;
   }
   const [a, b] = status.nextArrivals;
   const first = a === 0 ? 'Now' : `${a} min`;

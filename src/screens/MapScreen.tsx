@@ -86,7 +86,7 @@ function formatEta(minutes: number): string {
 }
 
 // SvgText does not inherit the app's font on web, so without an explicit
-// family every label on this map rendered in Times New Roman — a serif face
+// family every label on this map rendered in Times New Roman. A serif face
 // in the middle of an otherwise sans-serif app.
 function MapLabel({
   x, y, anchor, size, weight, fill, children,
@@ -258,7 +258,7 @@ export default function MapScreen() {
                   ? 'Boarding continuously'
                   : selectedStatus.nextArrivals.length
                     ? `Next departure in ${selectedStatus.nextArrivals[0]} min`
-                    : `Every ${selectedStatus.headwayMinutes[0]}–${selectedStatus.headwayMinutes[1]} min`)}
+                    : `Every ${selectedStatus.headwayMinutes[0]}-${selectedStatus.headwayMinutes[1]} min`)}
               {selectedStatus.status === 'down' && selectedStatus.etaMinutes
                 ? ` · about ${formatEta(selectedStatus.etaMinutes)} to restore`
                 : ''}

@@ -1,101 +1,84 @@
-# ParkWays
+# Walt Disney World transportation planner
 
-A trip planner for Walt Disney World transportation — monorails, the Skyliner, boats, and buses. Pick where you are and where you're going; it routes you across the property and shows what's running.
+Pick where you are and where you're going, and it tells you how to get there on Disney transportation: monorails, the Skyliner, boats, and buses.
 
-**[Live demo →](https://disney-transport-app.vercel.app)**
+Live demo: https://disney-transport-app.vercel.app
 
-Built with Expo + React Native (TypeScript), running on iOS, Android, and the web from one codebase.
-
----
+Built with Expo and React Native in TypeScript, so the same code runs on iOS, Android, and in a browser.
 
 ## What it does
 
-**Routes across the whole network.** 33 destinations, 400+ hand-authored route entries covering every park, resort, water park, and Disney Springs. Where no direct route exists, the planner composes one through a transfer hub the way a guest actually would — bus to a park, then transfer.
+You pick two places out of 33 (every park, every resort, both water parks, Disney Springs) and it gives you the ways to get between them. There are about 385 routes written out by hand. If two places have no direct connection, it builds a trip through a transfer point instead, which is what you'd actually end up doing.
 
-**Ranks by the journey, not the ride.** A trip costs *wait + time aboard + walking*. Expected wait comes from each line's real headway (half the mean interval, since you arrive at a random moment); walking legs and transfer walks are counted; the detail screen breaks the total back into its parts so the headline number reconciles with the steps below it.
+Trips are sorted by how long the whole thing takes, not just the time you're on the vehicle. That means it counts the wait too. A bus that shows up every 20 minutes costs you about 10 minutes of standing there on average, and a trip that ignores that isn't telling you the truth. The detail page splits the total back out into wait, ride, and walking so you can see where the time goes.
 
-This matters more than it sounds. An earlier version ranked on time aboard alone, which charged transit nothing for standing at the stop and made a paid Minnie Van the single fastest option on 60% of all pairs — the app's own headline advice was "call a car." Paid rides are now estimated from real distance and grouped separately, below transit.
+Some routes only run at certain times. Park to park buses don't start until 10am, the Blue Flag boat starts at 3pm, and Disney Springs buses from the parks start at 4pm. The planner checks the clock. If you ask for Magic Kingdom to Hollywood Studios at 8am it won't offer you a bus that isn't running yet, it'll route you through a monorail resort instead.
 
-**Time-of-day rules.** Park-to-park buses don't run before 10 AM, Blue Flag launches start at 3 PM, and Disney Springs park service starts at 4 PM. The planner checks the clock and swaps in the documented workaround — before opening, Magic Kingdom to Hollywood Studios routes you through a monorail resort instead of offering a bus that isn't running yet.
+There's also a status board for every line and a schematic map you can tap.
 
-**A live status board that doesn't lie to you on reload.** Every monorail beam, Skyliner line, boat route, and bus group carries a service level, next departures, and crowding. Disruptions are coordinated by system: a storm cell takes every Seven Seas Lagoon boat at once, never one boat while its dock-mates keep running, and monorail lightning escalates from the EPCOT beam to all three.
+## About the "live" data
 
-**A schematic transit map.** SVG, hand-placed, with live line status. Select a line to highlight it.
+Disney doesn't have a public API for transportation, so none of the status data is real. I made it up.
 
----
+The first version of this used `Math.random()` on a timer, and it had an obvious problem: refreshing the page rerolled everything. You could see the Skyliner shut down for lightning, hit reload, and it'd be running again. That's not a small bug, it makes the whole thing feel fake.
 
-## The interesting part: a simulation with no randomness in it
+So I rewrote it. Now every line's status is worked out from the current time and nothing else. There's no stored state and no `Math.random()` anywhere in `src/utils/liveStatus.ts`. It hashes the line ID together with a 30 minute time window to decide whether that line is having problems, and how long for. Departure times are a fixed schedule with an offset per line, so the countdowns tick down smoothly instead of jumping around.
 
-Disney publishes no transportation API, so the live data is modeled. The naive way to do that is `Math.random()` on a timer — which is what this app did first, and it had a tell: refreshing the browser re-rolled the whole board. You could watch the Skyliner get suspended for lightning, hit reload, and find it running.
+Because of that:
 
-The engine is now a **pure function of the wall clock**. There is no stored state, nothing mutates on a tick, and `src/utils/liveStatus.ts` contains no call to `Math.random()`.
+- Reloading gives you the same board
+- Everyone sees the same thing at the same time
+- I can freeze the clock in a test and check exactly what it does
 
-Each line's status is derived by hashing `(lineId, 30-minute episode index)` through a splitmix mixer into a uniform value, then reading a disruption window out of it. Departure boards are a fixed schedule with a per-line phase offset, so countdowns fall smoothly and never jump backwards. Coordinated weather works by hashing the *group* key rather than the line key, which makes the coordination structural — there's no shared mutable state for the code to keep in sync.
-
-What that buys:
-
-- Reload the page and the board is identical.
-- Every device sees the same thing at the same moment.
-- The whole engine is testable: freeze `Date.now()`, assert exact behavior.
-- No persistence layer, no seeding ceremony, no cleanup.
-
-The interval that remains exists only to re-render countdowns, and it pauses when the tab is backgrounded.
-
----
+Storms take out a whole group of boats at once instead of one random boat while the ones next to it keep going, because the outage is decided per body of water rather than per line. Monorail lightning starts with the EPCOT beam and can spread to all three.
 
 ## Running it
 
-```bash
+```
 git clone https://github.com/austin5374/disney-transport-app.git
 cd disney-transport-app
-npm install --legacy-peer-deps   # some peer ranges lag React 19
+npm install --legacy-peer-deps
 
-npx expo start --web             # browser
-npx expo start                   # scan the QR code with Expo Go
+npx expo start --web    # opens in a browser
+npx expo start          # scan the QR code with Expo Go
 ```
 
-```bash
-npm test         # 45 tests
+You need `--legacy-peer-deps` because a few packages haven't caught up to React 19 yet. It works fine, npm just complains.
+
+```
+npm test
 npm run typecheck
 ```
 
----
-
 ## Tests
 
-The route graph is 400+ entries written by hand, so it gets a validation suite rather than trust. Every check in `src/__tests__/routeData.test.ts` guards a defect that was actually present at some point:
+47 of them. Most are checks on the route data, because it's 385 entries typed out by hand and I didn't trust it. Writing the tests turned up real problems:
 
-- Totals that disagreed with the sum of their own legs (5 routes)
-- Bus legs that resolved to no transit line at all (22 legs)
-- A field carried on every leg of every route and read by nothing (485 instances)
+- 5 routes where the total time didn't match the sum of their own legs
+- 22 bus legs that didn't match up to any transit line
+- A field sitting on every leg of every route that nothing ever read (485 of them)
 
-`routing.test.ts` covers the cost model and the filters, including the invariant that a paid ride never outranks transit on any of the 1,056 ordered pairs. `liveStatus.test.ts` pins the clock and asserts the board is byte-identical across fresh module loads.
+The rest cover the routing logic (including a check that a paid Minnie Van never gets ranked above actual Disney transportation on any of the 1,056 possible trips) and the status simulation, where the clock gets frozen and the board has to come out identical every time.
 
----
-
-## Layout
+## Files
 
 ```
 src/
-  screens/       Planner, Results, Detail, Status, Map, About
+  screens/       the pages
   components/
-    ui/          Section, PillButton, LinkAction, ActionRow, StatBlock, OutlinedBox
-  data/          transit lines, destinations, route graph
+    ui/          buttons, sections, dividers, that kind of thing
+  data/          transit lines, places, route data
   utils/
-    theme.ts        design tokens — 5 type roles, one accent color, 4pt spacing
-    routing.ts      journey cost model, transfer synthesis, filters
-    liveStatus.ts   the clock-derived simulation
+    theme.ts        colors, type sizes, spacing
+    routing.ts      works out trips and sorts them
+    liveStatus.ts   the fake status data
   __tests__/
 ```
 
-The design system is five type roles and three weights. Anything needing a size off that ramp is a design mistake rather than a missing token — the previous build had 17 distinct font sizes, including 10.5, 11.5, 12.5, and 13.5.
-
----
-
 ## Disclaimer
 
-Service levels, departure countdowns, and crowd levels are modeled, not live operational data. Route structure — which lines exist, where they stop, how long a ride takes — follows the real Walt Disney World network.
+The status, wait times, and crowd levels are made up. The route information is based on the real Walt Disney World transportation system.
 
-ParkWays is an independent project, not affiliated with, endorsed by, or sponsored by The Walt Disney Company. Park, resort, and attraction names are trademarks of their respective owners and appear here for identification only.
+This is a personal project. It's not affiliated with or endorsed by Disney. Park and resort names are used so you know what the app is talking about.
 
-Built by [Austin Vodrazka](https://github.com/austin5374).
+Made by [Austin Vodrazka](https://github.com/austin5374).

@@ -1,6 +1,6 @@
 import { TransportMode } from '../types';
 
-// ─── Live-status transit lines ──────────────────────────────────────────────
+// Live-status transit lines
 // Modeled on the real WDW network: monorail lines, Skyliner lines (hubbed at
 // Caribbean Beach), watercraft routes (flag launches, ferry, Friendship
 // boats, Sassagoula), and park-level bus service groups.
@@ -14,13 +14,13 @@ export interface TransitLine {
   name: string;          // e.g. "Monorail: Express Line"
   shortName: string;     // e.g. "Express"
   stations: string[];    // display names in order
-  headwayMinutes: [number, number]; // typical min–max between departures
+  headwayMinutes: [number, number]; // typical min-max between departures
   serviceHours: string;  // display only
   color: string;         // line color for map + cards
 }
 
 export const TRANSIT_LINES: TransitLine[] = [
-  // ── Monorail ──────────────────────────────────────────────────────────────
+  // Monorail
   {
     id: 'mono-express',
     group: 'Monorail', mode: 'monorail_express',
@@ -28,7 +28,7 @@ export const TRANSIT_LINES: TransitLine[] = [
     shortName: 'Express',
     stations: ['Transportation & Ticket Center', 'Magic Kingdom'],
     headwayMinutes: [4, 7],
-    serviceHours: '30 min before park open – 1 hr after close',
+    serviceHours: '30 min before park open to 1 hr after close',
     color: '#E8554D',
   },
   {
@@ -38,7 +38,7 @@ export const TRANSIT_LINES: TransitLine[] = [
     shortName: 'Resort Loop',
     stations: ['Transportation & Ticket Center', 'Polynesian Village', 'Grand Floridian', 'Magic Kingdom', 'Contemporary'],
     headwayMinutes: [5, 9],
-    serviceHours: '30 min before park open – 1 hr after close',
+    serviceHours: '30 min before park open to 1 hr after close',
     color: '#F2A93B',
   },
   {
@@ -48,11 +48,11 @@ export const TRANSIT_LINES: TransitLine[] = [
     shortName: 'EPCOT',
     stations: ['Transportation & Ticket Center', 'EPCOT'],
     headwayMinutes: [6, 10],
-    serviceHours: '30 min before park open – 1 hr after close',
+    serviceHours: '30 min before park open to 1 hr after close',
     color: '#4C9F70',
   },
 
-  // ── Skyliner (hub: Caribbean Beach) ──────────────────────────────────────
+  // Skyliner (hub: Caribbean Beach)
   {
     id: 'sky-epcot',
     group: 'Skyliner', mode: 'skyliner',
@@ -60,7 +60,7 @@ export const TRANSIT_LINES: TransitLine[] = [
     shortName: 'EPCOT Line',
     stations: ['Caribbean Beach', 'Riviera Resort', 'EPCOT (International Gateway)'],
     headwayMinutes: [0, 1], // continuous loading
-    serviceHours: '30 min before earliest park open – park close',
+    serviceHours: '30 min before earliest park open to park close',
     color: '#1E96A8',
   },
   {
@@ -70,7 +70,7 @@ export const TRANSIT_LINES: TransitLine[] = [
     shortName: 'Studios Line',
     stations: ['Caribbean Beach', 'Hollywood Studios'],
     headwayMinutes: [0, 1],
-    serviceHours: '1 hr before park open – park close',
+    serviceHours: '1 hr before park open to park close',
     color: '#D97B29',
   },
   {
@@ -80,11 +80,11 @@ export const TRANSIT_LINES: TransitLine[] = [
     shortName: 'Pop / AoA Line',
     stations: ['Caribbean Beach', 'Pop Century & Art of Animation'],
     headwayMinutes: [0, 1],
-    serviceHours: '1 hr before earliest park open – park close',
+    serviceHours: '1 hr before earliest park open to park close',
     color: '#5A9AE6',
   },
 
-  // ── Boats ─────────────────────────────────────────────────────────────────
+  // Boats
   {
     id: 'boat-ferry',
     group: 'Boats', mode: 'ferry_ttc_mk',
@@ -92,7 +92,7 @@ export const TRANSIT_LINES: TransitLine[] = [
     shortName: 'MK Ferry',
     stations: ['Transportation & Ticket Center', 'Magic Kingdom'],
     headwayMinutes: [8, 12],
-    serviceHours: 'Park open – 1 hr after close',
+    serviceHours: 'Park open to 1 hr after close',
     color: '#378ADD',
   },
   {
@@ -102,7 +102,7 @@ export const TRANSIT_LINES: TransitLine[] = [
     shortName: 'Gold Flag',
     stations: ['Magic Kingdom', 'Grand Floridian', 'Polynesian Village'],
     headwayMinutes: [15, 25],
-    serviceHours: '30 min before park open – 90 min after close',
+    serviceHours: '30 min before park open to 90 min after close',
     color: '#D4A017',
   },
   {
@@ -112,7 +112,7 @@ export const TRANSIT_LINES: TransitLine[] = [
     shortName: 'Red Flag',
     stations: ['Magic Kingdom', 'Wilderness Lodge'],
     headwayMinutes: [15, 25],
-    serviceHours: '30 min before park open – 90 min after close',
+    serviceHours: '30 min before park open to 90 min after close',
     color: '#C94F42',
   },
   {
@@ -122,7 +122,7 @@ export const TRANSIT_LINES: TransitLine[] = [
     shortName: 'Green Flag',
     stations: ['Magic Kingdom', 'Fort Wilderness'],
     headwayMinutes: [15, 25],
-    serviceHours: '30 min before park open – 90 min after close',
+    serviceHours: '30 min before park open to 90 min after close',
     color: '#4C9F70',
   },
   {
@@ -132,7 +132,7 @@ export const TRANSIT_LINES: TransitLine[] = [
     shortName: 'Blue Flag',
     stations: ['Wilderness Lodge', 'Fort Wilderness', 'Contemporary'],
     headwayMinutes: [20, 30],
-    serviceHours: '3:00 PM – 10:45 PM',
+    serviceHours: '3:00 PM to 10:45 PM',
     color: '#4A7FD4',
   },
   {
@@ -142,7 +142,7 @@ export const TRANSIT_LINES: TransitLine[] = [
     shortName: 'Friendship',
     stations: ['EPCOT (International Gateway)', 'BoardWalk', 'Yacht & Beach Club', 'Swan & Dolphin', 'Hollywood Studios'],
     headwayMinutes: [15, 20],
-    serviceHours: 'Park open – 1 hr after close',
+    serviceHours: 'Park open to 1 hr after close',
     color: '#2E9E8F',
   },
   {
@@ -152,11 +152,11 @@ export const TRANSIT_LINES: TransitLine[] = [
     shortName: 'Sassagoula',
     stations: ['Port Orleans French Quarter', 'Port Orleans Riverside', 'Old Key West', 'Saratoga Springs', 'Disney Springs'],
     headwayMinutes: [15, 20],
-    serviceHours: '10:30 AM – 11:30 PM',
+    serviceHours: '10:30 AM to 11:30 PM',
     color: '#8C5A3C',
   },
 
-  // ── Bus service groups ────────────────────────────────────────────────────
+  // Bus service groups
   {
     id: 'bus-mk',
     group: 'Buses', mode: 'bus',
@@ -164,7 +164,7 @@ export const TRANSIT_LINES: TransitLine[] = [
     shortName: 'MK Buses',
     stations: ['All resorts', 'Magic Kingdom'],
     headwayMinutes: [15, 20],
-    serviceHours: '45 min before park open – 1 hr after close',
+    serviceHours: '45 min before park open to 1 hr after close',
     color: '#639922',
   },
   {
@@ -174,7 +174,7 @@ export const TRANSIT_LINES: TransitLine[] = [
     shortName: 'EPCOT Buses',
     stations: ['All resorts', 'EPCOT'],
     headwayMinutes: [15, 20],
-    serviceHours: '45 min before park open – 1 hr after close',
+    serviceHours: '45 min before park open to 1 hr after close',
     color: '#639922',
   },
   {
@@ -184,7 +184,7 @@ export const TRANSIT_LINES: TransitLine[] = [
     shortName: 'Studios Buses',
     stations: ['All resorts', 'Hollywood Studios'],
     headwayMinutes: [15, 20],
-    serviceHours: '45 min before park open – 1 hr after close',
+    serviceHours: '45 min before park open to 1 hr after close',
     color: '#639922',
   },
   {
@@ -194,7 +194,7 @@ export const TRANSIT_LINES: TransitLine[] = [
     shortName: 'AK Buses',
     stations: ['All resorts', 'Animal Kingdom'],
     headwayMinutes: [15, 20],
-    serviceHours: '45 min before park open – 1 hr after close',
+    serviceHours: '45 min before park open to 1 hr after close',
     color: '#639922',
   },
   {
@@ -214,7 +214,7 @@ export const TRANSIT_LINES: TransitLine[] = [
     shortName: 'Water Park Buses',
     stations: ['All resorts', 'Typhoon Lagoon & Blizzard Beach'],
     headwayMinutes: [20, 30],
-    serviceHours: 'Water park open – close',
+    serviceHours: 'Water park open to close',
     color: '#639922',
   },
   {
@@ -222,7 +222,7 @@ export const TRANSIT_LINES: TransitLine[] = [
     group: 'Buses', mode: 'bus',
     name: 'Resort Buses: Resort Connections',
     shortName: 'Resort Buses',
-    stations: ['Resort to resort', 'Transportation & Ticket Center'],
+    stations: ['Fort Wilderness', 'Wilderness Lodge', 'BoardWalk Inn', 'Caribbean Beach'],
     headwayMinutes: [20, 30],
     serviceHours: 'Limited service, longest waits on property',
     color: '#639922',

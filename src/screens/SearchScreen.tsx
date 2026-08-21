@@ -12,7 +12,6 @@ import { TRANSIT_LINES } from '../data/lines';
 import { useLiveStatus } from '../utils/liveStatus';
 import AppHeader from '../components/AppHeader';
 import TimeBanner from '../components/TimeBanner';
-import FilterPills from '../components/FilterPills';
 import DestinationPicker from '../components/DestinationPicker';
 import AppModal from '../components/AppModal';
 import InfoSheet from '../components/InfoSheet';
@@ -79,7 +78,7 @@ export default function SearchScreen({ navigation, route: navRoute }: Props) {
 
   // Only ever runs from an explicit tap. Firing a permission prompt on first
   // paint, before the user has done anything, is the fastest way to get a
-  // permanent block — and when it was denied the old screen showed nothing at
+  // permanent block. And when it was denied the old screen showed nothing at
   // all, leaving the origin field stuck on its placeholder forever.
   const detectLocation = async () => {
     setLocationStatus('checking');
@@ -145,10 +144,10 @@ export default function SearchScreen({ navigation, route: navRoute }: Props) {
 
   return (
     <View style={styles.screen}>
-      <AppHeader title={Brand.name} subtitle={Brand.tagline} />
+      <AppHeader title={Brand.title} />
 
       <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
-        {/* Trip form — underlined fields with floating labels and a swap
+        {/* Trip form. Underlined fields with floating labels and a swap
             control, the shape the reference app's Get Directions sheet uses. */}
         <View style={styles.tripSection}>
           <View style={styles.tripBody}>
@@ -238,21 +237,13 @@ export default function SearchScreen({ navigation, route: navRoute }: Props) {
               onPress={() => { if (from && to) search(from, to); }}
               style={styles.submitBtn}
             />
-            {!ready && (
-              <Text style={styles.submitHint}>
-                {!from && !to ? 'Choose where you are and where you are going.'
-                  : !from ? 'Choose a starting point.'
-                  : 'Choose a destination.'}
-              </Text>
-            )}
           </View>
         </View>
 
-        <FilterPills filters={filters} onChange={setFilters} />
         <TimeBanner timeOverride={timeOverride} onTimeChange={setTimeOverride} />
         <View style={styles.gutterGap} />
 
-        {/* Live advisories — the planner is the app's landing tab, and a
+        {/* Live advisories. The planner is the app's landing tab, and a
             disruption is the one thing worth interrupting it for. */}
         {advisories.length > 0 && (
           <Section eyebrow="Service Advisories" flush>
@@ -464,12 +455,6 @@ const styles = StyleSheet.create({
   },
   submitBtn: {
     alignSelf: 'stretch',
-  },
-  submitHint: {
-    ...Type.caption,
-    color: Colors.textSecondary,
-    textAlign: 'center',
-    marginTop: Spacing.sm,
   },
   gutterGap: {
     height: 8,

@@ -10,7 +10,7 @@ interface TemporaryBridgeCardProps {
 
 // A stopgap bus brought up to cover an active outage, not a fixed route.
 // Amber is the app's disruption color and this is a disruption, so the tag
-// earns it here — unlike the old palette, which used the same warm accent for
+// earns it here. Unlike the old palette, which used the same warm accent for
 // ordinary badges and links.
 export default function TemporaryBridgeCard({ bridge }: TemporaryBridgeCardProps) {
   return (

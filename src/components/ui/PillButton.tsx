@@ -5,7 +5,7 @@ import { Colors, Type, Spacing, Radius } from '../../utils/theme';
 interface PillButtonProps {
   label: string;
   onPress: () => void;
-  /** Filled blue instead of outlined — for the single strongest action on a screen. */
+  /** Filled blue instead of outlined. For the single strongest action on a screen. */
   solid?: boolean;
   disabled?: boolean;
   style?: ViewStyle;

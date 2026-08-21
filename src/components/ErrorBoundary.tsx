@@ -16,7 +16,7 @@ export default class ErrorBoundary extends React.Component<Props, State> {
   }
 
   componentDidCatch(error: Error) {
-    console.error('[ParkWays] Unhandled error:', error);
+    console.error('Unhandled error:', error);
   }
 
   reset = () => {
@@ -34,7 +34,7 @@ export default class ErrorBoundary extends React.Component<Props, State> {
       <View style={styles.screen}>
         <Text style={styles.title}>Something went wrong</Text>
         <Text style={styles.body}>
-          ParkWays hit an unexpected error and could not finish loading this screen.
+          The app hit an unexpected error and could not finish loading this screen.
         </Text>
         <TouchableOpacity style={styles.button} onPress={this.reset} activeOpacity={0.85}>
           <Text style={styles.buttonText}>Reload</Text>

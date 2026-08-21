@@ -10,7 +10,7 @@ const FEATURES: { icon: keyof typeof Ionicons.glyphMap; title: string; body: str
   {
     icon: 'navigate-outline',
     title: 'Trip Planner',
-    body: 'Point-to-point routing between every park, resort, and Disney Springs, ranked by the whole journey — typical wait, time aboard, and walking — not just time on the vehicle.',
+    body: 'Point to point routing between every park, resort, and Disney Springs. Trips are ranked by the whole journey: typical wait, time aboard, and walking, not just time on the vehicle.',
   },
   {
     icon: 'alert-circle-outline',
@@ -27,7 +27,7 @@ const FEATURES: { icon: keyof typeof Ionicons.glyphMap; title: string; body: str
 export default function MoreScreen() {
   return (
     <View style={styles.screen}>
-      <AppHeader title="About" subtitle={Brand.tagline} />
+      <AppHeader title="About" subtitle={Brand.title} />
 
       <ScrollView contentContainerStyle={styles.scroll}>
         <Section eyebrow="What's Inside" flush>
@@ -51,7 +51,7 @@ export default function MoreScreen() {
             of "this is not real" in five separate spots across the UI. */}
         <Section eyebrow="About This App">
           <Text style={styles.body}>
-            {Brand.name} models the Walt Disney World transportation network: which lines
+            This app models the Walt Disney World transportation network: which lines
             exist, where they stop, how long a ride takes, and which routes run at which
             times of day. That structure follows the real network.
           </Text>
@@ -61,7 +61,7 @@ export default function MoreScreen() {
             figure here reflects live operations.
           </Text>
           <Text style={styles.body}>
-            {Brand.name} is an independent project. It is not affiliated with, endorsed by,
+            This is an independent fan project. It is not affiliated with, endorsed by,
             or sponsored by The Walt Disney Company. Park, resort, and attraction names are
             trademarks of their respective owners and appear here for identification only.
           </Text>

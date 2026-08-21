@@ -1,12 +1,12 @@
 {
   "expo": {
-    "name": "ParkWays",
-    "slug": "parkways-wdw-transit",
+    "name": "Walt Disney World Transportation",
+    "slug": "disney-transport-app",
     "version": "2.1.0",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "icon": "./assets/icon.png",
-    "scheme": "parkways",
+    "scheme": "wdwtransport",
     "primaryColor": "#0B79D0",
     "splash": {
       "image": "./assets/splash.png",
@@ -15,13 +15,13 @@
     },
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.parkways.wdwtransit",
+      "bundleIdentifier": "com.austinvodrazka.wdwtransport",
       "infoPlist": {
         "NSLocationWhenInUseUsageDescription": "Used to detect which park or resort area you are currently at."
       }
     },
     "android": {
-      "package": "com.parkways.wdwtransit",
+      "package": "com.austinvodrazka.wdwtransport",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#0E5490"
@@ -35,8 +35,8 @@
       "bundler": "metro",
       "output": "single",
       "favicon": "./assets/favicon.png",
-      "name": "ParkWays",
-      "shortName": "ParkWays",
+      "name": "Walt Disney World Transportation",
+      "shortName": "WDW Transport",
       "description": "Plan a trip across Walt Disney World transportation: monorails, the Skyliner, boats, and buses. Routes ranked by total journey time, including the wait.",
       "themeColor": "#0B79D0",
       "backgroundColor": "#0E5490"

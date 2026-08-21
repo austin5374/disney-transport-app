@@ -21,13 +21,13 @@ const FRAME_MAX_HEIGHT = 900;
 const FRAME_MIN_VIEWPORT = 720;
 
 // On web, a bare mobile layout stretched across a desktop window reads as
-// unfinished — a phone-width column glued to the corner of an empty page.
+// unfinished. A phone-width column glued to the corner of an empty page.
 // This centers the app in a fixed, phone-proportioned frame on wide
 // viewports only; phones and narrow browser windows are untouched.
 //
 // The frame's own View always carries nativeID={MODAL_HOST_ID} (even when
 // unframed) so AppModal has a DOM node to portal into that's clipped to the
-// app's own bounds instead of the whole browser window — see AppModal.tsx.
+// app's own bounds instead of the whole browser window. See AppModal.tsx.
 function WebFrame({ children }: { children: React.ReactNode }) {
   const { width, height } = useWindowDimensions();
 

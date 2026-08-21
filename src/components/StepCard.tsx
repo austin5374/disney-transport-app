@@ -10,7 +10,7 @@ import ModeGlyph from './ModeGlyph';
 
 const placeLabel = (id: string) => DESTINATION_MAP[id]?.label ?? id;
 
-// What to call the physical spot you'd walk to for each mode — used by the
+// What to call the physical spot you'd walk to for each mode. Used by the
 // "walking directions" prompt below. Walking/rideshare legs get none: you're
 // either already walking, or waiting for a car, not heading to a station.
 function boardingPointNoun(mode: string): string | null {

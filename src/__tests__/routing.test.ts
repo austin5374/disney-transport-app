@@ -17,7 +17,7 @@ const at = (hour: number) => {
 const isPaid = (r: Route) => r.legs.some(l => l.mode === 'minnie_van');
 
 describe('journey cost model', () => {
-  it('counts wait, ride, and walk — not ride alone', () => {
+  it('counts wait, ride, and walk, not ride alone', () => {
     const [r] = getActiveRoutes('POLY', 'MK', at(11));
     const ride = r.legs.reduce((s, l) => s + l.rideMinutes, 0);
     expect(journeyMinutes(r)).toBeGreaterThanOrEqual(ride);
@@ -198,7 +198,7 @@ describe('time-of-day rules', () => {
     const ids = (hour: number) =>
       getActiveRoutes('MK', 'HS', at(hour)).map(r => r.id);
 
-    // Before opening, the only Disney option is the documented workaround —
+    // Before opening, the only Disney option is the documented workaround.
     // walk to a monorail resort and pick the bus up there.
     expect(ids(8)).toContain('mk-hs-before10');
     expect(ids(8)).not.toContain('mk-hs-bus');

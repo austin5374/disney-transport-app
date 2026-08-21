@@ -168,8 +168,8 @@ export default function StatusScreen() {
 
         <Section last>
           <Text style={styles.footnote}>
-            Service levels, departure estimates, and crowd levels in ParkWays are modeled,
-            not live operational data. Not affiliated with The Walt Disney Company.
+            Service levels, departure estimates, and crowd levels here are modeled, not live
+            operational data. Not affiliated with The Walt Disney Company.
           </Text>
         </Section>
       </ScrollView>

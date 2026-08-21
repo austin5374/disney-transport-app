@@ -1,18 +1,18 @@
-// ─── Design tokens ───────────────────────────────────────────────────────────
+// Design tokens
 // Modeled on the My Disney Experience app: near-neutral gray page ground,
 // full-bleed white sections, near-black navy text, and exactly one bright
-// interactive blue. No gold — the reference app has none, and using it as an
+// interactive blue. No gold. The reference app has none, and using it as an
 // accent was the loudest "this isn't the same app" signal in the old palette.
 
 export const Colors = {
-  // Interactive blue — links, buttons, active states, selected chips
+  // Interactive blue. Links, buttons, active states, selected chips
   primaryBlue:   '#0B79D0',
   primaryHover:  '#1994DC',
   primaryTint:   '#E7F2FB',   // wash behind blue content
   primaryBorder: '#9CCBEC',
 
   // Text
-  textPrimary:   '#0E2C4B',   // near-black navy — headings and body
+  textPrimary:   '#0E2C4B',   // near-black navy. Headings and body
   textSecondary: '#5A6B7B',
   textPlaceholder: '#8C97A3',
   textOnDark:    '#FFFFFF',
@@ -29,7 +29,7 @@ export const Colors = {
   heroMid:       '#136BAE',
   heroBottom:    '#0E5490',
 
-  // Service status — amber and red are reserved for real disruptions only,
+  // Service status. Amber and red are reserved for real disruptions only,
   // never for decoration or emphasis.
   statusOperating:      '#1B8A4B',
   statusOperatingBg:    '#E8F6ED',
@@ -41,7 +41,7 @@ export const Colors = {
   statusDownBg:         '#FBEBEA',
   statusDownBorder:     '#EDB9B6',
 
-  // Transport line colors — these identify real WDW lines on the map and on
+  // Transport line colors. These identify real WDW lines on the map and on
   // status cards. They are data, not UI accent.
   skyliner:        '#1E96A8',
   bus:             '#4E7D1F',
@@ -66,9 +66,9 @@ export const StatusColors = {
   down:      { text: Colors.statusDown,      bg: Colors.statusDownBg,      border: Colors.statusDownBorder },
 };
 
-// ─── Typography ──────────────────────────────────────────────────────────────
+// Typography
 // Nine roles on a 12/13/14/15/16/17/20/24/28 ramp, three weights. The old
-// palette had 17 distinct sizes — including 10.5, 11.5, 12.5 and 13.5 — and
+// palette had 17 distinct sizes. Including 10.5, 11.5, 12.5 and 13.5. And
 // used weight 500 for both headings and body, which left the UI with no
 // hierarchy at all. Anything that needs a size off this ramp is a design
 // mistake, not a missing token: spread a role, never override its fontSize.
@@ -90,9 +90,9 @@ export const Type = {
   subtitle:   { fontFamily: FontFamily.semibold, fontSize: 17, lineHeight: 23 },
   /** Default readable text */
   body:       { fontFamily: FontFamily.regular,  fontSize: 16, lineHeight: 23 },
-  /** Supporting text under a title — the second line of a list row */
+  /** Supporting text under a title. The second line of a list row */
   bodySmall:  { fontFamily: FontFamily.regular,  fontSize: 15, lineHeight: 21 },
-  /** Buttons, links, pill labels — anything tappable */
+  /** Buttons, links, pill labels. Anything tappable */
   action:     { fontFamily: FontFamily.semibold, fontSize: 16, lineHeight: 22 },
   /** Emphasized inline text that is not itself an action */
   label:      { fontFamily: FontFamily.semibold, fontSize: 14, lineHeight: 19 },
@@ -102,7 +102,7 @@ export const Type = {
   eyebrow:    { fontFamily: FontFamily.bold,     fontSize: 12, lineHeight: 16, letterSpacing: 0.7, textTransform: 'uppercase' as const },
 } as const;
 
-// ─── Spacing + radius ────────────────────────────────────────────────────────
+// Spacing + radius
 // A 4pt scale. Previously these existed in this file and were imported by
 // exactly zero components, which is why every screen invented its own numbers.
 
@@ -150,7 +150,7 @@ export const transportColor = (mode: string): string => {
 };
 
 // Destination badge tiers. Parks read as primary blue, water parks as teal,
-// everything else as a neutral slate — the reference app tints by category
+// everything else as a neutral slate. The reference app tints by category
 // but never introduces a warm accent to do it.
 export const groupTier = (group: string): 'park' | 'water' | 'hub' => {
   if (group === 'Parks') return 'park';
@@ -167,8 +167,10 @@ export const GroupTierColors: Record<'park' | 'water' | 'hub', { bg: string; tex
 export const groupBadgeColors = (group: string) => GroupTierColors[groupTier(group)];
 
 export const Brand = {
-  name: 'ParkWays',
-  tagline: 'Walt Disney World transportation',
+  /** The banner on every screen. This is a fan project and carries no product
+   *  name of its own; the disclaimer on the About screen says whose network
+   *  it describes and that it is unofficial. */
+  title: 'Walt Disney World transportation',
 };
 
 export const Gradients = {

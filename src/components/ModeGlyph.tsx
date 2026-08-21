@@ -120,7 +120,7 @@ function Glyph({ mode, body, tint }: { mode: TransportMode; body: string; tint: 
   }
 }
 
-/** Lighten a hex color toward white by `amount` (0–1). */
+/** Lighten a hex color toward white by `amount` (0-1). */
 function tintOf(hex: string, amount = 0.55): string {
   const h = hex.replace('#', '');
   const full = h.length === 3 ? h.split('').map(c => c + c).join('') : h;

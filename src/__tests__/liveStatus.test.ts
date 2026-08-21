@@ -32,7 +32,7 @@ describe('determinism', () => {
     const first = loadEngine().getLiveStatus();
     const disruptedFirst = Object.values(first).filter(s => s.status !== 'operating').map(s => s.lineId);
 
-    // Same instant, brand new module instance — the "refresh the page" case.
+    // Same instant, brand new module instance. The "refresh the page" case.
     const second = loadEngine().getLiveStatus();
     const disruptedSecond = Object.values(second).filter(s => s.status !== 'operating').map(s => s.lineId);
 

@@ -46,7 +46,7 @@ function PlannerStack() {
 
 // Five icon-only slots with a raised center action, matching the reference
 // app's tab bar silhouette. The old bar carried four labeled tabs and used an
-// EKG "pulse" glyph for service status — a dashboard metaphor, not one a
+// EKG "pulse" glyph for service status. A dashboard metaphor, not one a
 // guest would read.
 const TAB_ICONS: Record<string, { active: keyof typeof Ionicons.glyphMap; inactive: keyof typeof Ionicons.glyphMap }> = {
   Planner: { active: 'home',           inactive: 'home-outline' },
@@ -64,7 +64,7 @@ const TAB_LABELS: Record<string, string> = {
   More:    'More',
 };
 
-// The center slot is an action, not a destination — it resets the planner and
+// The center slot is an action, not a destination. It resets the planner and
 // sends you back to a blank form.
 function NewTripPlaceholder() {
   return <View style={styles.placeholder} />;
@@ -103,7 +103,7 @@ export default function AppNavigator() {
       // Without this the browser tab title becomes the raw route name, so the
       // window chrome reads "Search", then "Results", then "Detail".
       documentTitle={{
-        formatter: () => `${Brand.name} — ${Brand.tagline}`,
+        formatter: () => Brand.title,
       }}
     >
       <Tab.Navigator initialRouteName="Planner" screenOptions={screenOptions}>

@@ -11,7 +11,7 @@ interface InfoSheetProps {
   onClose: () => void;
 }
 
-// A small in-app bottom sheet for one-off informational messages — used
+// A small in-app bottom sheet for one-off informational messages. Used
 // instead of Alert.alert, which react-native-web ships as a total no-op, and
 // instead of a raw window.alert(), which looks like browser chrome rather
 // than part of the app.

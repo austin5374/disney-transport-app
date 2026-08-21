@@ -6,7 +6,7 @@ import { Modal, ModalProps, Platform, View, StyleSheet } from 'react-native';
 // desktop frame in App.tsx would cover the entire browser window instead of
 // just the frame. This swaps in a manual portal targeting the frame's own
 // DOM node on web, and falls back to the real Modal on native untouched.
-export const MODAL_HOST_ID = 'parkways-modal-host';
+export const MODAL_HOST_ID = 'app-modal-host';
 
 let ReactDOM: { createPortal: (children: React.ReactNode, container: Element) => React.ReactPortal } | null = null;
 if (Platform.OS === 'web') {
