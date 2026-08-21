@@ -629,3 +629,51 @@ describe('replacement buses', () => {
       .toBe(false);
   });
 });
+
+describe('trips that avoid walking', () => {
+  const walks = (r: Route) => r.legs.some(l => l.mode === 'walk');
+
+  it('offers the monorail end to end from the Polynesian to EPCOT', () => {
+    // "Walk to the Ticket Center, then take the monorail" counted as full
+    // coverage, so the router never looked for the way round — and this pair,
+    // which the monorail covers end to end, offered a six-minute walk or a
+    // paid car and nothing else.
+    const transit = applyFilters(getActiveRoutes('POLY', 'EP', at(13)), BASE).filter(r => !isPaid(r));
+    const stepFree = transit.filter(r => !walks(r));
+    expect(stepFree.length).toBeGreaterThan(0);
+    for (const r of stepFree) {
+      expect(r.legs.every(l => l.mode.startsWith('monorail'))).toBe(true);
+    }
+    // The walk is quicker and stays on top; the point is that it is not alone.
+    expect(walks(transit[0])).toBe(true);
+  });
+
+  it('keeps the walk-free option even when it is far slower than the cut-off', () => {
+    // Every pruning rule in the router sorts on time, and the trip that
+    // avoids walking is usually the slow one. EPCOT back to the Polynesian
+    // is more than twenty minutes past the margin that would otherwise drop
+    // it, which is exactly why somebody needs it.
+    const transit = applyFilters(getActiveRoutes('EP', 'POLY', at(13)), BASE).filter(r => !isPaid(r));
+    const stepFree = transit.filter(r => !walks(r));
+    expect(stepFree.length).toBeGreaterThan(0);
+    expect(journeyMinutes(stepFree[0])).toBeGreaterThan(journeyMinutes(transit[0]) + 20);
+  });
+
+  it('leaves no pair walking-only that the network could carry', () => {
+    // The exceptions are buildings that share a plot: the BoardWalk and its
+    // Inn, the Swan and the Swan Reserve. Three minutes apart, with nothing
+    // running between them because nothing needs to.
+    const ADJACENT = new Set(['BW>BWI', 'BWI>BW', 'SW>SR', 'SR>SW']);
+    const offenders: string[] = [];
+    for (const [a, b] of PAIRS) {
+      for (const hour of [9, 13, 17]) {
+        const transit = applyFilters(getActiveRoutes(a, b, at(hour)), BASE).filter(r => !isPaid(r));
+        if (transit.length === 0) continue;
+        if (transit.some(r => !walks(r))) continue;
+        if (ADJACENT.has(`${a}>${b}`)) continue;
+        offenders.push(`${a}>${b}@${hour}`);
+      }
+    }
+    expect(offenders).toEqual([]);
+  });
+});

@@ -162,6 +162,9 @@ function mirrorRoute(r: Route): Route {
 }
 
 const isPaidRoute = (r: Route) => r.legs.some(l => l.mode === 'minnie_van');
+/** Does this trip put the guest on their feet for a whole leg? A transfer
+ *  walk between two platforms is a different thing and lives on walkMinutes. */
+const hasWalkLeg = (r: Route) => r.legs.some(l => l.mode === 'walk');
 const isWalkOnly  = (r: Route) => r.legs.every(l => l.mode === 'walk');
 
 /** Identifies a route by the trip it describes, so a generated option and a
@@ -451,11 +454,22 @@ function synthesizeViaHub(from: string, to: string, timeOverride?: Date): Route[
 
   // Chosen on the detour-weighted score, then shown in honest time order.
   options.sort((x, y) => score.get(x.id)! - score.get(y.id)!);
-  const kept = options.slice(0, MAX_HUB_OPTIONS);
-  const best = Math.min(...kept.map(r => journeyMinutes(r)));
-  return kept
-    .filter(r => journeyMinutes(r) <= best + HUB_OPTION_MARGIN)
-    .sort((x, y) => journeyMinutes(x) - journeyMinutes(y));
+  const best = Math.min(...options.slice(0, MAX_HUB_OPTIONS).map(r => journeyMinutes(r)));
+  const kept = options
+    .slice(0, MAX_HUB_OPTIONS)
+    .filter(r => journeyMinutes(r) <= best + HUB_OPTION_MARGIN);
+
+  // Every rule above prunes on time, and the trip that avoids walking is
+  // usually the slow one — the monorail round three sides of the loop rather
+  // than the path across the middle. Cutting it leaves the guest who needs it
+  // with a paid car, so if the pruning took the last of them, put the best
+  // one back. Being slower is the whole reason it is wanted.
+  if (!kept.some(r => !hasWalkLeg(r))) {
+    const walkFree = options.find(r => !hasWalkLeg(r));
+    if (walkFree) kept.push(walkFree);
+  }
+
+  return kept.sort((x, y) => journeyMinutes(x) - journeyMinutes(y));
 }
 
 // Paid rides
@@ -604,13 +618,17 @@ export function getActiveRoutes(
   // ever comparing it against the resort hubs next door.
   //
   // A one-seat ride is the only thing a stitched trip cannot improve on —
-  // and only if it runs whenever the guest is travelling. A direct bus that
-  // starts at 10 is no answer at all to somebody reading the list at nine,
-  // and leaving the alternatives out meant the app showed exactly one option,
-  // badged "Only after 10:00 AM", with no hint of what else there was. Both
-  // now appear together, and the badge says which is which.
+  // and only if it runs whenever the guest is travelling, and only if it does
+  // not make them walk.
+  //
+  // A direct bus that starts at 10 is no answer to somebody reading the list
+  // at nine. And "walk to the Ticket Center, then take the monorail" is no
+  // answer at all to somebody who cannot make the walk — but it counted as
+  // full coverage, so the router never looked for the way round, and the
+  // Polynesian to EPCOT offered a six-minute walk or a paid car and nothing
+  // else, on a pair the monorail covers end to end.
   const hasDirectRide = routes.some(r =>
-    !isPaidRoute(r) && !r.timeRestriction &&
+    !isPaidRoute(r) && !r.timeRestriction && !hasWalkLeg(r) &&
     r.legs.filter(l => l.mode !== 'walk').length === 1);
 
   if (!hasDirectRide) {
