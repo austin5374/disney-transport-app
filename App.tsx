@@ -94,6 +94,10 @@ function useClock() {
  *  It floats over the screen rather than sitting above it, so the planner's
  *  banner gradient runs behind it exactly as it does on a phone. Screens keep
  *  clear of it by way of the safe-area inset the frame publishes below. */
+/** Ascending, so the meter's own box is exactly as tall as its tallest bar
+ *  and the group centres as one block. */
+const SIGNAL_BAR_HEIGHTS = [5, 7, 9, 11];
+
 function FakeStatusBar() {
   const tint = useChromeTint();
   const now = useClock();
@@ -113,14 +117,22 @@ function FakeStatusBar() {
         <Ionicons name="navigate" size={13} color={fg} />
       </View>
       <View style={styles.statusRight}>
-        {[5, 7, 9, 11].map((h, i) => (
-          <View
-            key={h}
-            style={[styles.signalBar, { height: h, backgroundColor: fg, opacity: i === 3 ? 0.35 : 1 }]}
-          />
-        ))}
-        <Ionicons name="wifi" size={15} color={fg} style={styles.statusIcon} />
-        <Ionicons name="battery-half" size={20} color={fg} style={styles.statusIcon} />
+        {/* The bars share a floor with each other; the meter as a whole shares
+            a midline with the two glyphs beside it. */}
+        <View style={styles.signalMeter}>
+          {SIGNAL_BAR_HEIGHTS.map((h, i) => (
+            <View
+              key={h}
+              style={[styles.signalBar, {
+              height: h,
+              backgroundColor: fg,
+              opacity: i === SIGNAL_BAR_HEIGHTS.length - 1 ? 0.35 : 1,
+            }]}
+            />
+          ))}
+        </View>
+        <Ionicons name="wifi" size={15} color={fg} />
+        <Ionicons name="battery-half" size={20} color={fg} />
       </View>
     </View>
   );
@@ -263,17 +275,27 @@ const styles = StyleSheet.create({
     ...Type.label,
     fontSize: 15,
   },
+  // Three things of three different heights, sitting on one line.
+  //
+  // This was bottom-aligned, which lines up the *boxes* — but a 3pt signal
+  // bar, a 15pt wifi glyph and a 20pt battery glyph carry their ink at
+  // different heights inside those boxes, so the boxes agreeing left the
+  // three marks stepping upwards across the corner. Centring is what the
+  // real status bar does: everything hangs off one midline.
   statusRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+  },
+  signalMeter: {
     flexDirection: 'row',
     alignItems: 'flex-end',
     gap: 1.5,
+    height: SIGNAL_BAR_HEIGHTS[SIGNAL_BAR_HEIGHTS.length - 1],
   },
   signalBar: {
     width: 3,
     borderRadius: 1,
-  },
-  statusIcon: {
-    marginLeft: 4,
   },
   homeBar: {
     height: HOME_BAR_HEIGHT,
