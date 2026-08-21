@@ -164,8 +164,11 @@ const TRANSFER_HUBS = ['DS', 'MK', 'EP', 'HS', 'AK', 'CBR', 'TTC'];
 
 function bestSegment(from: string, to: string, timeOverride?: Date): Route | null {
   const candidates = directRoutes(from, to, timeOverride)
-    .filter(r => r.legs.every(l => l.mode !== 'minnie_van'))
-    .filter(r => !r.timeRestriction)
+    .filter(r => !isPaidRoute(r))
+    // No timeRestriction filter here: directRoutes has already dropped
+    // anything not running at the requested time, and excluding restricted
+    // routes outright threw away every park-to-park bus, which is the most
+    // useful connection a transfer hub has.
     .filter(r => r.legs.length <= 2);
   if (candidates.length === 0) return null;
   return candidates.reduce((a, b) => (journeyMinutes(a) <= journeyMinutes(b) ? a : b));
@@ -179,9 +182,20 @@ function synthesizeViaHub(from: string, to: string, timeOverride?: Date): Route[
     const b = bestSegment(hub, to, timeOverride);
     if (!a || !b) continue;
     if (a.legs.length + b.legs.length > 3) continue;
+
     // Stitching two walks together through a hub is just a longer walk, not a
     // transfer, and it produced trips like "walk 12 min, then walk 5 min".
     if (a.legs.every(l => l.mode === 'walk') && b.legs.every(l => l.mode === 'walk')) continue;
+
+    // If a segment walks in or out of the hub on the joining end, the hub is
+    // not where the transfer happens, the far end of that walk is. Allowing it
+    // produced "bus to the Polynesian, walk to the TTC, bus to the Swan" and
+    // "bus to the TTC, walk to the Polynesian, take the Polynesian's bus".
+    // A segment that is nothing but a walk is fine on either side, since that
+    // is the real approach to plenty of places.
+    const walksIntoHub = a.legs.length > 1 && a.legs[a.legs.length - 1].mode === 'walk';
+    const walksOutOfHub = b.legs.length > 1 && b.legs[0].mode === 'walk';
+    if (walksIntoHub || walksOutOfHub) continue;
     const legs: Leg[] = [
       ...a.legs,
       { ...b.legs[0], walkMinutes: 5 },

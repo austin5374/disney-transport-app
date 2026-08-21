@@ -132,14 +132,17 @@ describe('route graph', () => {
     expect(offenders).toEqual([]);
   });
 
-  it('has no direct Magic Kingdom bus to the Swan or Dolphin', () => {
-    const direct = ALL_ROUTES.filter(r =>
-      r.legs.length === 1 &&
-      r.legs[0].mode === 'bus' &&
-      ((r.from === 'MK' && ['SW', 'DO'].includes(r.to)) ||
-       (r.to === 'MK' && ['SW', 'DO'].includes(r.from)))
-    ).map(r => r.id);
-    expect(direct).toEqual([]);
+  it('gives the Swan and Dolphin no bus of their own beyond the TTC run', () => {
+    // Neither hotel has a bus stop. The only bus that serves them is the one
+    // out of the TTC, so everywhere else is reached on foot or by boat to
+    // EPCOT or Hollywood Studios and a bus from there.
+    const offenders = ALL_ROUTES.flatMap(r =>
+      r.legs
+        .filter(l => l.mode === 'bus' && (['SW', 'DO'].includes(l.from) || ['SW', 'DO'].includes(l.to)))
+        .filter(l => l.from !== 'TTC' && l.to !== 'TTC')
+        .map(l => `${r.id}: ${l.from} to ${l.to}`)
+    );
+    expect(offenders).toEqual([]);
   });
 
   it('has a totalRideRange that brackets totalRideMinutes when present', () => {

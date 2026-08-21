@@ -271,3 +271,43 @@ describe('monorail stations', () => {
     expect(silly).toEqual([]);
   });
 });
+
+describe('hub transfers', () => {
+  it('never transfers by walking to a different stop mid-trip', () => {
+    // If a trip walks from one place to another and then boards something,
+    // the transfer really happened at the far end of that walk, not at the
+    // hub the composer picked. Left unchecked it produced "bus to the TTC,
+    // walk to the Polynesian, take the Polynesian's bus to Animal Kingdom".
+    const bad: string[] = [];
+    for (const [a, b] of PAIRS) {
+      for (const r of getActiveRoutes(a, b, at(13))) {
+        if (!r.id.startsWith('synth-')) continue;
+        for (let i = 1; i < r.legs.length - 1; i++) {
+          if (r.legs[i].mode === 'walk') bad.push(`${a} to ${b}: ${r.id}`);
+        }
+      }
+    }
+    expect(bad).toEqual([]);
+  });
+
+  it('can still use a park bus as a transfer, restricted hours and all', () => {
+    // bestSegment used to reject anything carrying a timeRestriction, which
+    // threw away every park-to-park bus and left the Swan with no way to
+    // reach Animal Kingdom except a paid car.
+    const routes = applyFilters(getActiveRoutes('SW', 'AK', at(13)), BASE);
+    const transit = routes.filter(r => !isPaid(r));
+    expect(transit.length).toBeGreaterThan(0);
+    expect(transit[0].legs.some(l => l.mode === 'bus')).toBe(true);
+  });
+
+  it('waits for Disney Springs park buses to start before offering them', () => {
+    const legsAt = (hour: number) =>
+      applyFilters(getActiveRoutes('SW', 'DS', at(hour)), BASE)
+        .filter(r => !isPaid(r))
+        .flatMap(r => r.legs.map(l => `${l.mode}:${l.from}>${l.to}`));
+
+    // Park to Disney Springs service starts in the late afternoon.
+    expect(legsAt(13)).not.toContain('bus:HS>DS');
+    expect(legsAt(17)).toContain('bus:HS>DS');
+  });
+});

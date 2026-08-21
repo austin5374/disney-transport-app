@@ -1682,6 +1682,12 @@ export const ALL_ROUTES: Route[] = [
     totalRideMinutes: 12, tags: ['walk_only'],
   },
   {
+    id: 'do-ep-boat',
+    from: 'DO', to: 'EP', name: 'Friendship Boat to EPCOT',
+    legs: [{ mode: 'friendship_boat', from: 'DO', to: 'EP', rideMinutes: 27, accessible: true, tip: 'Shares the Crescent Lake dock with the Swan. Stops at BWI and Yacht and Beach before EPCOT International Gateway. Walking is faster.' }],
+    totalRideMinutes: 27, tags: ['water', 'scenic'],
+  },
+  {
     id: 'sr-ep-walk',
     from: 'SR', to: 'EP', name: 'Walk via Crescent Lake (~12 min)',
     legs: [{ mode: 'walk', from: 'SR', to: 'EP', rideMinutes: 12, accessible: true }],
@@ -1705,20 +1711,14 @@ export const ALL_ROUTES: Route[] = [
     legs: [{ mode: 'walk', from: 'DO', to: 'HS', rideMinutes: 11, accessible: true }],
     totalRideMinutes: 11, tags: ['walk_only'],
   },
+  {
+    id: 'do-hs-boat',
+    from: 'DO', to: 'HS', name: 'Friendship Boat to Hollywood Studios',
+    legs: [{ mode: 'friendship_boat', from: 'DO', to: 'HS', rideMinutes: 12, accessible: true, tip: 'Shares the Crescent Lake dock with the Swan. First stop heading toward Hollywood Studios.' }],
+    totalRideMinutes: 12, tags: ['water', 'scenic'],
+  },
 
-  {
-    id: 'sw-ak-bus',
-    from: 'SW', to: 'AK', name: 'Bus from Swan',
-    legs: [{ mode: 'bus', from: 'SW', to: 'AK', rideMinutes: 25, accessible: true }],
-    totalRideMinutes: 25, totalRideRange: [25,45], tags: [],
-  },
-  {
-    id: 'sw-ds-bus',
-    from: 'SW', to: 'DS', name: 'Bus from Swan',
-    legs: [{ mode: 'bus', from: 'SW', to: 'DS', rideMinutes: 30, accessible: true }],
-    totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
-  },
-  {
+{
     id: 'sw-bwi-walk',
     from: 'SW', to: 'BWI', name: 'Walk to BoardWalk Inn (~12 min)',
     legs: [{ mode: 'walk', from: 'SW', to: 'BWI', rideMinutes: 12, accessible: true }],
