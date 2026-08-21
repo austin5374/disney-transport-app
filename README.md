@@ -1,52 +1,40 @@
 # Walt Disney World Transportation
 
-Pick where you are and where you're going, and it tells you how to get there on Disney transportation: monorails, the Skyliner, boats, and buses.
+Pick where you are and where you're going, and it tells you how to get there on Disney transport: monorails, the Skyliner, boats and buses.
 
-Live demo: https://disney-transport-app.vercel.app
+**Live demo: https://disney-transport-app.vercel.app**
 
-Built with Expo and React Native in TypeScript, so the same code runs on iOS, Android, and in a browser.
+Built with Expo and React Native in TypeScript, so the same code runs on iOS, Android and in a browser.
 
 ## What it does
 
-You pick two places out of 33 (every park, every resort, both water parks, Disney Springs) and it gives you the ways to get between them. There are about 350 routes written out by hand. If two places have no direct connection, it builds a trip through a transfer point instead, which is what you'd actually end up doing.
+You pick two places out of 33 — every park, every resort, both water parks, Disney Springs — and it lays out the ways to get between them. Around 350 routes are written out by hand, and where two places have no direct link it builds a trip through a transfer point instead.
 
-Trips are sorted by how long the whole thing takes, not just the time you're on the vehicle. That means it counts the wait too. A bus that shows up every 20 minutes costs you about 10 minutes of standing there on average, and a trip that ignores that isn't telling you the truth. The detail page splits the total back out into wait, ride, and walking so you can see where the time goes.
+Trips are ranked by how long the whole thing takes, not just the time you're on the vehicle. That means counting the wait. A bus every 20 minutes costs you about 10 minutes of standing there, and a trip that ignores that isn't telling you the truth. The detail page splits the total back out into wait, ride and walking so you can see where the time goes.
 
-Some routes only run at certain times. Park to park buses don't start until 10am, the Blue Flag boat starts at 3pm, and Disney Springs buses from the parks start at 4pm. The planner checks the clock. Ask for Magic Kingdom to Disney Springs before 10 and it won't offer you a bus that isn't running yet — it works out which resort you can pick one up at instead, and how to get to that resort.
+Some things only run at certain hours. Park-to-park buses don't start until 10am, the Blue Flag boat starts at 3pm, and Disney Springs buses from the parks start at 4pm. The planner checks the clock and shows the all-day options alongside the restricted ones, labelling which is which.
 
-That second half is a search rather than a lookup, which matters more than it sounds. Anywhere is a candidate hub if something leaves it for where you're going, and the way in is ranked across every mode that can get you there: the monorail to the Contemporary and the footpath to it both cost eight minutes, so you're told about both. A transfer won't ride a flagged-down resort launch if the hop has anything else, because a boat you have to wave down is a bad thing to bet a connection on. And a hub that carries you well past your destination loses to one that doesn't, which the clock alone can't express.
+That "instead" is a search rather than a lookup, which matters more than it sounds. Anywhere can be a transfer point if something leaves it for where you're going, and the way in is compared across every mode that gets you there — so leaving Magic Kingdom before 10am, you're told about the monorail to the Contemporary *and* the eight-minute walk to it, because they cost the same.
 
-Where the clock is hiding something, the list says so instead of just being short: "1 more route runs after 10:00 AM", with a control to go and look.
+The Express beam is modelled the way it actually runs: one way into Magic Kingdom through the morning, with the return leg opening around lunchtime at a slightly different time each day. That trip still appears before it opens, labelled with the hour it's expected, because "not yet, here's when" beats leaving it out.
 
-Every line has published operating hours, and the app respects them. After park close the board says a line has ended for the night rather than counting down to a train that isn't coming, and a route that rides a closed line drops out of the results instead of being offered.
-
-Live service feeds the ranking, not just the decoration. A line that's down costs a trip the length of its own outage, a delayed line costs it the stretched headway, and a heavy crowd costs it more still — so a downed monorail falls below the ferry on its own rather than sitting at the top of the list with a red warning underneath it.
-
-When a monorail beam goes down, Disney puts a bus on its stops, and the planner will route you onto it. It competes on the same cost model as everything else, which sorts itself out: a nine-minute stoppage is still worth waiting out and the beam keeps its place, while a forty-five minute one isn't and the bus moves above it.
-
-The Express beam is modelled the way it actually runs — one way into Magic Kingdom through the morning, with the return leg opening around lunchtime at a slightly different time each day. That trip is still listed before it opens, labelled with the hour it's expected and ranked below everything that's moving, because "you can't do this yet, here's when you can" is more useful than leaving it out.
+And when a monorail beam goes down, Disney puts a bus on its stops — so the planner will route you onto it. It competes on the same cost model as everything else, which sorts itself out nicely: a nine-minute stoppage is still worth waiting out and the beam keeps its place, while a forty-five minute one isn't, and the bus moves above it.
 
 There's also a status board for every line and a pannable map with live departures on it.
 
 ## Offline
 
-Every byte of data in this app is static: the route graph, the line definitions, and a status engine that computes from a hash of the wall clock. Nothing needs a network, which means the whole thing works with the antenna off — which is exactly the condition it's for. Park wifi at 2pm is not a network. Add it to your home screen and it runs as an app.
+All the data is static — the route graph, the line definitions, and a status engine that computes from the clock. Nothing needs a network, which is the point: park wifi at 2pm is not a network. Add it to your home screen and it runs as an app.
 
 ## About the "live" data
 
-Disney doesn't have a public API for transportation, so none of the status data is real. I made it up.
+Disney has no public transport API, so none of the status data is real. I made it up.
 
-The first version of this used `Math.random()` on a timer, and it had an obvious problem: refreshing the page rerolled everything. You could see the Skyliner shut down for lightning, hit reload, and it'd be running again. That's not a small bug, it makes the whole thing feel fake.
+The first version used `Math.random()` on a timer, which had an obvious problem: refreshing rerolled everything. You could watch the Skyliner shut for lightning, hit reload, and it was running again. That doesn't read as variable, it reads as broken.
 
-So I rewrote it. Now every line's status is worked out from the current time and nothing else. There's no stored state and no `Math.random()` anywhere in `src/utils/liveStatus.ts`. It hashes the line ID together with a 30 minute time window to decide whether that line is having problems, and how long for. Departure times are a fixed schedule with an offset per line, so the countdowns tick down smoothly instead of jumping around.
+Now every line's status comes from the current time and nothing else — no stored state, no `Math.random()` anywhere in the simulation. So reloading gives you the same board, everyone sees the same thing at the same time, and a test can freeze the clock and assert exactly what happens.
 
-Because of that:
-
-- Reloading gives you the same board
-- Everyone sees the same thing at the same time
-- I can freeze the clock in a test and check exactly what it does
-
-Storms take out a whole group of boats at once instead of one random boat while the ones next to it keep going, because the outage is decided per body of water rather than per line. Monorail lightning starts with the EPCOT beam and can spread to all three.
+A few things fall out of that. Storms take out a whole group of boats at once rather than one at random while its neighbour keeps going, because the outage is decided per body of water. Monorail lightning starts with the EPCOT beam and can spread. And the Express beam's opening time is seeded on the date, so it holds all day and is different tomorrow.
 
 ## Running it
 
@@ -59,7 +47,7 @@ npx expo start --web    # opens in a browser
 npx expo start          # scan the QR code with Expo Go
 ```
 
-You need `--legacy-peer-deps` because a few packages haven't caught up to React 19 yet. It works fine, npm just complains.
+`--legacy-peer-deps` is needed because a few packages haven't caught up to React 19. It works fine, npm just complains.
 
 ```
 npm test
@@ -68,24 +56,19 @@ npm run typecheck
 
 ## Tests
 
-119, in two suites. `npm run test:logic` runs the route graph and the status engine under ts-jest with no native pipeline, so a sweep across all 1,056 destination pairs finishes in under a second. `npm run test:screens` renders the real screens under jest-expo.
+119, in two suites. `npm run test:logic` runs the route graph and the status engine under ts-jest with no native pipeline, so a sweep across all 1,056 destination pairs finishes in about a second. `npm run test:screens` renders the real screens under jest-expo.
 
-Most of the route-data tests exist because the data was typed out by hand and I didn't trust it. Writing them turned up real problems:
+Most of the route-data tests exist because the data was typed out by hand and I didn't trust it — writing them turned up real problems, like five routes whose total didn't match the sum of their own legs.
 
-- 5 routes where the total time didn't match the sum of their own legs
-- 22 bus legs that didn't match up to any transit line
-- A field sitting on every leg of every route that nothing ever read (485 of them)
-
-The rest cover the routing logic and the status simulation, where the clock gets frozen and the board has to come out identical every time. Some of them are guarantees about the network as a whole, checked across every ordered pair:
+The more useful ones are guarantees about the whole network, checked across every ordered pair:
 
 - every pair has an answer that isn't a paid car
 - no pair is offered a journey long enough to be a mistake
 - every two stops on the same boat or Skyliner line are actually connected
-- a paid Minnie Van never outranks Disney transportation
 - a paved path that walks one way walks the other way too
-- a transfer never boards a flagged-down launch when that hop has another option
+- a paid Minnie Van never outranks Disney transport
 
-The last one is why the coverage tests sweep all 1,056 pairs rather than sampling: this class of gap is never the pair you happen to check by hand. Twelve pairs used to have no transit answer at all, and all twelve involved Typhoon Lagoon.
+That last one is why the sweeps cover all 1,056 pairs rather than sampling. This kind of gap is never the pair you happen to check by hand.
 
 ## Files
 
@@ -93,22 +76,21 @@ The last one is why the coverage tests sweep all 1,056 pairs rather than samplin
 src/
   screens/       the pages
   components/
-    ui/          buttons, sections, tabs, dividers, that kind of thing
+    ui/          buttons, sections, tabs, dividers
   data/
     routes.ts       hand-authored trips
-    lines.ts        transit lines, with their operating hours
+    lines.ts        transit lines and their operating hours
     rail.ts         monorail pairs, derived from the beams
     lineRoutes.ts   boat and Skyliner pairs, derived from the stops
     resortBus.ts    resort buses, derived from Disney's own rule
   utils/
-    theme.ts        colors, type sizes, spacing
-    routing.ts      works out trips, ranks them against live service
+    routing.ts      works out trips and ranks them against live service
     liveStatus.ts   the simulated status engine
-    savedTrips.ts   trips you kept
+    theme.ts        colors, type sizes, spacing
   __tests__/
 ```
 
-Three of those data files generate trips instead of listing them. That's deliberate: the monorail resort loop had only 12 of its 20 ordered pairs written out, so Magic Kingdom to Grand Floridian offered a walk and no train. The boats had the same latent bug, and so did the resort buses. Deriving the trips from the stops makes that whole class of gap impossible rather than fixing its instances one at a time.
+Three of those data files generate trips instead of listing them, which is deliberate. The monorail resort loop had only 12 of its 20 ordered pairs written out, so Magic Kingdom to Grand Floridian offered a walk and no train. The boats had the same latent bug, and so did the resort buses. Deriving trips from stops makes that whole class of gap impossible rather than fixing it one instance at a time.
 
 ## Sharing a trip
 
@@ -116,8 +98,10 @@ Every screen has a URL. `/trip/POLY/MK` is Polynesian to Magic Kingdom, `/trip/P
 
 ## Disclaimer
 
-The status, wait times, and crowd levels are made up. The route information is based on the real Walt Disney World transportation system.
+The status, wait times and crowd levels are made up. The route information is based on the real Walt Disney World transportation system.
 
-This is a personal project. It's not affiliated with or endorsed by Disney. Park and resort names are used so you know what the app is talking about.
+This is a personal project, not affiliated with or endorsed by Disney. Park and resort names are used so you know what the app is talking about.
 
-Made by [Austin Vodrazka](https://github.com/austin5374).
+---
+
+Made by [Austin Vodrazka](https://github.com/austin5374) with [Claude Code](https://claude.com/claude-code).
