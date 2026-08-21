@@ -22,6 +22,10 @@ Every line has published operating hours, and the app respects them. After park 
 
 Live service feeds the ranking, not just the decoration. A line that's down costs a trip the length of its own outage, a delayed line costs it the stretched headway, and a heavy crowd costs it more still — so a downed monorail falls below the ferry on its own rather than sitting at the top of the list with a red warning underneath it.
 
+When a monorail beam goes down, Disney puts a bus on its stops, and the planner will route you onto it. It competes on the same cost model as everything else, which sorts itself out: a nine-minute stoppage is still worth waiting out and the beam keeps its place, while a forty-five minute one isn't and the bus moves above it.
+
+The Express beam is modelled the way it actually runs — one way into Magic Kingdom through the morning, with the return leg opening around lunchtime at a slightly different time each day. That trip is still listed before it opens, labelled with the hour it's expected and ranked below everything that's moving, because "you can't do this yet, here's when you can" is more useful than leaving it out.
+
 There's also a status board for every line and a pannable map with live departures on it.
 
 ## Offline
@@ -64,7 +68,7 @@ npm run typecheck
 
 ## Tests
 
-103, in two suites. `npm run test:logic` runs the route graph and the status engine under ts-jest with no native pipeline, so a sweep across all 1,056 destination pairs finishes in under a second. `npm run test:screens` renders the real screens under jest-expo.
+119, in two suites. `npm run test:logic` runs the route graph and the status engine under ts-jest with no native pipeline, so a sweep across all 1,056 destination pairs finishes in under a second. `npm run test:screens` renders the real screens under jest-expo.
 
 Most of the route-data tests exist because the data was typed out by hand and I didn't trust it. Writing them turned up real problems:
 
