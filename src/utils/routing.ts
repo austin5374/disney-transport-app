@@ -2,6 +2,7 @@ import { Route, ActiveFilters, TransportMode, Leg } from '../types';
 import { ALL_ROUTES } from '../data/routes';
 import { DESTINATIONS, DESTINATION_MAP, GEOFENCE_ZONES } from '../data/destinations';
 import { lineForLeg } from '../data/lines';
+import { shortLabel } from './destinationMeta';
 import { LineStatus, DELAY_HEADWAY_FACTOR, CROWD_WAIT_FACTOR } from './liveStatus';
 import { railRoutes } from '../data/rail';
 import { resortBusRoutes } from '../data/resortBus';
@@ -87,7 +88,7 @@ export function transferCount(route: Route): number {
 // Time rules engine
 
 // Destinations that share transport with an adjacent location and have no
-// route entries of their own. BoardWalk (the district) is served by BoardWalk
+// route entries of their own. Boardwalk (the district) is served by Boardwalk
 // Inn's stops; Swan Reserve shares the Swan/Dolphin bus loop and boat dock.
 const DEST_ALIAS: Record<string, string> = {
   BW: 'BWI',
@@ -104,9 +105,11 @@ function timeValid(r: Route, timeOverride?: Date): boolean {
   return true;
 }
 
-function destLabel(id: string): string {
-  return DESTINATION_MAP[id]?.label ?? id;
-}
+// Route and leg names are read as instructions, not as a list of places to
+// pick from, so they use the short name. The official one ("Disney's Grand
+// Floridian Resort & Spa") is correct on a header and unreadable inside
+// "Walk to X, Bus to Y".
+const destLabel = shortLabel;
 
 function nameForLegs(legs: Leg[]): string {
   return legs
@@ -185,26 +188,104 @@ function directRoutes(from: string, to: string, timeOverride?: Date): Route[] {
 
   const combined = [...explicit, ...rail, ...resortBus, ...byLine];
 
+  const reverse = ALL_ROUTES.filter(r =>
+    r.from === to && r.to === from && timeValid(r, timeOverride) && !isPaidRoute(r));
+
+  // A paved path is a paved path in both directions. The route file only ever
+  // authored one of them, so EPCOT knew about the six-minute walk to the
+  // Boardwalk Inn only if you asked from the Boardwalk Inn — and the planner
+  // sent you round Crescent Lake on a boat instead.
+  const mirroredWalks = reverse.filter(isWalkOnly).map(mirrorRoute);
+
   // A walk is a legitimate option but never a complete answer on its own. If
   // that is all this direction has, the reverse direction's real routes are
-  // worth mirroring. Treating a walk-only entry as full coverage is what hid
-  // the monorail on Grand Floridian to Polynesian and seven other pairs.
+  // worth mirroring too. Treating a walk-only entry as full coverage is what
+  // hid the monorail on Grand Floridian to Polynesian and seven other pairs.
   const hasVehicleRoute = combined.some(r => !isPaidRoute(r) && !isWalkOnly(r));
-  if (hasVehicleRoute) return combined;
+  const mirroredRides = hasVehicleRoute ? [] : reverse.filter(r => !isWalkOnly(r)).map(mirrorRoute);
 
-  const mirrored = ALL_ROUTES
-    .filter(r => r.from === to && r.to === from && timeValid(r, timeOverride))
-    .filter(r => !isPaidRoute(r) && !isWalkOnly(r))
-    .map(mirrorRoute)
-    .filter(r => !seen.has(legSignature(r)));
-
-  return [...combined, ...mirrored];
+  return [
+    ...combined,
+    ...[...mirroredWalks, ...mirroredRides].filter(r => !seen.has(legSignature(r))),
+  ];
 }
 
-// Compose a two-segment journey through a major transfer hub, mirroring how
-// guests actually connect between two resorts (bus to a park or Disney
-// Springs, then transfer).
-const TRANSFER_HUBS = ['DS', 'MK', 'EP', 'HS', 'AK', 'CBR', 'TTC'];
+// Transfer hubs
+//
+// A hub is anywhere you can get off one vehicle and onto another that is
+// going where you are. The fixed list below is where Disney's own network
+// crosses — every one of them is served by more than one system.
+const INTERCHANGE_HUBS = ['DS', 'MK', 'EP', 'HS', 'AK', 'CBR', 'TTC'];
+
+// ...but the fixed list is not the whole answer, and assuming it was is what
+// produced this app's worst routing bug. Before 10 AM the park-to-park buses
+// are not running, so the connection a guest actually makes is at a *resort*,
+// whose own buses run all day. The route file answered that with one
+// hand-written line per pair — "Walk to Grand Floridian, Bus to Hollywood
+// Studios" — which meant the Grand Floridian was the answer for every
+// destination, on foot, whether or not it was the right resort or the right
+// way to reach it. Meanwhile the same app, asked for the Contemporary
+// directly, correctly offered the monorail: it knew about the walk, the boat
+// and the two monorail beams, and compared them properly. It just never ran
+// that comparison when the resort was a stop on the way rather than the
+// destination.
+//
+// Whether a place can act as a hub depends on the trip, not on a list: it is
+// a hub if something leaves it for where you are going. So every destination
+// is a candidate and the segment search below decides which of them can
+// actually carry this trip. The fixed list stays at the front of the queue so
+// that a real interchange wins an exact tie.
+function hubsFor(from: string, to: string): string[] {
+  const rest = DESTINATIONS.map(d => d.id).filter(id => !INTERCHANGE_HUBS.includes(id));
+  const seen = new Set([sharedStop(from), sharedStop(to)]);
+  const out: string[] = [];
+  for (const hub of [...INTERCHANGE_HUBS, ...rest]) {
+    const stop = sharedStop(hub);
+    if (seen.has(stop)) continue;
+    seen.add(stop);
+    out.push(hub);
+  }
+  return out;
+}
+
+// Places that are different hotels but one physical stop. The Swan and the
+// Dolphin share a bus shelter and a boat dock; so do Pop Century and Art of
+// Animation, and the Yacht and Beach Club. As destinations they are distinct.
+// As a hub they are the same place, and offering both turned one answer into
+// two identical cards.
+const SHARED_STOPS: string[][] = [
+  ['SW', 'DO', 'SR'],
+  ['YC', 'BC'],
+  ['POP', 'AOA'],
+  ['BWI', 'BW'],
+];
+
+function sharedStop(id: string): string {
+  const group = SHARED_STOPS.find(g => g.includes(id));
+  return group ? group[0] : id;
+}
+
+// A transfer that carries you well past where you were going is a bad
+// transfer, even when the clock says otherwise. Riding a bus from Magic
+// Kingdom all the way across property to Caribbean Beach in order to catch a
+// gondola back to Hollywood Studios is not what anybody does, and the only
+// reason it can win on time is that the route file records almost every
+// resort bus as a flat 30 minutes, so a hub next door and a hub across the
+// resort look identical.
+//
+// This is a tiebreak for *choosing* between hubs, not a cost added to the
+// trip: the minutes shown to the guest stay the honest ones.
+const DETOUR_WEIGHT = 0.25;
+
+function detourFactor(from: string, hub: string, to: string): number {
+  const a = DESTINATION_MAP[from], b = DESTINATION_MAP[hub], c = DESTINATION_MAP[to];
+  if (!a || !b || !c) return 1;
+  const direct = haversineDistance(a.lat, a.lng, c.lat, c.lng);
+  if (direct <= 0) return 1;
+  const viaHub = haversineDistance(a.lat, a.lng, b.lat, b.lng)
+    + haversineDistance(b.lat, b.lng, c.lat, c.lng);
+  return 1 + Math.max(0, viaHub / direct - 1) * DETOUR_WEIGHT;
+}
 
 // How far you actually walk between vehicles at each hub. This was a flat 5
 // minutes everywhere, which is wrong in both directions: the Skyliner and the
@@ -220,6 +301,10 @@ const HUB_TRANSFER_WALK: Record<string, number> = {
   TTC: 4,   // ferry dock to monorail ramp
 };
 
+/** A resort is small enough that the dock, the station and the bus stop are
+ *  all within a few minutes of each other. */
+const RESORT_HUB_WALK = 4;
+
 const HUB_TRANSFER_NOTE: Record<string, string> = {
   DS:  'Transfer at Disney Springs. The bus bays are about a 6 minute walk from the boat dock.',
   MK:  'Transfer at Magic Kingdom. The bus stops are below the park; the monorail and ferry are above it.',
@@ -230,7 +315,31 @@ const HUB_TRANSFER_NOTE: Record<string, string> = {
   TTC: 'Transfer at the Transportation & Ticket Center, between the ferry dock and the monorail ramp.',
 };
 
-function bestSegment(from: string, to: string, timeOverride?: Date): Route | null {
+function hubNote(hub: string): string {
+  if (HUB_TRANSFER_NOTE[hub]) return HUB_TRANSFER_NOTE[hub];
+  return `Transfer at ${destLabel(hub)}, at the resort's own bus stop. Resort buses run all day, including the hours when the park-to-park buses do not.`;
+}
+
+// Flag launches are the small resort boats on Seven Seas Lagoon and Bay Lake:
+// 15 to 25 minutes apart, and tied to a dock rather than a station. They are
+// a fine way to reach a resort you are going to. They are a bad way to reach
+// a *connection*, where missing one costs more than the leg saved — so a
+// transfer segment only rides one when nothing else can make that hop at all.
+const FLAG_LAUNCHES: TransportMode[] = [
+  'water_taxi_gold', 'water_taxi_red', 'water_taxi_green', 'water_taxi_blue',
+];
+const ridesAFlagLaunch = (r: Route) => r.legs.some(l => FLAG_LAUNCHES.includes(l.mode));
+
+const walkMinutesIn = (r: Route) =>
+  r.legs.reduce((s, l) => s + (l.mode === 'walk' ? l.rideMinutes : 0) + (l.walkMinutes ?? 0), 0);
+
+/** Every way to cover one half of a stitched trip, quickest first.
+ *
+ *  Ties are broken towards riding rather than walking. Between Magic Kingdom
+ *  and the Contemporary the monorail and the footpath cost the same eight
+ *  minutes, and the monorail is the one to put in front of someone who is
+ *  only there to catch a bus. */
+function rankedSegments(from: string, to: string, timeOverride?: Date): Route[] {
   const candidates = directRoutes(from, to, timeOverride)
     .filter(r => !isPaidRoute(r))
     // No timeRestriction filter here: directRoutes has already dropped
@@ -238,50 +347,100 @@ function bestSegment(from: string, to: string, timeOverride?: Date): Route | nul
     // routes outright threw away every park-to-park bus, which is the most
     // useful connection a transfer hub has.
     .filter(r => r.legs.length <= 2);
-  if (candidates.length === 0) return null;
-  return candidates.reduce((a, b) => (journeyMinutes(a) <= journeyMinutes(b) ? a : b));
+  const withoutLaunches = candidates.filter(r => !ridesAFlagLaunch(r));
+  const pool = withoutLaunches.length > 0 ? withoutLaunches : candidates;
+  return [...pool].sort((a, b) =>
+    journeyMinutes(a) - journeyMinutes(b) || walkMinutesIn(a) - walkMinutesIn(b));
 }
+
+function bestSegment(from: string, to: string, timeOverride?: Date): Route | null {
+  return rankedSegments(from, to, timeOverride)[0] ?? null;
+}
+
+/** How many different ways of reaching one hub are worth offering. Two, so
+ *  that "monorail or walk to the Contemporary" reads as the choice it is,
+ *  without turning one trip into a wall of near-identical cards. */
+const ACCESS_MODES_PER_HUB = 2;
+
+/** The best way to reach a hub by each mode that can get you there.
+ *
+ *  Returning a single winner here is what collapsed the transfer leg to one
+ *  option: the app compared walk, boat and monorail properly when a resort
+ *  was the destination, and not at all when the same resort was a stop on the
+ *  way. */
+function accessSegments(from: string, hub: string, timeOverride?: Date): Route[] {
+  const byMode = new Set<TransportMode>();
+  const out: Route[] = [];
+  for (const r of rankedSegments(from, hub, timeOverride)) {
+    const mode = r.legs[0].mode;
+    if (byMode.has(mode)) continue;
+    byMode.add(mode);
+    out.push(r);
+    if (out.length === ACCESS_MODES_PER_HUB) break;
+  }
+  return out;
+}
+
+/** How many stitched options to keep, and how much slower than the best one
+ *  an alternate may be before it stops being an alternate. */
+const MAX_HUB_OPTIONS = 3;
+const HUB_OPTION_MARGIN = 20;
 
 function synthesizeViaHub(from: string, to: string, timeOverride?: Date): Route[] {
   const options: Route[] = [];
-  for (const hub of TRANSFER_HUBS) {
-    if (hub === from || hub === to) continue;
-    const a = bestSegment(from, hub, timeOverride);
+  const seen = new Set<string>();
+  const score = new Map<string, number>();
+
+  for (const hub of hubsFor(from, to)) {
     const b = bestSegment(hub, to, timeOverride);
-    if (!a || !b) continue;
-    if (a.legs.length + b.legs.length > 3) continue;
+    if (!b) continue;
 
-    // Stitching two walks together through a hub is just a longer walk, not a
-    // transfer, and it produced trips like "walk 12 min, then walk 5 min".
-    if (a.legs.every(l => l.mode === 'walk') && b.legs.every(l => l.mode === 'walk')) continue;
+    // If the segment out of the hub starts with a walk, the transfer really
+    // happens at the far end of that walk, not at the hub. Allowing it
+    // produced "bus to the TTC, walk to the Polynesian, take the Polynesian's
+    // bus". A segment that is nothing but a walk is fine, since that is the
+    // real approach to plenty of places.
+    if (b.legs.length > 1 && b.legs[0].mode === 'walk') continue;
 
-    // If a segment walks in or out of the hub on the joining end, the hub is
-    // not where the transfer happens, the far end of that walk is. Allowing it
-    // produced "bus to the Polynesian, walk to the TTC, bus to the Swan" and
-    // "bus to the TTC, walk to the Polynesian, take the Polynesian's bus".
-    // A segment that is nothing but a walk is fine on either side, since that
-    // is the real approach to plenty of places.
-    const walksIntoHub = a.legs.length > 1 && a.legs[a.legs.length - 1].mode === 'walk';
-    const walksOutOfHub = b.legs.length > 1 && b.legs[0].mode === 'walk';
-    if (walksIntoHub || walksOutOfHub) continue;
-    const legs: Leg[] = [
-      ...a.legs,
-      { ...b.legs[0], walkMinutes: HUB_TRANSFER_WALK[hub] ?? 5 },
-      ...b.legs.slice(1),
-    ];
-    options.push({
-      id: `synth-${from}-${hub}-${to}`,
-      from, to, legs,
-      totalRideMinutes: legs.reduce((sum, l) => sum + l.rideMinutes, 0),
-      tags: ['transfer'],
-      name: nameForLegs(legs),
-      notes: `${HUB_TRANSFER_NOTE[hub] ?? `Transfer at ${destLabel(hub)}.`} The wait for the second vehicle is included in the journey total.`,
-    });
+    for (const a of accessSegments(from, hub, timeOverride)) {
+      if (a.legs.length + b.legs.length > 3) continue;
+
+      // Stitching two walks together through a hub is just a longer walk, not
+      // a transfer, and it produced trips like "walk 12 min, then walk 5 min".
+      if (a.legs.every(l => l.mode === 'walk') && b.legs.every(l => l.mode === 'walk')) continue;
+      if (a.legs.length > 1 && a.legs[a.legs.length - 1].mode === 'walk') continue;
+
+      const legs: Leg[] = [
+        ...a.legs,
+        { ...b.legs[0], walkMinutes: HUB_TRANSFER_WALK[hub] ?? RESORT_HUB_WALK },
+        ...b.legs.slice(1),
+      ];
+      const route: Route = {
+        id: `synth-${from}-${hub}-${to}-${a.legs[0].mode}`,
+        from, to, legs,
+        totalRideMinutes: legs.reduce((sum, l) => sum + l.rideMinutes, 0),
+        tags: legs.some(l => FLAG_LAUNCHES.includes(l.mode) || l.mode === 'friendship_boat'
+                          || l.mode === 'sassagoula_boat' || l.mode === 'ferry_ttc_mk')
+          ? ['transfer', 'water']
+          : ['transfer'],
+        name: nameForLegs(legs),
+        notes: `${hubNote(hub)} The wait for the second vehicle is included in the journey total.`,
+      };
+      const signature = legSignature(route);
+      if (seen.has(signature)) continue;
+      seen.add(signature);
+      options.push(route);
+      score.set(route.id, journeyMinutes(route) * detourFactor(from, hub, to));
+    }
   }
-  options.sort((x, y) => journeyMinutes(x) - journeyMinutes(y));
-  // Keep alternates only if they're competitive with the best option
-  const best = options[0];
-  return options.slice(0, 2).filter((r, i) => i === 0 || journeyMinutes(r) <= journeyMinutes(best) + 20);
+
+  // Chosen on the detour-weighted score, then shown in honest time order.
+  options.sort((x, y) => score.get(x.id)! - score.get(y.id)!);
+  const kept = options.slice(0, MAX_HUB_OPTIONS);
+  const best = Math.min(...kept.map(r => journeyMinutes(r)));
+  return kept
+    .filter(r => journeyMinutes(r) <= best + HUB_OPTION_MARGIN)
+    .sort((x, y) => journeyMinutes(x) - journeyMinutes(y));
 }
 
 // Paid rides
@@ -328,12 +487,43 @@ function minnieVanFallback(from: string, to: string): Route {
   };
 }
 
+// Last resort
+//
+// Some stitched trips are real but absurd next to what else is on offer. Two
+// value resorts a mile apart on a paved path are also, technically, connected
+// by an eighty-minute bus ride through a theme park. Both belong on the list;
+// only one of them should look like an answer.
+//
+// The threshold is deliberately blunt. This is not "slower than the best" —
+// on this network almost everything is slower than the best — it is "so much
+// slower that offering it without comment would be misleading".
+const LAST_RESORT_FACTOR = 2.5;
+const LAST_RESORT_MARGIN = 30;
+
+function markLastResort(routes: Route[]): Route[] {
+  const times = routes.map(r => journeyMinutes(r));
+  const best = Math.min(...times);
+  if (!Number.isFinite(best)) return routes;
+  // Both conditions, so that neither a short best option nor a long one can
+  // trip the label on its own: three minutes against one is a ratio, not a
+  // problem, and ten minutes' difference is never worth a warning.
+  const beaten = (t: number) => t > best * LAST_RESORT_FACTOR && t > best + LAST_RESORT_MARGIN;
+  return routes.map((r, i) => {
+    if (!r.id.startsWith('synth-') || !beaten(times[i])) return r;
+    return {
+      ...r,
+      tags: [...r.tags, 'last_resort' as const],
+      notes: `${r.notes ?? ''} Only worth it if the quicker options above are not open to you.`.trim(),
+    };
+  });
+}
+
 export function getActiveRoutes(from: string, to: string, timeOverride?: Date): Route[] {
   const origFrom = from, origTo = to;
   from = DEST_ALIAS[from] ?? from;
   to = DEST_ALIAS[to] ?? to;
 
-  // Aliased neighbors (e.g. BoardWalk ↔ BoardWalk Inn) are a short walk apart
+  // Aliased neighbors (e.g. Boardwalk ↔ Boardwalk Inn) are a short walk apart
   if (from === to) {
     if (origFrom === origTo) return [];
     return [{
@@ -347,9 +537,21 @@ export function getActiveRoutes(from: string, to: string, timeOverride?: Date): 
   }
 
   let routes = directRoutes(from, to, timeOverride);
-  const hasRealRoute = routes.some(r => r.legs.every(l => l.mode !== 'minnie_van'));
+  // Compose transfers unless this pair has a trip you can take without
+  // changing vehicles at all.
+  //
+  // Two narrower rules used to guard this, and each hid real answers. Any
+  // non-paid route counted, so once a footpath was added between All-Star
+  // Movies and All-Star Sports the bus options vanished entirely. Any
+  // *vehicle* route counted, so a single hand-written transfer — "bus to
+  // Animal Kingdom, bus to Magic Kingdom" — was enough to stop the router
+  // ever comparing it against the resort hubs next door.
+  //
+  // A one-seat ride is the only thing a stitched trip cannot improve on.
+  const hasDirectRide = routes.some(r =>
+    !isPaidRoute(r) && r.legs.filter(l => l.mode !== 'walk').length === 1);
 
-  if (!hasRealRoute) {
+  if (!hasDirectRide) {
     // A stitched trip has to stay in the realm of something a person would
     // actually do. Unbounded, the synthesizer confidently proposed a
     // 107-minute bus odyssey from Blizzard Beach to Art of Animation, two
@@ -363,17 +565,20 @@ export function getActiveRoutes(from: string, to: string, timeOverride?: Date): 
     // absurd, not a performance target: tightened to anything like the drive
     // time it starts deleting trips people genuinely make.
     const ceiling = Math.max(100, Math.round(driveMinutes(from, to) * 2 + 50));
+    const already = new Set(routes.map(legSignature));
     routes = [
       ...routes,
-      ...synthesizeViaHub(from, to, timeOverride).filter(r => journeyMinutes(r) <= ceiling),
+      ...synthesizeViaHub(from, to, timeOverride)
+        .filter(r => journeyMinutes(r) <= ceiling)
+        .filter(r => !already.has(legSignature(r))),
     ];
   }
 
-  routes = routes.filter(r => !isPaidRoute(r));
+  routes = markLastResort(routes.filter(r => !isPaidRoute(r)));
 
   // A paid ride is always offered as a separate option rather than as a
   // competitor for the top transit slot — except where it would be absurd.
-  // Every pair used to get one, so BoardWalk to BoardWalk Inn, which the
+  // Every pair used to get one, so Boardwalk to Boardwalk Inn, which the
   // router correctly answers as a three-minute walk, also offered a car.
   const bestTransit = routes.filter(r => !isWalkOnly(r) || journeyMinutes(r) > 10);
   const shortWalkOnly = routes.length > 0 && bestTransit.length === 0;
@@ -385,6 +590,7 @@ export function getActiveRoutes(from: string, to: string, timeOverride?: Date): 
 // Filter + sort
 
 const isWater = (r: Route) => r.tags.includes('water');
+export const isLastResort = (r: Route) => r.tags.includes('last_resort');
 const isStepFree = (r: Route) => r.legs.every(l => l.accessible);
 
 function scenicScore(r: Route): number {
@@ -416,8 +622,23 @@ export function applyFilters(routes: Route[], filters: ActiveFilters, live?: Liv
       result = result.sort(byJourney);
   }
 
-  // A paid car never outranks transit, whatever the sort.
-  return result.sort((a, b) => Number(isPaidRoute(a)) - Number(isPaidRoute(b)));
+  // A paid car never outranks transit, and a last-resort stitch never
+  // outranks a trip somebody would actually take — whatever the sort.
+  return result.sort((a, b) =>
+    Number(isPaidRoute(a)) - Number(isPaidRoute(b)) ||
+    Number(isLastResort(a)) - Number(isLastResort(b)));
+}
+
+/** Did the user's own filters remove anything, as opposed to the clock? The
+ *  empty state has to know, because "your filters hid every route" over a list
+ *  emptied by the network at 8 AM sends people to turn off filters they never
+ *  turned on. */
+export function hiddenByFilters(
+  all: Route[], filters: ActiveFilters,
+): boolean {
+  const transit = all.filter(r => !isPaidRoute(r));
+  return (filters.noWater && transit.some(isWater))
+    || (filters.accessible && transit.some(r => !isStepFree(r)));
 }
 
 /** Human-readable reasons the visible list is shorter than the full one, so an
@@ -443,6 +664,76 @@ export function describeExclusions(
     if (n > 0) reasons.push(`"Step-Free" is hiding ${n} route${n === 1 ? '' : 's'}.`);
   }
   return reasons;
+}
+
+// Time restrictions
+//
+// Three of the four rules below hide routes rather than show them, which is
+// why the app could look like it simply had no answer for a trip at 8 AM. A
+// restriction is a fact about the trip, so it belongs on the card that
+// carries it and in the list that is missing one.
+
+type Restriction = NonNullable<Route['timeRestriction']>;
+
+const RESTRICTION_MINUTES: Record<Restriction, number> = {
+  before_10am:    8 * 60,
+  after_10am:     10 * 60,
+  after_3pm_only: 15 * 60,
+  after_4pm_only: 16 * 60,
+};
+
+const RESTRICTION_LABEL: Record<Restriction, string> = {
+  before_10am:    'Only before 10:00 AM',
+  after_10am:     'Only after 10:00 AM',
+  after_3pm_only: 'Only after 3:00 PM',
+  after_4pm_only: 'Only after 4:00 PM',
+};
+
+/** The badge a route carries because of when it runs, or null if it runs
+ *  whenever the network does. */
+export function restrictionLabel(route: Route): string | null {
+  return route.timeRestriction ? RESTRICTION_LABEL[route.timeRestriction] : null;
+}
+
+export interface TimeGap {
+  /** How many routes this pair has that the clock is currently hiding. */
+  count: number;
+  /** "after 10:00 AM" — reads as the tail of a sentence. */
+  window: string;
+  /** A moment those routes are running, for the "show me" action. */
+  at: Date;
+}
+
+/** Routes this pair really has, which the current time is hiding.
+ *
+ *  A guest planning tomorrow morning from their room has no way to know that
+ *  the direct bus exists at all: it is simply absent from the list, and the
+ *  list does not say so. */
+export function describeTimeGaps(from: string, to: string, when?: Date): TimeGap[] {
+  const now = when ?? new Date();
+  const a = DEST_ALIAS[from] ?? from;
+  const b = DEST_ALIAS[to] ?? to;
+
+  const byWindow = new Map<Restriction, number>();
+  for (const r of ALL_ROUTES) {
+    if (r.from !== a || r.to !== b) continue;
+    if (!r.timeRestriction || isPaidRoute(r)) continue;
+    if (timeValid(r, now)) continue;
+    byWindow.set(r.timeRestriction, (byWindow.get(r.timeRestriction) ?? 0) + 1);
+  }
+
+  return [...byWindow.entries()]
+    .map(([restriction, count]) => {
+      const at = new Date(now);
+      at.setHours(Math.floor(RESTRICTION_MINUTES[restriction] / 60),
+                  RESTRICTION_MINUTES[restriction] % 60, 0, 0);
+      return {
+        count,
+        window: RESTRICTION_LABEL[restriction].replace(/^Only /, ''),
+        at,
+      };
+    })
+    .sort((x, y) => x.at.getTime() - y.at.getTime());
 }
 
 // Labels

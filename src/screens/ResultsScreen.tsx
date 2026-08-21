@@ -5,7 +5,9 @@ import { RouteProp } from '@react-navigation/native';
 import { RootStackParamList, ActiveFilters } from '../types';
 import { Colors, Type, Spacing } from '../utils/theme';
 import { DESTINATION_MAP } from '../data/destinations';
-import { getActiveRoutes, applyFilters, describeExclusions } from '../utils/routing';
+import {
+  getActiveRoutes, applyFilters, describeExclusions, describeTimeGaps, hiddenByFilters,
+} from '../utils/routing';
 import { useLiveStatusAt } from '../utils/liveStatus';
 import AppHeader from '../components/AppHeader';
 import TimeBanner from '../components/TimeBanner';
@@ -53,6 +55,14 @@ export default function ResultsScreen({ navigation, route: navRoute }: Props) {
   );
   const routes = useMemo(() => applyFilters(all, filters, live), [all, filters, live]);
 
+  // Routes this pair really has that the clock is hiding. Without this the
+  // list at 8 AM is simply missing the direct bus and never says so, which is
+  // exactly the question a guest planning tomorrow morning is asking.
+  const gaps = useMemo(
+    () => (from && to ? describeTimeGaps(from.id, to.id, timeDate ?? undefined) : []),
+    [from, to, timeDate]
+  );
+
   // Transit options come first; a paid car is never the headline answer.
   const transit = routes.filter(r => !r.legs.some(l => l.mode === 'minnie_van'));
   const paid = routes.filter(r => r.legs.some(l => l.mode === 'minnie_van'));
@@ -60,6 +70,10 @@ export default function ResultsScreen({ navigation, route: navRoute }: Props) {
   // Naming the filters that are actually removing routes, rather than
   // blaming the network for an empty list the user's own settings produced.
   const excluded = describeExclusions(all, filters, live);
+  // ...and whether the user's own settings are among them. A list emptied by
+  // the clock used to be headlined "Your filters hid every route", over
+  // filters that were all switched off.
+  const blameFilters = hiddenByFilters(all, filters);
 
   const clearFilters = () =>
     setFilters({ sort: filters.sort, noWater: false, accessible: false });
@@ -108,15 +122,36 @@ export default function ResultsScreen({ navigation, route: navRoute }: Props) {
           <LinkAction label="Reverse Trip" onPress={reverseTrip} noChevron />
         </View>
 
+        {gaps.map(gap => (
+          <View key={gap.window} style={styles.planAheadRow}>
+            <Text style={styles.planAheadText}>
+              Planning ahead? {gap.count} more route{gap.count === 1 ? '' : 's'}{' '}
+              {gap.count === 1 ? 'runs' : 'run'} {gap.window}.
+            </Text>
+            <LinkAction
+              label={`Show ${gap.at.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`}
+              onPress={() => setTimeDate(gap.at)}
+              noChevron
+            />
+          </View>
+        ))}
+
         {transit.length === 0 && (
           <Section flush={false}>
             {excluded.length > 0 ? (
               <>
-                <Text style={styles.emptyTitle}>Your filters hid every route</Text>
-                <Text style={styles.emptyBody}>
-                  {excluded.join(' ')} Turn a filter off to see the rest.
+                <Text style={styles.emptyTitle}>
+                  {blameFilters ? 'Your filters hid every route' : 'Nothing is running yet'}
                 </Text>
-                <PillButton label="Clear Filters" onPress={clearFilters} style={styles.emptyBtn} />
+                <Text style={styles.emptyBody}>
+                  {excluded.join(' ')}
+                  {blameFilters
+                    ? ' Turn a filter off to see the rest.'
+                    : ' Try a later time to see how this trip works once service starts.'}
+                </Text>
+                {blameFilters && (
+                  <PillButton label="Clear Filters" onPress={clearFilters} style={styles.emptyBtn} />
+                )}
               </>
             ) : (
               <>
@@ -183,6 +218,21 @@ const styles = StyleSheet.create({
   },
   summaryText: {
     ...Type.label,
+    color: Colors.textSecondary,
+  },
+  planAheadRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: Spacing.md,
+    backgroundColor: Colors.sectionBg,
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.md,
+    marginBottom: Spacing.sm,
+  },
+  planAheadText: {
+    ...Type.bodySmall,
+    flex: 1,
     color: Colors.textSecondary,
   },
   emptyTitle: {

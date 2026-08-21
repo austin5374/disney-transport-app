@@ -1,5 +1,5 @@
 import { ALL_ROUTES } from '../data/routes';
-import { DESTINATIONS, DESTINATION_MAP } from '../data/destinations';
+import { DESTINATIONS, DESTINATION_MAP, shortLabel } from '../data/destinations';
 import { TRANSIT_LINES, lineForLeg } from '../data/lines';
 import { railRoutes, RAIL_STATIONS } from '../data/rail';
 
@@ -29,6 +29,52 @@ describe('destinations', () => {
 
   it('are all reachable from DESTINATION_MAP', () => {
     for (const d of DESTINATIONS) expect(DESTINATION_MAP[d.id]).toBe(d);
+  });
+
+  it("gives every Disney-owned resort its official name", () => {
+    // "Polynesian Village" is not what it is called. The prefix is part of
+    // the name on the signage, the confirmation email and the reference app.
+    const RESORT_GROUPS = [
+      'Deluxe MK Area', 'Deluxe EPCOT Area', 'Deluxe AK Area',
+      'Moderate Resorts', 'Value Resorts', 'DVC / Other',
+    ];
+    // The Swan, the Dolphin and the Swan Reserve sit on Disney land and are
+    // run by Marriott. Calling them Disney's would be wrong.
+    const THIRD_PARTY = new Set(['SW', 'DO', 'SR']);
+    for (const d of DESTINATIONS) {
+      if (!RESORT_GROUPS.includes(d.group)) continue;
+      if (THIRD_PARTY.has(d.id)) {
+        expect(d.label).not.toMatch(/Disney/);
+      } else {
+        expect(d.label.startsWith("Disney's")).toBe(true);
+      }
+    }
+    expect(DESTINATION_MAP.POLY.label).toBe("Disney's Polynesian Village Resort");
+  });
+
+  it('spells the Boardwalk the way the stakeholder asked for', () => {
+    const camelCased = /BoardWalk/;
+    const boardwalk = DESTINATIONS.filter(d => /boardwalk/i.test(d.label));
+    expect(boardwalk.length).toBeGreaterThan(0);
+    for (const d of boardwalk) expect(d.label).not.toMatch(camelCased);
+    // ...everywhere it is written down, not only on the destination list.
+    for (const r of ALL_ROUTES) {
+      expect(r.name).not.toMatch(camelCased);
+      for (const l of r.legs) expect(l.tip ?? '').not.toMatch(camelCased);
+    }
+    for (const line of TRANSIT_LINES) {
+      for (const station of line.stations) expect(station).not.toMatch(camelCased);
+    }
+  });
+
+  it('keeps a short name for anywhere whose official one is long', () => {
+    // Route names are built out of place names — "Walk to X, Bus to Y" — and
+    // an official name is unreadable inside one.
+    for (const d of DESTINATIONS) {
+      if (d.label.length <= 24) continue;
+      expect(shortLabel(d.id).length).toBeLessThanOrEqual(24);
+      expect(shortLabel(d.id)).not.toBe(d.label);
+    }
   });
 });
 

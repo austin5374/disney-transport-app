@@ -143,6 +143,40 @@ describe('detail', () => {
   });
 });
 
+describe('planning for a different time', () => {
+  // The "Change" link opened a sheet with a title and a Done button and
+  // nothing in between: the picker it rendered has no web implementation, so
+  // on the only build anyone can click, the whole feature was dead.
+  const morning = new Date(2026, 7, 20, 9, 0, 0).toISOString();
+  const early = { params: { fromId: 'MK', toId: 'HS', timeOverride: morning } } as never;
+
+  it('opens a sheet that actually contains a time control', async () => {
+    await wrap(<ResultsScreen navigation={nav()} route={early} />);
+    await fireEvent.press(screen.getByText('Change'));
+    await waitFor(() => expect(screen.getByText('Plan for a different time')).toBeTruthy());
+    // A readout to change, presets to change it to, and a way to commit.
+    expect(screen.getByText('Early morning · 9:00 AM')).toBeTruthy();
+    expect(screen.getByLabelText('Forward 15 minutes')).toBeTruthy();
+    expect(screen.getByText('Done')).toBeTruthy();
+  });
+
+  it('moves the planned time when the control is used', async () => {
+    await wrap(<ResultsScreen navigation={nav()} route={early} />);
+    await fireEvent.press(screen.getByText('Change'));
+    await waitFor(() => expect(screen.getByLabelText('Planning for 9:00 AM')).toBeTruthy());
+    await fireEvent.press(screen.getByLabelText('Forward 15 minutes'));
+    expect(screen.getByLabelText('Planning for 9:15 AM')).toBeTruthy();
+  });
+
+  it('offers a preview of the routes the clock is hiding', async () => {
+    await wrap(<ResultsScreen navigation={nav()} route={early} />);
+    expect(screen.getByText(/Planning ahead\?/)).toBeTruthy();
+    await fireEvent.press(screen.getByText('Show 10:00 AM'));
+    // The direct park-to-park bus is what was missing at eight.
+    await waitFor(() => expect(screen.getByText('Bus from Magic Kingdom')).toBeTruthy());
+  });
+});
+
 describe('saved trips', () => {
   // The detail test above pressed Save Trip, and the store is module-level, so
   // this is the other half of the same journey: what you saved is what you see.

@@ -22,7 +22,11 @@ export type RouteTag =
   | 'transfer'
   | 'before_10am_only'
   | 'scenic'
-  | 'time_restricted';
+  | 'time_restricted'
+  /** A trip that works but is far slower than everything else on the list —
+   *  the eighty-minute bus through a theme park between two resorts that
+   *  share a footpath. Shown, ranked last, and labelled as what it is. */
+  | 'last_resort';
 
 // Leg
 export interface Leg {

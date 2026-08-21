@@ -1,6 +1,7 @@
 import {
   getActiveRoutes, applyFilters, journeyMinutes, waitMinutesFor,
   transferCount, driveMinutes, describeExclusions, expectedWait,
+  describeTimeGaps, restrictionLabel,
 } from '../utils/routing';
 import { DESTINATIONS } from '../data/destinations';
 import { RAIL_STATIONS } from '../data/rail';
@@ -199,14 +200,108 @@ describe('time-of-day rules', () => {
     const ids = (hour: number) =>
       getActiveRoutes('MK', 'HS', at(hour)).map(r => r.id);
 
-    // Before opening, the only Disney option is the documented workaround.
-    // walk to a monorail resort and pick the bus up there.
-    expect(ids(8)).toContain('mk-hs-before10');
+    // Before opening the direct bus is not running, so every option is a
+    // transfer through somewhere whose own buses are.
     expect(ids(8)).not.toContain('mk-hs-bus');
+    const early = getActiveRoutes('MK', 'HS', at(8)).filter(r => !isPaid(r));
+    expect(early.length).toBeGreaterThan(0);
+    for (const r of early) expect(r.legs.length).toBeGreaterThan(1);
 
-    // Once park-to-park service starts, the direct bus replaces it.
+    // Once park-to-park service starts, the direct bus replaces them.
     expect(ids(11)).toContain('mk-hs-bus');
-    expect(ids(11)).not.toContain('mk-hs-before10');
+    expect(getActiveRoutes('MK', 'HS', at(11)).filter(r => !isPaid(r) && r.id.startsWith('synth-')))
+      .toEqual([]);
+  });
+
+  it('picks the transfer hub by cost rather than from a hardcoded default', () => {
+    // The route file used to answer every early-morning trip out of the Magic
+    // Kingdom with one hand-written line: walk twelve minutes to the Grand
+    // Floridian and take its bus. That was the answer for Hollywood Studios,
+    // for Disney Springs and for Animal Kingdom alike, whichever resort was
+    // actually the right one and whichever way was actually quickest — while
+    // the same app, asked for the Contemporary directly, correctly offered
+    // the monorail.
+    for (const dest of ['DS', 'AK', 'TL', 'BB']) {
+      const best = applyFilters(getActiveRoutes('MK', dest, at(8)), BASE)
+        .filter(r => !isPaid(r))[0];
+      expect(best.legs[0].to).toBe('CON');
+      expect(best.legs[0].mode).toBe('monorail_resort');
+    }
+  });
+
+  it('compares every mode that can reach the hub, not just the first one found', () => {
+    // Grand Floridian as a destination offered a walk, a boat and a monorail
+    // and ranked them. Grand Floridian as a stop on the way offered a walk.
+    const early = getActiveRoutes('MK', 'DS', at(8)).filter(r => !isPaid(r));
+    const accessModes = new Set(early.map(r => r.legs[0].mode));
+    expect(accessModes.size).toBeGreaterThan(1);
+  });
+
+  it('never boards a flagged-down resort launch when the hop has another option', () => {
+    // A flag launch is twenty minutes apart and has to be waited for at a
+    // dock. It is a fine way to reach a resort you are going to and a bad way
+    // to reach a bus, so a transfer only rides one where the hop has nothing
+    // else at all — Wilderness Lodge to the Contemporary, and no more.
+    const LAUNCHES = ['water_taxi_gold', 'water_taxi_red', 'water_taxi_green', 'water_taxi_blue'];
+    const offenders: string[] = [];
+    for (const [a, b] of PAIRS) {
+      for (const hour of [8, 13]) {
+        for (const r of getActiveRoutes(a, b, at(hour))) {
+          if (r.legs.length < 2) continue;
+          for (const leg of r.legs) {
+            if (!LAUNCHES.includes(leg.mode)) continue;
+            const alternatives = getActiveRoutes(leg.from, leg.to, at(hour)).filter(alt =>
+              alt.legs.length === 1 && !isPaid(alt) && !LAUNCHES.includes(alt.legs[0].mode));
+            if (alternatives.length > 0) offenders.push(`${a}>${b}: ${r.id} rides ${leg.mode}`);
+          }
+        }
+      }
+    }
+    expect(offenders).toEqual([]);
+  });
+
+  it('never connects through a resort launch on the Magic Kingdom side', () => {
+    // Every resort the launches serve is also on the monorail loop or a
+    // footpath, so the boat is never the way to reach a connection there.
+    const LAUNCHES = ['water_taxi_gold', 'water_taxi_red', 'water_taxi_green', 'water_taxi_blue'];
+    for (const [, b] of PAIRS.filter(([x]) => x === 'MK')) {
+      for (const r of getActiveRoutes('MK', b, at(8))) {
+        if (r.legs.length < 2) continue;
+        expect(r.legs.some(l => LAUNCHES.includes(l.mode))).toBe(false);
+      }
+    }
+  });
+});
+
+describe('walking', () => {
+  it('offers the footpath between the All-Star resorts, and demotes the bus', () => {
+    // The only options here were two eighty-minute bus rides through a theme
+    // park, the first of them presented as the quickest way — between two
+    // resorts that share a sidewalk.
+    for (const [a, b] of [['ASMo', 'ASS'], ['ASS', 'ASMo']] as [string, string][]) {
+      const transit = applyFilters(getActiveRoutes(a, b, at(11)), BASE).filter(r => !isPaid(r));
+      expect(transit[0].legs.every(l => l.mode === 'walk')).toBe(true);
+      expect(transit[0].tags).toContain('walk_only');
+      const buses = transit.filter(r => r.legs.some(l => l.mode === 'bus'));
+      expect(buses.length).toBeGreaterThan(0);
+      for (const r of buses) expect(r.tags).toContain('last_resort');
+      // ...and a demoted route sorts below everything that is not demoted.
+      const lastReal = transit.findIndex(r => r.tags.includes('last_resort'));
+      expect(transit.slice(lastReal).every(r => r.tags.includes('last_resort'))).toBe(true);
+    }
+  });
+
+  it('walks a paved path in both directions', () => {
+    // Authored one way and one way only, which is how EPCOT came to have a
+    // six-minute walk to the Boardwalk Inn that it would only tell you about
+    // if you asked from the Boardwalk Inn.
+    const walkable = (a: string, b: string) =>
+      getActiveRoutes(a, b, at(13)).some(r => r.legs.every(l => l.mode === 'walk'));
+    const asymmetric: string[] = [];
+    for (const [a, b] of PAIRS) {
+      if (walkable(a, b) !== walkable(b, a)) asymmetric.push(`${a} / ${b}`);
+    }
+    expect(asymmetric).toEqual([]);
   });
 });
 
@@ -311,5 +406,48 @@ describe('hub transfers', () => {
 
     expect(legsAt(13)).not.toContain('bus:HS>DS');
     expect(legsAt(17)).toContain('bus:HS>DS');
+  });
+});
+
+describe('time restrictions, said out loud', () => {
+  it('labels a route by the hours it runs', () => {
+    const bus = getActiveRoutes('MK', 'HS', at(11)).find(r => r.id === 'mk-hs-bus')!;
+    expect(restrictionLabel(bus)).toBe('Only after 10:00 AM');
+    // A route with no restriction carries no badge, rather than a reassuring
+    // one nobody needs to read.
+    const walk = getActiveRoutes('MK', 'CON', at(11)).find(r => r.id === 'mk-con-walk')!;
+    expect(restrictionLabel(walk)).toBeNull();
+  });
+
+  it('names the routes the clock is hiding, and when to come back for them', () => {
+    // At eight in the morning the direct bus is not merely slower, it is
+    // absent, and the list said nothing about it.
+    const [gap] = describeTimeGaps('MK', 'HS', at(8));
+    expect(gap.count).toBeGreaterThan(0);
+    expect(gap.window).toBe('after 10:00 AM');
+    expect(gap.at.getHours()).toBe(10);
+
+    // Come back at that hour and there is nothing left to promise.
+    expect(describeTimeGaps('MK', 'HS', gap.at)).toEqual([]);
+  });
+
+  it('offers the afternoon Disney Springs bus to someone asking at lunchtime', () => {
+    const [gap] = describeTimeGaps('MK', 'DS', at(13));
+    expect(gap.window).toBe('after 4:00 PM');
+    expect(getActiveRoutes('MK', 'DS', gap.at).some(r => r.id === 'mk-ds-after4-bus')).toBe(true);
+  });
+});
+
+describe('ride times', () => {
+  it('does not inflate the Fort Wilderness bus', () => {
+    // The Outpost is two miles from the park gates. The route file had this
+    // at 17 minutes, which put the whole trip at 26 before you had waited for
+    // anything.
+    for (const [a, b] of [['MK', 'FW'], ['FW', 'MK']] as [string, string][]) {
+      const bus = getActiveRoutes(a, b, at(13))
+        .find(r => r.legs.length === 1 && r.legs[0].mode === 'bus')!;
+      expect(bus.legs[0].rideMinutes).toBeLessThanOrEqual(10);
+      expect(journeyMinutes(bus)).toBeLessThan(20);
+    }
   });
 });

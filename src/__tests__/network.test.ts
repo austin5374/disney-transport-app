@@ -36,7 +36,7 @@ describe('network coverage', () => {
   });
 
   it('does not offer a paid car for a walk across the street', () => {
-    // BoardWalk to BoardWalk Inn is three minutes on foot, and used to come
+    // Boardwalk to Boardwalk Inn is three minutes on foot, and used to come
     // with the offer of a six-minute taxi.
     const routes = getActiveRoutes('BW', 'BWI', AFTERNOON);
     expect(routes.some(r => isPaid(r.legs))).toBe(false);
@@ -138,7 +138,11 @@ describe('live service changes the answer', () => {
     const all = getActiveRoutes('POLY', 'MK', AFTERNOON);
     expect(all.some(r => isRouteClosed(r, night))).toBe(true);
     const kept = applyFilters(all, BASE, night).filter(r => !isPaid(r.legs));
-    expect(kept).toEqual([]);
+    // The monorail and the launches are shut at two in the morning. The
+    // footpath is not, and has no line to close: whatever survives here rides
+    // nothing.
+    expect(kept.length).toBeGreaterThan(0);
+    for (const r of kept) expect(r.legs.every(l => l.mode === 'walk')).toBe(true);
   });
 });
 

@@ -43,7 +43,7 @@ const NODES: Record<string, MapNode> = {
   TTC:  { x: 100, y: 152, label: 'TTC',              kind: 'hub',    labelDx: -14, labelDy: 4,  anchor: 'end' },
   EP:   { x: 208, y: 296, label: 'EPCOT',            kind: 'park', abbrev: 'EP', labelDy: -20 },
   IG:   { x: 196, y: 330, label: 'Intl Gateway',     kind: 'place',  labelDx: 12, labelDy: -2,  anchor: 'start' },
-  BW:   { x: 162, y: 352, label: 'BoardWalk',        kind: 'resort', labelDx: -12, labelDy: -2, anchor: 'end' },
+  BW:   { x: 162, y: 352, label: 'Boardwalk',        kind: 'resort', labelDx: -12, labelDy: -2, anchor: 'end' },
   YBC:  { x: 214, y: 356, label: 'Yacht & Beach',    kind: 'resort', labelDx: 0,  labelDy: 20,  anchor: 'middle' },
   SD:   { x: 168, y: 380, label: 'Swan / Dolphin',   kind: 'resort', labelDx: -12, labelDy: 4,  anchor: 'end' },
   HS:   { x: 118, y: 424, label: 'Hollywood Studios', kind: 'park', abbrev: 'HS', labelDy: -20 },

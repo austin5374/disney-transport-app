@@ -1,5 +1,5 @@
 import { Route, Leg, TransportMode } from '../types';
-import { DESTINATION_MAP } from './destinations';
+import { shortLabel } from './destinations';
 
 // Monorail connections are generated from the beams themselves rather than
 // written out pair by pair.
@@ -59,7 +59,7 @@ const LINES: RailLine[] = [
   },
 ];
 
-const label = (id: string) => DESTINATION_MAP[id]?.label ?? id;
+const label = shortLabel;
 
 const MODE_NAME: Partial<Record<TransportMode, string>> = {
   monorail_resort:  'Resort Monorail',

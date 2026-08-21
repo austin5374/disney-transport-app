@@ -4,11 +4,11 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { Leg } from '../types';
 import { LineStatus } from '../utils/liveStatus';
 import { Colors, Type, Spacing, Radius, SECTION_GAP } from '../utils/theme';
-import { DESTINATION_MAP } from '../data/destinations';
+import { shortLabel } from '../utils/destinationMeta';
 import LiveArrival from './LiveArrival';
 import ModeGlyph from './ModeGlyph';
 
-const placeLabel = (id: string) => DESTINATION_MAP[id]?.label ?? id;
+const placeLabel = shortLabel;
 
 // What to call the physical spot you'd walk to for each mode, used by the
 // transfer-walk line. Walking and rideshare legs get none: you're either

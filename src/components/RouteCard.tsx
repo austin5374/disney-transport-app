@@ -4,7 +4,7 @@ import { Route } from '../types';
 import { Colors, Type, Spacing, Radius, StatusColors, SECTION_GAP } from '../utils/theme';
 import { lineForLeg } from '../data/lines';
 import { LineStatus, ServiceStatus } from '../utils/liveStatus';
-import { journeyMinutes } from '../utils/routing';
+import { journeyMinutes, restrictionLabel } from '../utils/routing';
 import TransportChip from './TransportChip';
 import LiveArrival from './LiveArrival';
 import ModeGlyph from './ModeGlyph';
@@ -51,6 +51,12 @@ export default function RouteCard({ route, live, at, onPress }: RouteCardProps) 
   const total = journeyMinutes(route, live);
   const transfers = route.legs.filter(l => l.mode !== 'walk').length - 1;
 
+  // When a route runs is a fact about the route, and it used to be visible
+  // nowhere: a trip the clock had hidden simply wasn't in the list, and a
+  // trip that only runs after 10 looked, at noon, like it ran all day.
+  const restriction = restrictionLabel(route);
+  const lastResort = route.tags.includes('last_resort');
+
   // The paid-ride note used to be a gray capsule above the title. It is a
   // fact about the trip, not a status, so it belongs on the meta line with the
   // other facts about the trip.
@@ -63,22 +69,37 @@ export default function RouteCard({ route, live, at, onPress }: RouteCardProps) 
   return (
     <>
       <View style={styles.section}>
-        {/* A live disruption is the one thing worth flagging above the name. */}
-        {disruption && (
+        {/* Three things can sit above the name, and all three are facts the
+            rest of the card cannot carry: a live disruption, the hours this
+            route runs, and a warning that it is far slower than the trips
+            listed above it. */}
+        {(disruption || restriction || lastResort) && (
           <View style={styles.badgeRow}>
-            <View style={[
-              styles.badge,
-              {
-                backgroundColor: StatusColors[disruption.status].bg,
-                borderColor: StatusColors[disruption.status].border,
-              },
-            ]}>
-              <Text style={[styles.badgeText, { color: StatusColors[disruption.status].text }]}>
-                {disruption.status === 'down'
-                  ? `${disruption.name} temporarily down`
-                  : `${disruption.name} delays`}
-              </Text>
-            </View>
+            {disruption && (
+              <View style={[
+                styles.badge,
+                {
+                  backgroundColor: StatusColors[disruption.status].bg,
+                  borderColor: StatusColors[disruption.status].border,
+                },
+              ]}>
+                <Text style={[styles.badgeText, { color: StatusColors[disruption.status].text }]}>
+                  {disruption.status === 'down'
+                    ? `${disruption.name} temporarily down`
+                    : `${disruption.name} delays`}
+                </Text>
+              </View>
+            )}
+            {restriction && (
+              <View style={[styles.badge, styles.badgeNeutral]}>
+                <Text style={[styles.badgeText, styles.badgeNeutralText]}>{restriction}</Text>
+              </View>
+            )}
+            {lastResort && (
+              <View style={[styles.badge, styles.badgeNeutral]}>
+                <Text style={[styles.badgeText, styles.badgeNeutralText]}>Last resort</Text>
+              </View>
+            )}
           </View>
         )}
 
@@ -154,6 +175,13 @@ const styles = StyleSheet.create({
     ...Type.caption,
     fontFamily: Type.label.fontFamily,
     color: Colors.textSecondary,
+  },
+  badgeNeutral: {
+    backgroundColor: Colors.statusClosedBg,
+    borderColor: Colors.statusClosedBorder,
+  },
+  badgeNeutralText: {
+    color: Colors.statusClosed,
   },
   headerRow: {
     flexDirection: 'row',

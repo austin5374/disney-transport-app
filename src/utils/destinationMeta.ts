@@ -1,6 +1,6 @@
 import { TransportMode, Destination } from '../types';
 import { ALL_ROUTES } from '../data/routes';
-import { DESTINATIONS, DESTINATION_MAP } from '../data/destinations';
+import { DESTINATIONS, shortLabel } from '../data/destinations';
 
 // What a list row says underneath a place name
 //
@@ -93,6 +93,7 @@ export function matchesQuery(dest: Destination, query: string): boolean {
   if (!q) return true;
   return (
     dest.label.toLowerCase().includes(q) ||
+    shortLabel(dest.id).toLowerCase().includes(q) ||
     dest.id.toLowerCase().includes(q) ||
     dest.abbrev.toLowerCase().includes(q)
   );
@@ -104,32 +105,6 @@ export function searchDestinations(query: string): Destination[] {
   return DESTINATIONS.filter(d => matchesQuery(d, q));
 }
 
-// Names that do not fit under a 92-point diagram node
-//
-// The journey diagram was rendering "Transportation & Ticket Center" into a
-// 76-point column, which broke the word across two lines as "Transportati /
-// on & Ticket.." — the first thing on the detail screen, and it looked broken
-// because it was. These are the names people actually use out loud anyway.
-const SHORT_LABELS: Record<string, string> = {
-  TTC:  'Ticket Center',
-  POFQ: 'Port Orleans FQ',
-  POR:  'Port Orleans Riverside',
-  ASMo: 'All-Star Movies',
-  ASMu: 'All-Star Music',
-  ASS:  'All-Star Sports',
-  BWI:  'BoardWalk Inn',
-  CBR:  'Caribbean Beach',
-  CON:  'Contemporary',
-  POLY: 'Polynesian',
-  GF:   'Grand Floridian',
-  AKL:  'Animal Kingdom Lodge',
-  OKW:  'Old Key West',
-  SS:   'Saratoga Springs',
-  AOA:  'Art of Animation',
-  POP:  'Pop Century',
-};
-
-/** A place name short enough to sit under a diagram node without breaking. */
-export function shortLabel(id: string): string {
-  return SHORT_LABELS[id] ?? DESTINATION_MAP[id]?.label ?? id;
-}
+// shortLabel lives with the destination data now. Re-exported here because
+// this is where the rest of the app already reaches for place-name helpers.
+export { shortLabel };

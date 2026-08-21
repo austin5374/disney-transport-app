@@ -1,6 +1,6 @@
 import { Route, Leg, TransportMode } from '../types';
 import { TRANSIT_LINES, TransitLine } from './lines';
-import { DESTINATION_MAP } from './destinations';
+import { shortLabel } from './destinations';
 
 // Every ordered pair on a line, derived from the line's own stop list
 //
@@ -26,7 +26,7 @@ function findStop(line: TransitLine, id: string): Stop | null {
   return index === -1 ? null : { index, ids: line.stops[index] };
 }
 
-const label = (id: string) => DESTINATION_MAP[id]?.label ?? id;
+const label = shortLabel;
 
 const MODE_NAME: Partial<Record<TransportMode, string>> = {
   skyliner:        'Skyliner',

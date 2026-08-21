@@ -35,16 +35,6 @@ export const ALL_ROUTES: Route[] = [
     notes: 'Park-to-park buses run from 10am until about 1 hour after the later park\'s closing time (varies daily).',
   },
   {
-    id: 'mk-hs-before10',
-    from: 'MK', to: 'HS', name: 'Walk to Grand Floridian, Bus to Hollywood Studios (before 10am)',
-    legs: [
-      { mode: 'walk', from: 'MK', to: 'GF', rideMinutes: 12, accessible: true, tip: 'Exit MK, walk the scenic path along the lagoon to Grand Floridian. Takes 12 minutes.' },
-      { mode: 'bus', from: 'GF', to: 'HS', rideMinutes: 25, accessible: true, walkMinutes: 0, tip: 'Park-to-park buses do not run before 10am. Grand Floridian resort buses run all day.' },
-    ],
-    totalRideMinutes: 37, totalRideRange: [37,52], tags: ['before_10am_only', 'transfer', 'time_restricted'],
-    timeRestriction: 'before_10am',
-  },
-  {
     id: 'mk-hs-minnie',
     from: 'MK', to: 'HS', name: 'Minnie Van (Lyft)',
     legs: [{ mode: 'minnie_van', from: 'MK', to: 'HS', rideMinutes: 15, accessible: true }],
@@ -58,16 +48,6 @@ export const ALL_ROUTES: Route[] = [
     totalRideMinutes: 25, totalRideRange: [25,40], tags: ['time_restricted'],
     timeRestriction: 'after_10am',
     notes: 'Park-to-park buses run from 10am until about 1 hour after the later park\'s closing time (varies daily).',
-  },
-  {
-    id: 'mk-ak-before10',
-    from: 'MK', to: 'AK', name: 'Walk to Polynesian, Bus to Animal Kingdom (before 10am)',
-    legs: [
-      { mode: 'walk', from: 'MK', to: 'POLY', rideMinutes: 25, accessible: true, tip: 'Walk via the GF path to Polynesian. It\'s a long 25-minute walk. Consider Minnie Van instead.' },
-      { mode: 'bus', from: 'POLY', to: 'AK', rideMinutes: 30, accessible: true, walkMinutes: 0 },
-    ],
-    totalRideMinutes: 55, totalRideRange: [55,75], tags: ['before_10am_only', 'transfer', 'time_restricted'],
-    timeRestriction: 'before_10am',
   },
   {
     id: 'mk-ak-minnie',
@@ -84,33 +64,12 @@ export const ALL_ROUTES: Route[] = [
     timeRestriction: 'after_4pm_only',
   },
   {
-    id: 'mk-ds-via-gf',
-    from: 'MK', to: 'DS', name: 'Walk to Grand Floridian, Bus to Disney Springs',
-    legs: [
-      { mode: 'walk', from: 'MK', to: 'GF', rideMinutes: 12, accessible: true },
-      { mode: 'bus', from: 'GF', to: 'DS', rideMinutes: 30, accessible: true, walkMinutes: 0, tip: 'Runs all day, not tied to a specific time.' },
-    ],
-    totalRideMinutes: 42, totalRideRange: [42,62], tags: ['transfer'],
-    notes: 'A direct Disney Springs bus also runs from the park starting mid-afternoon, and is usually faster once it\'s running.',
-  },
-  {
     id: 'mk-ds-minnie',
     from: 'MK', to: 'DS', name: 'Minnie Van (Lyft)',
     legs: [{ mode: 'minnie_van', from: 'MK', to: 'DS', rideMinutes: 20, accessible: true }],
     totalRideMinutes: 20, tags: [],
   },
 
-  {
-    id: 'mk-tl-bus',
-    from: 'MK', to: 'TL', name: 'Walk to Grand Floridian, Bus to Disney Springs, Bus to Typhoon Lagoon',
-    legs: [
-      { mode: 'walk', from: 'MK', to: 'GF', rideMinutes: 12, accessible: true },
-      { mode: 'bus', from: 'GF', to: 'DS', rideMinutes: 30, accessible: true, walkMinutes: 0 },
-      { mode: 'bus', from: 'DS', to: 'TL', rideMinutes: 10, accessible: true, walkMinutes: 5, tip: 'Typhoon Lagoon bus departs from Disney Springs bus loop.' },
-    ],
-    totalRideMinutes: 52, totalRideRange: [52,80], tags: ['transfer'],
-    notes: 'Disney Springs is open to all park guests, no resort stay required.',
-  },
   {
     id: 'mk-tl-minnie',
     from: 'MK', to: 'TL', name: 'Minnie Van (Lyft)',
@@ -180,8 +139,9 @@ export const ALL_ROUTES: Route[] = [
   {
     id: 'mk-fw-bus',
     from: 'MK', to: 'FW', name: 'Bus from Magic Kingdom to Fort Wilderness',
-    legs: [{ mode: 'bus', from: 'MK', to: 'FW', rideMinutes: 17, accessible: true, tip: 'Bus to FW Outpost Depot. Take internal FW bus from there to your site. Not TTC.' }],
-    totalRideMinutes: 17, totalRideRange: [17,37], tags: [],
+    legs: [{ mode: 'bus', from: 'MK', to: 'FW', rideMinutes: 8, accessible: true, tip: 'Bus to FW Outpost Depot. Take internal FW bus from there to your site. Not TTC.' }],
+    totalRideMinutes: 8, totalRideRange: [8,20], tags: [],
+    notes: 'The Outpost is barely two miles from the park by road. The wait for the bus is usually longer than the ride.',
   },
 
   {
@@ -318,33 +278,6 @@ export const ALL_ROUTES: Route[] = [
   },
 
   {
-    id: 'ttc-hs-via-poly',
-    from: 'TTC', to: 'HS', name: 'Walk to Polynesian, Bus to Hollywood Studios',
-    legs: [
-      { mode: 'walk', from: 'TTC', to: 'POLY', rideMinutes: 6, accessible: true, tip: 'No direct bus from TTC. Walk to Poly (5-8 min) to catch resort buses.' },
-      { mode: 'bus', from: 'POLY', to: 'HS', rideMinutes: 30, accessible: true, walkMinutes: 0 },
-    ],
-    totalRideMinutes: 36, totalRideRange: [36,56], tags: ['transfer'],
-  },
-  {
-    id: 'ttc-ak-via-poly',
-    from: 'TTC', to: 'AK', name: 'Walk to Polynesian, Bus to Animal Kingdom',
-    legs: [
-      { mode: 'walk', from: 'TTC', to: 'POLY', rideMinutes: 6, accessible: true, tip: 'No direct bus from TTC to parks. Walk to Poly first.' },
-      { mode: 'bus', from: 'POLY', to: 'AK', rideMinutes: 30, accessible: true, walkMinutes: 0 },
-    ],
-    totalRideMinutes: 36, totalRideRange: [36,56], tags: ['transfer'],
-  },
-  {
-    id: 'ttc-ds-via-poly',
-    from: 'TTC', to: 'DS', name: 'Walk to Polynesian, Bus to Disney Springs',
-    legs: [
-      { mode: 'walk', from: 'TTC', to: 'POLY', rideMinutes: 6, accessible: true },
-      { mode: 'bus', from: 'POLY', to: 'DS', rideMinutes: 30, accessible: true, walkMinutes: 0 },
-    ],
-    totalRideMinutes: 36, totalRideRange: [36,56], tags: ['transfer'],
-  },
-  {
     id: 'ttc-ds-minnie',
     from: 'TTC', to: 'DS', name: 'Minnie Van (Lyft)',
     legs: [{ mode: 'minnie_van', from: 'TTC', to: 'DS', rideMinutes: 20, accessible: true }],
@@ -362,10 +295,10 @@ export const ALL_ROUTES: Route[] = [
   },
   {
     id: 'ttc-bwi-monorail-walk',
-    from: 'TTC', to: 'BWI', name: 'EPCOT Monorail to EPCOT, walk to BoardWalk Inn',
+    from: 'TTC', to: 'BWI', name: 'EPCOT Monorail to EPCOT, walk to Boardwalk Inn',
     legs: [
       { mode: 'monorail_epcot', from: 'TTC', to: 'EP', rideMinutes: 12, accessible: true },
-      { mode: 'walk', from: 'EP', to: 'BWI', rideMinutes: 6, accessible: true, walkMinutes: 0, tip: 'Exit via International Gateway. BoardWalk Inn is directly adjacent.' },
+      { mode: 'walk', from: 'EP', to: 'BWI', rideMinutes: 6, accessible: true, walkMinutes: 0, tip: 'Exit via International Gateway. Boardwalk Inn is directly adjacent.' },
     ],
     totalRideMinutes: 18, tags: ['transfer'],
   },
@@ -392,9 +325,9 @@ export const ALL_ROUTES: Route[] = [
     from: 'TTC', to: 'FW', name: 'Express Monorail to MK, Bus to Fort Wilderness',
     legs: [
       { mode: 'monorail_express', from: 'TTC', to: 'MK', rideMinutes: 8, accessible: true },
-      { mode: 'bus', from: 'MK', to: 'FW', rideMinutes: 17, accessible: true, walkMinutes: 3 },
+      { mode: 'bus', from: 'MK', to: 'FW', rideMinutes: 8, accessible: true, walkMinutes: 3 },
     ],
-    totalRideMinutes: 25, totalRideRange: [25,45], tags: ['transfer'],
+    totalRideMinutes: 16, totalRideRange: [16,36], tags: ['transfer'],
   },
   {
     id: 'ttc-minnie',
@@ -469,16 +402,6 @@ export const ALL_ROUTES: Route[] = [
     notes: 'Park-to-park buses run from 10am until about 1 hour after the later park\'s closing time (varies daily).',
   },
   {
-    id: 'ep-ak-before10',
-    from: 'EP', to: 'AK', name: 'Friendship Boat to BoardWalk Inn, Bus to Animal Kingdom (before 10am)',
-    legs: [
-      { mode: 'friendship_boat', from: 'EP', to: 'BWI', rideMinutes: 10, accessible: true, tip: 'Board at EPCOT International Gateway boat dock.' },
-      { mode: 'bus', from: 'BWI', to: 'AK', rideMinutes: 30, accessible: true, walkMinutes: 5, tip: 'Park-to-park buses don\'t run before 10am. BoardWalk Inn resort bus runs all day.' },
-    ],
-    totalRideMinutes: 40, totalRideRange: [40,62], tags: ['water', 'before_10am_only', 'transfer', 'time_restricted'],
-    timeRestriction: 'before_10am',
-  },
-  {
     id: 'ep-ak-minnie',
     from: 'EP', to: 'AK', name: 'Minnie Van (Lyft)',
     legs: [{ mode: 'minnie_van', from: 'EP', to: 'AK', rideMinutes: 20, accessible: true }],
@@ -493,33 +416,12 @@ export const ALL_ROUTES: Route[] = [
     timeRestriction: 'after_4pm_only',
   },
   {
-    id: 'ep-ds-before4',
-    from: 'EP', to: 'DS', name: 'Friendship Boat to BoardWalk Inn, Bus to Disney Springs',
-    legs: [
-      { mode: 'friendship_boat', from: 'EP', to: 'BWI', rideMinutes: 10, accessible: true },
-      { mode: 'bus', from: 'BWI', to: 'DS', rideMinutes: 25, accessible: true, walkMinutes: 5 },
-    ],
-    totalRideMinutes: 35, totalRideRange: [35,57], tags: ['water', 'transfer'],
-    notes: 'A direct Disney Springs bus also runs from the park starting mid-afternoon, and is usually faster once it\'s running.',
-  },
-  {
     id: 'ep-ds-minnie',
     from: 'EP', to: 'DS', name: 'Minnie Van (Lyft)',
     legs: [{ mode: 'minnie_van', from: 'EP', to: 'DS', rideMinutes: 15, accessible: true }],
     totalRideMinutes: 15, tags: [],
   },
 
-  {
-    id: 'ep-tl-bus',
-    from: 'EP', to: 'TL', name: 'Friendship Boat to BoardWalk Inn, Bus to Disney Springs, Bus to Typhoon Lagoon',
-    legs: [
-      { mode: 'friendship_boat', from: 'EP', to: 'BWI', rideMinutes: 10, accessible: true },
-      { mode: 'bus', from: 'BWI', to: 'DS', rideMinutes: 25, accessible: true, walkMinutes: 5 },
-      { mode: 'bus', from: 'DS', to: 'TL', rideMinutes: 10, accessible: true, walkMinutes: 5 },
-    ],
-    totalRideMinutes: 45, totalRideRange: [45,70], tags: ['water', 'transfer'],
-    notes: 'Disney Springs is open to all park guests, no resort stay required.',
-  },
   {
     id: 'ep-tl-minnie',
     from: 'EP', to: 'TL', name: 'Minnie Van (Lyft)',
@@ -546,12 +448,12 @@ export const ALL_ROUTES: Route[] = [
   {
     id: 'ep-bwi-walk',
     from: 'EP', to: 'BWI', name: 'Walk via International Gateway (~6 min)',
-    legs: [{ mode: 'walk', from: 'EP', to: 'BWI', rideMinutes: 6, accessible: true, tip: 'Exit EPCOT via International Gateway (between UK and France). BoardWalk Inn is immediately adjacent.' }],
+    legs: [{ mode: 'walk', from: 'EP', to: 'BWI', rideMinutes: 6, accessible: true, tip: 'Exit EPCOT via International Gateway (between UK and France). Boardwalk Inn is immediately adjacent.' }],
     totalRideMinutes: 6, tags: ['walk_only'],
   },
   {
     id: 'ep-bwi-boat',
-    from: 'EP', to: 'BWI', name: 'Friendship Boat to BoardWalk Inn',
+    from: 'EP', to: 'BWI', name: 'Friendship Boat to Boardwalk Inn',
     legs: [{ mode: 'friendship_boat', from: 'EP', to: 'BWI', rideMinutes: 10, accessible: true, tip: 'Walking is faster, the boat makes several stops.' }],
     totalRideMinutes: 10, tags: ['water', 'scenic'],
   },
@@ -756,16 +658,6 @@ export const ALL_ROUTES: Route[] = [
     notes: 'Park-to-park buses run from 10am until about 1 hour after the later park\'s closing time (varies daily).',
   },
   {
-    id: 'hs-mk-before10',
-    from: 'HS', to: 'MK', name: 'Friendship Boat to BoardWalk Inn, Bus to Magic Kingdom (before 10am)',
-    legs: [
-      { mode: 'friendship_boat', from: 'HS', to: 'BWI', rideMinutes: 15, accessible: true, tip: 'Board Friendship Boat at Hollywood Studios dock. Stops at SW/DO first, then BWI.' },
-      { mode: 'bus', from: 'BWI', to: 'MK', rideMinutes: 30, accessible: true, walkMinutes: 5 },
-    ],
-    totalRideMinutes: 45, totalRideRange: [45,67], tags: ['water', 'before_10am_only', 'transfer', 'time_restricted'],
-    timeRestriction: 'before_10am',
-  },
-  {
     id: 'hs-mk-minnie',
     from: 'HS', to: 'MK', name: 'Minnie Van (Lyft)',
     legs: [{ mode: 'minnie_van', from: 'HS', to: 'MK', rideMinutes: 20, accessible: true }],
@@ -779,16 +671,6 @@ export const ALL_ROUTES: Route[] = [
     totalRideMinutes: 25, totalRideRange: [25,45], tags: ['time_restricted'],
     timeRestriction: 'after_10am',
     notes: 'Park-to-park buses run from 10am until about 1 hour after the later park\'s closing time (varies daily).',
-  },
-  {
-    id: 'hs-ak-before10',
-    from: 'HS', to: 'AK', name: 'Friendship Boat to BoardWalk Inn, Bus to Animal Kingdom (before 10am)',
-    legs: [
-      { mode: 'friendship_boat', from: 'HS', to: 'BWI', rideMinutes: 15, accessible: true },
-      { mode: 'bus', from: 'BWI', to: 'AK', rideMinutes: 30, accessible: true, walkMinutes: 5 },
-    ],
-    totalRideMinutes: 45, totalRideRange: [45,67], tags: ['water', 'before_10am_only', 'transfer', 'time_restricted'],
-    timeRestriction: 'before_10am',
   },
   {
     id: 'hs-ak-minnie',
@@ -805,33 +687,12 @@ export const ALL_ROUTES: Route[] = [
     timeRestriction: 'after_4pm_only',
   },
   {
-    id: 'hs-ds-before4',
-    from: 'HS', to: 'DS', name: 'Friendship Boat to BoardWalk Inn, Bus to Disney Springs',
-    legs: [
-      { mode: 'friendship_boat', from: 'HS', to: 'BWI', rideMinutes: 15, accessible: true },
-      { mode: 'bus', from: 'BWI', to: 'DS', rideMinutes: 25, accessible: true, walkMinutes: 5 },
-    ],
-    totalRideMinutes: 40, totalRideRange: [40,62], tags: ['water', 'transfer'],
-    notes: 'A direct Disney Springs bus also runs from the park starting mid-afternoon, and is usually faster once it\'s running.',
-  },
-  {
     id: 'hs-ds-minnie',
     from: 'HS', to: 'DS', name: 'Minnie Van (Lyft)',
     legs: [{ mode: 'minnie_van', from: 'HS', to: 'DS', rideMinutes: 15, accessible: true }],
     totalRideMinutes: 15, tags: [],
   },
 
-  {
-    id: 'hs-tl-bus',
-    from: 'HS', to: 'TL', name: 'Friendship Boat to BoardWalk Inn, Bus to Disney Springs, Bus to Typhoon Lagoon',
-    legs: [
-      { mode: 'friendship_boat', from: 'HS', to: 'BWI', rideMinutes: 15, accessible: true },
-      { mode: 'bus', from: 'BWI', to: 'DS', rideMinutes: 25, accessible: true, walkMinutes: 5 },
-      { mode: 'bus', from: 'DS', to: 'TL', rideMinutes: 10, accessible: true, walkMinutes: 5 },
-    ],
-    totalRideMinutes: 50, totalRideRange: [50,75], tags: ['water', 'transfer'],
-    notes: 'Disney Springs is open to all park guests, no resort stay required.',
-  },
   {
     id: 'hs-tl-minnie',
     from: 'HS', to: 'TL', name: 'Minnie Van (Lyft)',
@@ -857,20 +718,20 @@ export const ALL_ROUTES: Route[] = [
 
   {
     id: 'hs-bwi-walk',
-    from: 'HS', to: 'BWI', name: 'Walk via BoardWalk path (~18 min)',
-    legs: [{ mode: 'walk', from: 'HS', to: 'BWI', rideMinutes: 18, accessible: true, tip: 'Direct path along the BoardWalk. Pass Swan/Dolphin area heading toward BWI.' }],
+    from: 'HS', to: 'BWI', name: 'Walk via Boardwalk path (~18 min)',
+    legs: [{ mode: 'walk', from: 'HS', to: 'BWI', rideMinutes: 18, accessible: true, tip: 'Direct path along the Boardwalk. Pass Swan/Dolphin area heading toward BWI.' }],
     totalRideMinutes: 18, tags: ['walk_only'],
   },
   {
     id: 'hs-bwi-boat',
-    from: 'HS', to: 'BWI', name: 'Friendship Boat to BoardWalk Inn',
+    from: 'HS', to: 'BWI', name: 'Friendship Boat to Boardwalk Inn',
     legs: [{ mode: 'friendship_boat', from: 'HS', to: 'BWI', rideMinutes: 20, accessible: true, tip: 'Stops at SW/DO before BWI.' }],
     totalRideMinutes: 20, tags: ['water', 'scenic'],
   },
 
   {
     id: 'hs-yc-walk',
-    from: 'HS', to: 'YC', name: 'Walk via BoardWalk path (~22 min)',
+    from: 'HS', to: 'YC', name: 'Walk via Boardwalk path (~22 min)',
     legs: [{ mode: 'walk', from: 'HS', to: 'YC', rideMinutes: 22, accessible: true }],
     totalRideMinutes: 22, tags: ['walk_only'],
   },
@@ -1035,16 +896,6 @@ export const ALL_ROUTES: Route[] = [
     notes: 'Park-to-park buses run from 10am until about 1 hour after the later park\'s closing time (varies daily).',
   },
   {
-    id: 'ak-mk-before10',
-    from: 'AK', to: 'MK', name: 'Bus to Animal Kingdom Lodge, Bus to Magic Kingdom (before 10am)',
-    legs: [
-      { mode: 'bus', from: 'AK', to: 'AKL', rideMinutes: 10, accessible: true, tip: 'Shortest hop from AK before park-to-park buses start at 10am.' },
-      { mode: 'bus', from: 'AKL', to: 'MK', rideMinutes: 30, accessible: true, walkMinutes: 5 },
-    ],
-    totalRideMinutes: 40, totalRideRange: [40,65], tags: ['before_10am_only', 'transfer', 'time_restricted'],
-    timeRestriction: 'before_10am',
-  },
-  {
     id: 'ak-mk-minnie',
     from: 'AK', to: 'MK', name: 'Minnie Van (Lyft)',
     legs: [{ mode: 'minnie_van', from: 'AK', to: 'MK', rideMinutes: 20, accessible: true }],
@@ -1058,16 +909,6 @@ export const ALL_ROUTES: Route[] = [
     totalRideMinutes: 30, totalRideRange: [30,50], tags: ['time_restricted'],
     timeRestriction: 'after_10am',
     notes: 'Park-to-park buses run from 10am until about 1 hour after the later park\'s closing time (varies daily).',
-  },
-  {
-    id: 'ak-ep-before10',
-    from: 'AK', to: 'EP', name: 'Bus to Animal Kingdom Lodge, Bus to EPCOT (before 10am)',
-    legs: [
-      { mode: 'bus', from: 'AK', to: 'AKL', rideMinutes: 10, accessible: true },
-      { mode: 'bus', from: 'AKL', to: 'EP', rideMinutes: 30, accessible: true, walkMinutes: 5 },
-    ],
-    totalRideMinutes: 40, totalRideRange: [40,65], tags: ['before_10am_only', 'transfer', 'time_restricted'],
-    timeRestriction: 'before_10am',
   },
   {
     id: 'ak-ep-minnie',
@@ -1085,16 +926,6 @@ export const ALL_ROUTES: Route[] = [
     notes: 'Park-to-park buses run from 10am until about 1 hour after the later park\'s closing time (varies daily).',
   },
   {
-    id: 'ak-hs-before10',
-    from: 'AK', to: 'HS', name: 'Bus to Animal Kingdom Lodge, Bus to Hollywood Studios (before 10am)',
-    legs: [
-      { mode: 'bus', from: 'AK', to: 'AKL', rideMinutes: 10, accessible: true },
-      { mode: 'bus', from: 'AKL', to: 'HS', rideMinutes: 30, accessible: true, walkMinutes: 5 },
-    ],
-    totalRideMinutes: 40, totalRideRange: [40,65], tags: ['before_10am_only', 'transfer', 'time_restricted'],
-    timeRestriction: 'before_10am',
-  },
-  {
     id: 'ak-hs-minnie',
     from: 'AK', to: 'HS', name: 'Minnie Van (Lyft)',
     legs: [{ mode: 'minnie_van', from: 'AK', to: 'HS', rideMinutes: 20, accessible: true }],
@@ -1107,16 +938,6 @@ export const ALL_ROUTES: Route[] = [
     legs: [{ mode: 'bus', from: 'AK', to: 'DS', rideMinutes: 25, accessible: true, tip: 'Direct park-to-Disney Springs bus, no transfer needed. Starts running mid-afternoon.' }],
     totalRideMinutes: 25, totalRideRange: [25,45], tags: [],
     timeRestriction: 'after_4pm_only',
-  },
-  {
-    id: 'ak-ds-before4',
-    from: 'AK', to: 'DS', name: 'Bus to Animal Kingdom Lodge, Bus to Disney Springs',
-    legs: [
-      { mode: 'bus', from: 'AK', to: 'AKL', rideMinutes: 10, accessible: true },
-      { mode: 'bus', from: 'AKL', to: 'DS', rideMinutes: 30, accessible: true, walkMinutes: 5 },
-    ],
-    totalRideMinutes: 40, totalRideRange: [40,65], tags: ['transfer'],
-    notes: 'A direct Disney Springs bus also runs from the park starting mid-afternoon, and is usually faster once it\'s running.',
   },
   {
     id: 'ak-ds-minnie',
@@ -1132,17 +953,6 @@ export const ALL_ROUTES: Route[] = [
     totalRideMinutes: 15, totalRideRange: [15,35], tags: [],
   },
 
-  {
-    id: 'ak-tl-bus',
-    from: 'AK', to: 'TL', name: 'Bus to Animal Kingdom Lodge, Bus to Disney Springs, Bus to Typhoon Lagoon',
-    legs: [
-      { mode: 'bus', from: 'AK', to: 'AKL', rideMinutes: 10, accessible: true },
-      { mode: 'bus', from: 'AKL', to: 'DS', rideMinutes: 30, accessible: true, walkMinutes: 5 },
-      { mode: 'bus', from: 'DS', to: 'TL', rideMinutes: 10, accessible: true, walkMinutes: 5 },
-    ],
-    totalRideMinutes: 50, totalRideRange: [50,80], tags: ['transfer'],
-    notes: 'Disney Springs is open to all park guests, no resort stay required.',
-  },
   {
     id: 'ak-tl-minnie',
     from: 'AK', to: 'TL', name: 'Minnie Van (Lyft)',
@@ -1269,15 +1079,6 @@ export const ALL_ROUTES: Route[] = [
     timeRestriction: 'after_4pm_only',
   },
   {
-    id: 'ds-ak-via-cor',
-    from: 'DS', to: 'AK', name: 'Bus to Coronado Springs, Bus to Animal Kingdom',
-    legs: [
-      { mode: 'bus', from: 'DS', to: 'COR', rideMinutes: 20, accessible: true },
-      { mode: 'bus', from: 'COR', to: 'AK', rideMinutes: 20, accessible: true, walkMinutes: 5 },
-    ],
-    totalRideMinutes: 40, totalRideRange: [40,65], tags: ['transfer'],
-  },
-  {
     id: 'ds-ak-minnie',
     from: 'DS', to: 'AK', name: 'Minnie Van (Lyft)',
     legs: [{ mode: 'minnie_van', from: 'DS', to: 'AK', rideMinutes: 20, accessible: true }],
@@ -1291,15 +1092,6 @@ export const ALL_ROUTES: Route[] = [
     totalRideMinutes: 10, totalRideRange: [10,30], tags: [],
   },
 
-  {
-    id: 'ds-bb-via-akl',
-    from: 'DS', to: 'BB', name: 'Bus to AKL area, Bus to Blizzard Beach',
-    legs: [
-      { mode: 'bus', from: 'DS', to: 'AKL', rideMinutes: 25, accessible: true },
-      { mode: 'bus', from: 'AKL', to: 'BB', rideMinutes: 15, accessible: true, walkMinutes: 5 },
-    ],
-    totalRideMinutes: 40, totalRideRange: [40,65], tags: ['transfer'],
-  },
   {
     id: 'ds-bb-minnie',
     from: 'DS', to: 'BB', name: 'Minnie Van (Lyft)',
@@ -1397,17 +1189,6 @@ export const ALL_ROUTES: Route[] = [
     from: 'TL', to: 'DS', name: 'Bus from Typhoon Lagoon to Disney Springs',
     legs: [{ mode: 'bus', from: 'TL', to: 'DS', rideMinutes: 10, accessible: true, tip: 'Quick hop. All TL connections go through Disney Springs.' }],
     totalRideMinutes: 10, totalRideRange: [10,30], tags: [],
-  },
-  {
-    id: 'tl-mk-via-ds',
-    from: 'TL', to: 'MK', name: 'Bus to Disney Springs, Bus to Grand Floridian, Walk to Magic Kingdom',
-    legs: [
-      { mode: 'bus', from: 'TL', to: 'DS', rideMinutes: 10, accessible: true },
-      { mode: 'bus', from: 'DS', to: 'GF', rideMinutes: 30, accessible: true, walkMinutes: 0 },
-      { mode: 'walk', from: 'GF', to: 'MK', rideMinutes: 12, accessible: true },
-    ],
-    totalRideMinutes: 52, totalRideRange: [52,80], tags: ['transfer'],
-    notes: 'Disney Springs is open to all park guests, no resort stay required.',
   },
   {
     id: 'tl-mk-minnie',
@@ -1509,7 +1290,7 @@ export const ALL_ROUTES: Route[] = [
   {
     id: 'bwi-ep-walk',
     from: 'BWI', to: 'EP', name: 'Walk via International Gateway (~6 min)',
-    legs: [{ mode: 'walk', from: 'BWI', to: 'EP', rideMinutes: 6, accessible: true, tip: 'Fastest option. BoardWalk Inn is right next to EPCOT\'s International Gateway entrance.' }],
+    legs: [{ mode: 'walk', from: 'BWI', to: 'EP', rideMinutes: 6, accessible: true, tip: 'Fastest option. Boardwalk Inn is right next to EPCOT\'s International Gateway entrance.' }],
     totalRideMinutes: 6, tags: ['walk_only'],
   },
   {
@@ -1520,8 +1301,8 @@ export const ALL_ROUTES: Route[] = [
   },
   {
     id: 'bwi-hs-walk',
-    from: 'BWI', to: 'HS', name: 'Walk via BoardWalk path (~18 min)',
-    legs: [{ mode: 'walk', from: 'BWI', to: 'HS', rideMinutes: 18, accessible: true, tip: 'Walk along BoardWalk past Swan/Dolphin area toward HS.' }],
+    from: 'BWI', to: 'HS', name: 'Walk via Boardwalk path (~18 min)',
+    legs: [{ mode: 'walk', from: 'BWI', to: 'HS', rideMinutes: 18, accessible: true, tip: 'Walk along Boardwalk past Swan/Dolphin area toward HS.' }],
     totalRideMinutes: 18, tags: ['walk_only'],
   },
   {
@@ -1532,19 +1313,19 @@ export const ALL_ROUTES: Route[] = [
   },
   {
     id: 'bwi-mk-bus',
-    from: 'BWI', to: 'MK', name: 'Bus from BoardWalk Inn',
+    from: 'BWI', to: 'MK', name: 'Bus from Boardwalk Inn',
     legs: [{ mode: 'bus', from: 'BWI', to: 'MK', rideMinutes: 30, accessible: true }],
     totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
   },
   {
     id: 'bwi-ak-bus',
-    from: 'BWI', to: 'AK', name: 'Bus from BoardWalk Inn',
+    from: 'BWI', to: 'AK', name: 'Bus from Boardwalk Inn',
     legs: [{ mode: 'bus', from: 'BWI', to: 'AK', rideMinutes: 25, accessible: true }],
     totalRideMinutes: 25, totalRideRange: [25,45], tags: [],
   },
   {
     id: 'bwi-ds-bus',
-    from: 'BWI', to: 'DS', name: 'Bus from BoardWalk Inn',
+    from: 'BWI', to: 'DS', name: 'Bus from Boardwalk Inn',
     legs: [{ mode: 'bus', from: 'BWI', to: 'DS', rideMinutes: 30, accessible: true }],
     totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
   },
@@ -1562,7 +1343,7 @@ export const ALL_ROUTES: Route[] = [
   },
   {
     id: 'bwi-cbr-bus',
-    from: 'BWI', to: 'CBR', name: 'Bus from BoardWalk Inn',
+    from: 'BWI', to: 'CBR', name: 'Bus from Boardwalk Inn',
     legs: [{ mode: 'bus', from: 'BWI', to: 'CBR', rideMinutes: 30, accessible: true }],
     totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
   },
@@ -1589,7 +1370,7 @@ export const ALL_ROUTES: Route[] = [
   },
   {
     id: 'yc-hs-walk',
-    from: 'YC', to: 'HS', name: 'Walk via BoardWalk path (~22 min)',
+    from: 'YC', to: 'HS', name: 'Walk via Boardwalk path (~22 min)',
     legs: [{ mode: 'walk', from: 'YC', to: 'HS', rideMinutes: 22, accessible: true }],
     totalRideMinutes: 22, tags: ['walk_only'],
   },
@@ -1625,7 +1406,7 @@ export const ALL_ROUTES: Route[] = [
   },
   {
     id: 'yc-bwi-walk',
-    from: 'YC', to: 'BWI', name: 'Walk to BoardWalk Inn (~7 min)',
+    from: 'YC', to: 'BWI', name: 'Walk to Boardwalk Inn (~7 min)',
     legs: [{ mode: 'walk', from: 'YC', to: 'BWI', rideMinutes: 7, accessible: true }],
     totalRideMinutes: 7, tags: ['walk_only'],
   },
@@ -1720,7 +1501,7 @@ export const ALL_ROUTES: Route[] = [
 
 {
     id: 'sw-bwi-walk',
-    from: 'SW', to: 'BWI', name: 'Walk to BoardWalk Inn (~12 min)',
+    from: 'SW', to: 'BWI', name: 'Walk to Boardwalk Inn (~12 min)',
     legs: [{ mode: 'walk', from: 'SW', to: 'BWI', rideMinutes: 12, accessible: true }],
     totalRideMinutes: 12, tags: ['walk_only'],
   },
@@ -1792,7 +1573,7 @@ export const ALL_ROUTES: Route[] = [
   },
   {
     id: 'cbr-bwi-skyliner-walk',
-    from: 'CBR', to: 'BWI', name: 'Skyliner to EPCOT, walk to BoardWalk Inn',
+    from: 'CBR', to: 'BWI', name: 'Skyliner to EPCOT, walk to Boardwalk Inn',
     legs: [
       { mode: 'skyliner', from: 'CBR', to: 'EP', rideMinutes: 12, accessible: true },
       { mode: 'walk', from: 'EP', to: 'BWI', rideMinutes: 6, accessible: true, walkMinutes: 0, tip: 'Exit via International Gateway. BWI is immediately adjacent.' },
@@ -1861,7 +1642,7 @@ export const ALL_ROUTES: Route[] = [
   },
   {
     id: 'riv-bwi-skyliner-walk',
-    from: 'RIV', to: 'BWI', name: 'Skyliner to EPCOT, walk to BoardWalk Inn',
+    from: 'RIV', to: 'BWI', name: 'Skyliner to EPCOT, walk to Boardwalk Inn',
     legs: [
       { mode: 'skyliner', from: 'RIV', to: 'EP', rideMinutes: 9, accessible: true },
       { mode: 'walk', from: 'EP', to: 'BWI', rideMinutes: 6, accessible: true, walkMinutes: 0 },
@@ -2178,8 +1959,9 @@ export const ALL_ROUTES: Route[] = [
   {
     id: 'fw-mk-bus',
     from: 'FW', to: 'MK', name: 'Bus from Fort Wilderness to Magic Kingdom',
-    legs: [{ mode: 'bus', from: 'FW', to: 'MK', rideMinutes: 17, accessible: true, tip: 'Take internal FW bus to Outpost Depot first. External bus drops at MK gates, not TTC. A real, always-available option.' }],
-    totalRideMinutes: 17, totalRideRange: [17,37], tags: [],
+    legs: [{ mode: 'bus', from: 'FW', to: 'MK', rideMinutes: 8, accessible: true, tip: 'Take internal FW bus to Outpost Depot first. External bus drops at MK gates, not TTC. A real, always-available option.' }],
+    totalRideMinutes: 8, totalRideRange: [8,20], tags: [],
+    notes: 'Eight minutes is the Outpost-to-park leg only. Getting to the Outpost from a cabin or campsite on the internal bus takes another 10 to 15.',
   },
   {
     id: 'fw-hs-bus',
@@ -2298,6 +2080,29 @@ export const ALL_ROUTES: Route[] = [
   },
 
   // FROM: ALL-STAR RESORTS (ASMo / ASMu / ASS)
+
+  // The three All-Star resorts sit on one loop road and share a sidewalk.
+  // Without this entry the planner answered "All-Star Movies to All-Star
+  // Sports" with two eighty-minute bus rides through a theme park and a paid
+  // car, and called the first of them the quickest — for a walk you can see
+  // the end of from the front desk.
+  //
+  // Authored in both directions rather than once: this is a real, signed
+  // path, not an inference from the reverse trip.
+  {
+    id: 'asmo-ass-walk',
+    from: 'ASMo', to: 'ASS', name: 'Walk to All-Star Sports (~15 min)',
+    legs: [{ mode: 'walk', from: 'ASMo', to: 'ASS', rideMinutes: 15, accessible: true, tip: 'Paved sidewalk the whole way, past All-Star Music. About a mile, all flat.' }],
+    totalRideMinutes: 15, totalRideRange: [12,18], tags: ['walk_only'],
+    notes: 'The All-Star resorts share one loop road. Walking is almost always quicker than waiting for a bus, which goes to a park before it comes back.',
+  },
+  {
+    id: 'ass-asmo-walk',
+    from: 'ASS', to: 'ASMo', name: 'Walk to All-Star Movies (~15 min)',
+    legs: [{ mode: 'walk', from: 'ASS', to: 'ASMo', rideMinutes: 15, accessible: true, tip: 'Paved sidewalk the whole way, past All-Star Music. About a mile, all flat.' }],
+    totalRideMinutes: 15, totalRideRange: [12,18], tags: ['walk_only'],
+    notes: 'The All-Star resorts share one loop road. Walking is almost always quicker than waiting for a bus, which goes to a park before it comes back.',
+  },
 
   {
     id: 'asmo-mk-bus',

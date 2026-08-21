@@ -1,5 +1,5 @@
 import { Route, Leg, DestinationGroup } from '../types';
-import { DESTINATION_MAP } from './destinations';
+import { DESTINATION_MAP, shortLabel } from './destinations';
 
 // Resort buses, generated rather than written out
 //
@@ -96,7 +96,7 @@ export function resortBusRoutes(from: string, to: string): Route[] {
   if (!hasBus(from, to) && !hasBus(to, from)) return [];
 
   const ride = busRideMinutes(from, to);
-  const label = DESTINATION_MAP[to]?.label ?? to;
+  const label = shortLabel(to);
   const waterPark = WATER_PARKS.includes(from) || WATER_PARKS.includes(to);
 
   const legs: Leg[] = [{
