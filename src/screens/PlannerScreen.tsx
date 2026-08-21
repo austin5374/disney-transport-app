@@ -152,6 +152,8 @@ export default function PlannerScreen({ navigation, route: navRoute }: Props) {
     locationStatus === 'not_at_park' ? "You don't appear to be on property. Choose a starting point below." :
     null;
 
+  const hasTrip = !!from && !!to;
+
   const tripSummary = from && to
     ? `${shortLabel(from.id)} to ${shortLabel(to.id)}`
     : from ? `From ${shortLabel(from.id)}`
@@ -171,23 +173,43 @@ export default function PlannerScreen({ navigation, route: navRoute }: Props) {
               <View style={styles.avatar}>
                 <ModeGlyph mode="monorail_express" size={30} />
               </View>
-              <View style={styles.greetingText}>
+              {/* Once a trip is filled in, the summary is the trip — so it
+                  is also the way back into it. Tapping the line you are
+                  reading is the first thing anyone tries. */}
+              <TouchableOpacity
+                style={styles.greetingText}
+                onPress={() => setSheet(from ? 'to' : 'from')}
+                activeOpacity={hasTrip ? 0.6 : 1}
+                disabled={!hasTrip}
+                accessibilityRole={hasTrip ? 'button' : undefined}
+                accessibilityLabel={hasTrip ? `Change trip: ${tripSummary}` : undefined}
+              >
                 <Text style={styles.greetingHello}>{greeting(new Date().getHours())}</Text>
                 <Text style={styles.greetingTrip} numberOfLines={2}>{tripSummary}</Text>
-              </View>
+              </TouchableOpacity>
             </View>
 
             {locationHint ? <Text style={styles.hint}>{locationHint}</Text> : null}
 
             <View style={styles.actionRow}>
               <PillButton
-                label={from && to ? 'See Routes' : 'Get Directions'}
+                label={hasTrip ? 'See Routes' : 'Get Directions'}
                 onPress={() => {
-                  if (from && to) search(from, to);
+                  if (hasTrip) search(from!, to!);
                   else setSheet(from ? 'to' : 'from');
                 }}
               />
-              <LinkAction label="Use My Location" noChevron onPress={detectLocation} />
+              {/* Coming back from a trip left the card showing that trip, a
+                  button that re-ran it, and no way to ask for a different
+                  one. The only escape was the tab bar's centre control, which
+                  says nothing about what it does. "Use My Location" is a
+                  starting-point affordance and earns its place while the trip
+                  is still blank; the sheet carries its own copy of it. */}
+              {hasTrip ? (
+                <LinkAction label="Change Trip" noChevron onPress={() => setSheet('from')} />
+              ) : (
+                <LinkAction label="Use My Location" noChevron onPress={detectLocation} />
+              )}
             </View>
           </View>
         </View>

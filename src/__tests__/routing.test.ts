@@ -1,7 +1,7 @@
 import {
   getActiveRoutes, applyFilters, journeyMinutes, waitMinutesFor,
   transferCount, driveMinutes, describeExclusions, expectedWait,
-  describeTimeGaps, restrictionLabel,
+  describeTimeGaps, describeAlternateWindow, restrictionLabel,
 } from '../utils/routing';
 import { DESTINATIONS } from '../data/destinations';
 import { RAIL_STATIONS } from '../data/rail';
@@ -505,5 +505,53 @@ describe('stitched transfers', () => {
       }
     }
     expect(offenders).toEqual([]);
+  });
+});
+
+describe('the other side of a restriction', () => {
+  it('answers the question the "only after 10 AM" badge asks', () => {
+    // The badge is on screen at 11, and the trips covering the hours it
+    // excludes are composed on demand rather than written down — so nothing
+    // could find them and the list said nothing.
+    const bus = getActiveRoutes('MK', 'HS', at(11)).find(r => r.id === 'mk-hs-bus')!;
+    expect(restrictionLabel(bus)).toBe('Only after 10:00 AM');
+
+    const [alt] = describeAlternateWindow('MK', 'HS', at(11));
+    expect(alt.window).toBe('before 10:00 AM');
+    expect(alt.at.getHours()).toBeLessThan(10);
+    expect(alt.count).toBeGreaterThan(0);
+
+    // ...and following it really does land on a different set of trips.
+    const now = getActiveRoutes('MK', 'HS', at(11)).filter(r => !isPaid(r));
+    const then = getActiveRoutes('MK', 'HS', alt.at).filter(r => !isPaid(r));
+    expect(then.map(r => r.id)).not.toEqual(now.map(r => r.id));
+    expect(then.length).toBe(alt.count);
+  });
+
+  it('stays quiet where the other hour changes nothing', () => {
+    // Most pairs run the same way all day. Pointing at nine in the morning
+    // there would be pointing at nothing.
+    let quiet = 0;
+    for (const [a, b] of PAIRS) {
+      const alts = describeAlternateWindow(a, b, at(11));
+      if (alts.length === 0) { quiet++; continue; }
+      for (const alt of alts) {
+        const now = getActiveRoutes(a, b, at(11)).filter(r => !isPaid(r)).map(r => r.id).join('|');
+        const then = getActiveRoutes(a, b, alt.at).filter(r => !isPaid(r)).map(r => r.id).join('|');
+        expect(then).not.toBe(now);
+      }
+    }
+    expect(quiet).toBeGreaterThan(PAIRS.length / 2);
+  });
+
+  it('never offers an hour with nothing to show', () => {
+    for (const [a, b] of PAIRS) {
+      for (const hour of [8, 11, 17, 21]) {
+        for (const alt of describeAlternateWindow(a, b, at(hour))) {
+          expect(alt.count).toBeGreaterThan(0);
+          expect(getActiveRoutes(a, b, alt.at).filter(r => !isPaid(r)).length).toBe(alt.count);
+        }
+      }
+    }
   });
 });

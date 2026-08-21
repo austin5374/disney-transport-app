@@ -177,6 +177,57 @@ describe('planning for a different time', () => {
   });
 });
 
+describe('changing a trip you already ran', () => {
+  // Coming back from a trip left the greeting card showing that trip, a
+  // button that re-ran it, and nothing that opened the form again. The only
+  // way out was the tab bar's centre control, which is unlabelled.
+  // Running a Popular Trip fills the card in and calls navigate — which is a
+  // mock here, so the planner stays mounted showing exactly what a guest sees
+  // when they come back from a set of results.
+  const runATrip = async () => {
+    await wrap(<PlannerScreen navigation={nav()} route={{ params: undefined } as never} />);
+    await fireEvent.press(screen.getByText(/Caribbean Beach/));
+  };
+
+  it('offers a way to change the trip, not just to re-run it', async () => {
+    await runATrip();
+    expect(screen.getByText('See Routes')).toBeTruthy();
+    expect(screen.getByText('Change Trip')).toBeTruthy();
+    // The blank-state affordance has stepped aside; the sheet carries its own.
+    expect(screen.queryByText('Use My Location')).toBeNull();
+  });
+
+  it('reopens the form from the trip summary itself', async () => {
+    await runATrip();
+    await fireEvent.press(screen.getByLabelText(/^Change trip:/));
+    await waitFor(() => expect(screen.getByText('From')).toBeTruthy());
+  });
+
+  it('reopens the form from the Change Trip link', async () => {
+    await runATrip();
+    await fireEvent.press(screen.getByText('Change Trip'));
+    await waitFor(() => expect(screen.getByText('To')).toBeTruthy());
+  });
+});
+
+describe('the other side of the 10 AM rule', () => {
+  const midday = new Date(2026, 7, 20, 11, 0, 0).toISOString();
+
+  it('offers the earlier routes the badge implies but never showed', async () => {
+    await wrap(
+      <ResultsScreen
+        navigation={nav()}
+        route={{ params: { fromId: 'MK', toId: 'HS', timeOverride: midday } } as never}
+      />
+    );
+    expect(screen.getByText('Only after 10:00 AM')).toBeTruthy();
+    expect(screen.getByText(/Travelling before 10:00 AM\?/)).toBeTruthy();
+    await fireEvent.press(screen.getByText('Show 9:00 AM'));
+    await waitFor(() =>
+      expect(screen.queryByText('Bus from Magic Kingdom')).toBeNull());
+  });
+});
+
 describe('saved trips', () => {
   // The detail test above pressed Save Trip, and the store is module-level, so
   // this is the other half of the same journey: what you saved is what you see.

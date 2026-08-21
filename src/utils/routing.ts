@@ -710,6 +710,18 @@ export function restrictionLabel(route: Route): string | null {
   return route.timeRestriction ? RESTRICTION_LABEL[route.timeRestriction] : null;
 }
 
+/** For a restriction that is currently *in force*, the hour on the other side
+ *  of it. Reading "Only after 10:00 AM" on a card immediately raises the
+ *  question "so what do I do at nine?", and the app had no answer: the
+ *  before-ten trips are composed on demand rather than written down, so they
+ *  carry no restriction of their own and nothing could find them. */
+const RESTRICTION_COMPLEMENT: Record<Restriction, { minutes: number; window: string }> = {
+  before_10am:    { minutes: 10 * 60 + 30, window: 'after 10:00 AM' },
+  after_10am:     { minutes: 9 * 60,       window: 'before 10:00 AM' },
+  after_3pm_only: { minutes: 9 * 60,       window: 'before 3:00 PM' },
+  after_4pm_only: { minutes: 9 * 60,       window: 'before 4:00 PM' },
+};
+
 export interface TimeGap {
   /** How many routes this pair has that the clock is currently hiding. */
   count: number;
@@ -749,6 +761,45 @@ export function describeTimeGaps(from: string, to: string, when?: Date): TimeGap
       };
     })
     .sort((x, y) => x.at.getTime() - y.at.getTime());
+}
+
+/** The other side of a restriction the guest can currently see.
+ *
+ *  Counterpart to describeTimeGaps: that one speaks up when the clock is
+ *  hiding routes, this one when the clock is *granting* them. Only offered
+ *  where the trip genuinely works differently at the other hour — on plenty
+ *  of pairs the restricted bus is one option among several that run all day,
+ *  and pointing at nine in the morning would be pointing at nothing. */
+export function describeAlternateWindow(from: string, to: string, when?: Date): TimeGap[] {
+  const now = when ?? new Date();
+  const a = DEST_ALIAS[from] ?? from;
+  const b = DEST_ALIAS[to] ?? to;
+
+  const inForce = new Set<Restriction>();
+  for (const r of ALL_ROUTES) {
+    if (r.from !== a || r.to !== b) continue;
+    if (!r.timeRestriction || isPaidRoute(r)) continue;
+    if (!timeValid(r, now)) continue;   // only what is actually on the screen
+    inForce.add(r.timeRestriction);
+  }
+  if (inForce.size === 0) return [];
+
+  const shape = (routes: Route[]) =>
+    routes.filter(r => !isPaidRoute(r)).map(legSignature).sort().join('~');
+  const nowShape = shape(getActiveRoutes(a, b, now));
+
+  const out: TimeGap[] = [];
+  for (const restriction of inForce) {
+    const { minutes, window } = RESTRICTION_COMPLEMENT[restriction];
+    const at = new Date(now);
+    at.setHours(Math.floor(minutes / 60), minutes % 60, 0, 0);
+
+    const then = getActiveRoutes(a, b, at).filter(r => !isPaidRoute(r));
+    if (shape(then) === nowShape) continue;
+    if (then.length === 0) continue;
+    out.push({ count: then.length, window, at });
+  }
+  return out;
 }
 
 // Labels

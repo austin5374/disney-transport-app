@@ -6,7 +6,8 @@ import { RootStackParamList, ActiveFilters } from '../types';
 import { Colors, Type, Spacing } from '../utils/theme';
 import { DESTINATION_MAP } from '../data/destinations';
 import {
-  getActiveRoutes, applyFilters, describeExclusions, describeTimeGaps, hiddenByFilters,
+  getActiveRoutes, applyFilters, describeExclusions, describeTimeGaps,
+  describeAlternateWindow, hiddenByFilters,
 } from '../utils/routing';
 import { useLiveStatusAt } from '../utils/liveStatus';
 import AppHeader from '../components/AppHeader';
@@ -20,6 +21,9 @@ import LinkAction from '../components/ui/LinkAction';
 // With the badges gone, the order has to explain itself somewhere. This is
 // the line that does it.
 const DEFAULT_FILTERS: ActiveFilters = { sort: 'fastest', noWater: false, accessible: false };
+
+const fmtHour = (d: Date) =>
+  d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
 
 const SORT_NOTE: Record<ActiveFilters['sort'], string> = {
   fastest:   'Fastest First',
@@ -60,6 +64,14 @@ export default function ResultsScreen({ navigation, route: navRoute }: Props) {
   // exactly the question a guest planning tomorrow morning is asking.
   const gaps = useMemo(
     () => (from && to ? describeTimeGaps(from.id, to.id, timeDate ?? undefined) : []),
+    [from, to, timeDate]
+  );
+
+  // ...and the other direction. A card badged "Only after 10:00 AM" asks a
+  // question the list was not answering: the trips that cover the hours it
+  // does not are composed on demand, so nothing pointed at them.
+  const alternates = useMemo(
+    () => (from && to ? describeAlternateWindow(from.id, to.id, timeDate ?? undefined) : []),
     [from, to, timeDate]
   );
 
@@ -123,14 +135,28 @@ export default function ResultsScreen({ navigation, route: navRoute }: Props) {
         </View>
 
         {gaps.map(gap => (
-          <View key={gap.window} style={styles.planAheadRow}>
+          <View key={`gap-${gap.window}`} style={styles.planAheadRow}>
             <Text style={styles.planAheadText}>
               Planning ahead? {gap.count} more route{gap.count === 1 ? '' : 's'}{' '}
               {gap.count === 1 ? 'runs' : 'run'} {gap.window}.
             </Text>
             <LinkAction
-              label={`Show ${gap.at.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`}
+              label={`Show ${fmtHour(gap.at)}`}
               onPress={() => setTimeDate(gap.at)}
+              noChevron
+            />
+          </View>
+        ))}
+
+        {alternates.map(alt => (
+          <View key={`alt-${alt.window}`} style={styles.planAheadRow}>
+            <Text style={styles.planAheadText}>
+              Travelling {alt.window}? This trip works differently then —{' '}
+              {alt.count} route{alt.count === 1 ? '' : 's'}.
+            </Text>
+            <LinkAction
+              label={`Show ${fmtHour(alt.at)}`}
+              onPress={() => setTimeDate(alt.at)}
               noChevron
             />
           </View>
