@@ -16,7 +16,6 @@ export interface TransitLine {
   stations: string[];    // display names in order
   headwayMinutes: [number, number]; // typical min–max between departures
   serviceHours: string;  // display only
-  weatherSensitive?: boolean; // gondolas + boats pause for lightning/wind
   color: string;         // line color for map + cards
 }
 
@@ -62,7 +61,6 @@ export const TRANSIT_LINES: TransitLine[] = [
     stations: ['Caribbean Beach', 'Riviera Resort', 'EPCOT (International Gateway)'],
     headwayMinutes: [0, 1], // continuous loading
     serviceHours: '30 min before earliest park open – park close',
-    weatherSensitive: true,
     color: '#1E96A8',
   },
   {
@@ -73,7 +71,6 @@ export const TRANSIT_LINES: TransitLine[] = [
     stations: ['Caribbean Beach', 'Hollywood Studios'],
     headwayMinutes: [0, 1],
     serviceHours: '1 hr before park open – park close',
-    weatherSensitive: true,
     color: '#D97B29',
   },
   {
@@ -84,7 +81,6 @@ export const TRANSIT_LINES: TransitLine[] = [
     stations: ['Caribbean Beach', 'Pop Century & Art of Animation'],
     headwayMinutes: [0, 1],
     serviceHours: '1 hr before earliest park open – park close',
-    weatherSensitive: true,
     color: '#5A9AE6',
   },
 
@@ -97,7 +93,6 @@ export const TRANSIT_LINES: TransitLine[] = [
     stations: ['Transportation & Ticket Center', 'Magic Kingdom'],
     headwayMinutes: [8, 12],
     serviceHours: 'Park open – 1 hr after close',
-    weatherSensitive: true,
     color: '#378ADD',
   },
   {
@@ -108,7 +103,6 @@ export const TRANSIT_LINES: TransitLine[] = [
     stations: ['Magic Kingdom', 'Grand Floridian', 'Polynesian Village'],
     headwayMinutes: [15, 25],
     serviceHours: '30 min before park open – 90 min after close',
-    weatherSensitive: true,
     color: '#D4A017',
   },
   {
@@ -119,7 +113,6 @@ export const TRANSIT_LINES: TransitLine[] = [
     stations: ['Magic Kingdom', 'Wilderness Lodge'],
     headwayMinutes: [15, 25],
     serviceHours: '30 min before park open – 90 min after close',
-    weatherSensitive: true,
     color: '#C94F42',
   },
   {
@@ -130,7 +123,6 @@ export const TRANSIT_LINES: TransitLine[] = [
     stations: ['Magic Kingdom', 'Fort Wilderness'],
     headwayMinutes: [15, 25],
     serviceHours: '30 min before park open – 90 min after close',
-    weatherSensitive: true,
     color: '#4C9F70',
   },
   {
@@ -141,7 +133,6 @@ export const TRANSIT_LINES: TransitLine[] = [
     stations: ['Wilderness Lodge', 'Fort Wilderness', 'Contemporary'],
     headwayMinutes: [20, 30],
     serviceHours: '3:00 PM – 10:45 PM',
-    weatherSensitive: true,
     color: '#4A7FD4',
   },
   {
@@ -152,7 +143,6 @@ export const TRANSIT_LINES: TransitLine[] = [
     stations: ['EPCOT (International Gateway)', 'BoardWalk', 'Yacht & Beach Club', 'Swan & Dolphin', 'Hollywood Studios'],
     headwayMinutes: [15, 20],
     serviceHours: 'Park open – 1 hr after close',
-    weatherSensitive: true,
     color: '#2E9E8F',
   },
   {
@@ -163,7 +153,6 @@ export const TRANSIT_LINES: TransitLine[] = [
     stations: ['Port Orleans French Quarter', 'Port Orleans Riverside', 'Old Key West', 'Saratoga Springs', 'Disney Springs'],
     headwayMinutes: [15, 20],
     serviceHours: '10:30 AM – 11:30 PM',
-    weatherSensitive: true,
     color: '#8C5A3C',
   },
 
@@ -228,6 +217,16 @@ export const TRANSIT_LINES: TransitLine[] = [
     serviceHours: 'Water park open – close',
     color: '#639922',
   },
+  {
+    id: 'bus-resort',
+    group: 'Buses', mode: 'bus',
+    name: 'Resort Buses: Resort Connections',
+    shortName: 'Resort Buses',
+    stations: ['Resort to resort', 'Transportation & Ticket Center'],
+    headwayMinutes: [20, 30],
+    serviceHours: 'Limited service, longest waits on property',
+    color: '#639922',
+  },
 ];
 
 export const LINE_MAP: Record<string, TransitLine> = Object.fromEntries(
@@ -259,8 +258,10 @@ export function lineForLeg(mode: TransportMode, from: string, to: string): Trans
         MK: 'bus-mk', EP: 'bus-ep', HS: 'bus-hs', AK: 'bus-ak',
         DS: 'bus-ds', TL: 'bus-wp', BB: 'bus-wp',
       };
-      // A bus leg's status follows the park-side end of the trip
-      return LINE_MAP[parkBus[to] ?? parkBus[from]] ?? null;
+      // A bus leg's status follows the park-side end of the trip. Legs with
+      // no park end are the sparse resort-to-resort connections, which have
+      // their own (much longer) headway rather than no line at all.
+      return LINE_MAP[parkBus[to] ?? parkBus[from] ?? 'bus-resort'];
     }
     default: return null;
   }

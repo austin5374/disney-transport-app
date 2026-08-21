@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Platform } from 'react-native';
-import AppModal from './AppModal';
-import { Ionicons } from '@expo/vector-icons';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { Colors } from '../utils/theme';
+import AppModal from './AppModal';
+import { Colors, Type, Spacing, Radius } from '../utils/theme';
 import { getTimeBannerMessage } from '../utils/routing';
 
 interface TimeBannerProps {
@@ -11,40 +11,46 @@ interface TimeBannerProps {
   onTimeChange: (date: Date | null) => void;
 }
 
+const fmt = (d: Date) => d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+
+// A quiet inline row rather than a bordered callout. It only earns space when
+// the time actually changes what the planner will show, or when the user has
+// deliberately overridden it.
 export default function TimeBanner({ timeOverride, onTimeChange }: TimeBannerProps) {
   const [showPicker, setShowPicker] = useState(false);
   const [pickerValue, setPickerValue] = useState(new Date());
 
   const effectiveTime = timeOverride ?? new Date();
-  const message = getTimeBannerMessage(effectiveTime);
+  const advisory = getTimeBannerMessage(effectiveTime);
 
-  if (!message && !timeOverride) return null;
-
-  const isAdvisory = !!message;
+  if (!advisory && !timeOverride) return null;
 
   return (
     <>
-      <View style={[styles.banner, isAdvisory ? styles.bannerAdvisory : styles.bannerNeutral]}>
+      <View style={styles.row}>
         <Ionicons
-          name="time-outline"
-          size={16}
-          color={isAdvisory ? Colors.warnIcon : Colors.textSecondary}
+          name={advisory ? 'information-circle-outline' : 'time-outline'}
+          size={18}
+          color={advisory ? Colors.statusDelayed : Colors.textSecondary}
         />
-        <Text style={[styles.bannerText, isAdvisory && styles.bannerTextAdvisory]} numberOfLines={2}>
-          {message ?? `Showing routes for ${effectiveTime.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`}
+        <Text style={[styles.text, advisory && styles.textAdvisory]}>
+          {advisory ?? `Showing routes for ${fmt(effectiveTime)}`}
         </Text>
         <TouchableOpacity
           onPress={() => { setPickerValue(timeOverride ?? new Date()); setShowPicker(true); }}
-          hitSlop={{ top: 8, bottom: 8, left: 6, right: 6 }}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          accessibilityRole="button"
         >
           <Text style={styles.link}>Change</Text>
         </TouchableOpacity>
         {timeOverride && (
           <TouchableOpacity
             onPress={() => onTimeChange(null)}
-            hitSlop={{ top: 8, bottom: 8, left: 6, right: 8 }}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            accessibilityRole="button"
+            accessibilityLabel="Clear time override"
           >
-            <Ionicons name="close" size={15} color={Colors.textSecondary} />
+            <Ionicons name="close" size={17} color={Colors.textSecondary} />
           </TouchableOpacity>
         )}
       </View>
@@ -52,15 +58,15 @@ export default function TimeBanner({ timeOverride, onTimeChange }: TimeBannerPro
       {showPicker && (
         <AppModal transparent animationType="slide" onRequestClose={() => setShowPicker(false)}>
           <TouchableOpacity
-            style={styles.modalOverlay}
+            style={styles.overlay}
             activeOpacity={1}
             onPress={() => setShowPicker(false)}
           >
-            <View style={styles.pickerSheet}>
-              <View style={styles.pickerHeader}>
-                <Text style={styles.pickerTitle}>Set time override</Text>
-                <TouchableOpacity onPress={() => setShowPicker(false)}>
-                  <Text style={styles.pickerDone}>Done</Text>
+            <View style={styles.sheet}>
+              <View style={styles.sheetHeader}>
+                <Text style={styles.sheetTitle}>Plan for a different time</Text>
+                <TouchableOpacity onPress={() => setShowPicker(false)} accessibilityRole="button">
+                  <Text style={styles.done}>Done</Text>
                 </TouchableOpacity>
               </View>
               <DateTimePicker
@@ -85,66 +91,55 @@ export default function TimeBanner({ timeOverride, onTimeChange }: TimeBannerPro
 }
 
 const styles = StyleSheet.create({
-  banner: {
+  row: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    marginHorizontal: 16,
-    marginTop: 12,
-    paddingVertical: 9,
-    paddingHorizontal: 12,
-    borderRadius: 10,
+    gap: Spacing.sm,
+    backgroundColor: Colors.sectionBg,
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.md,
+    borderTopWidth: 1,
+    borderTopColor: Colors.divider,
   },
-  bannerNeutral: {
-    backgroundColor: Colors.cardBg,
-    borderWidth: 1,
-    borderColor: Colors.cardBorder,
-  },
-  bannerAdvisory: {
-    backgroundColor: 'rgba(255,179,0,0.08)',
-  },
-  bannerText: {
+  text: {
+    ...Type.bodySmall,
     flex: 1,
-    fontSize: 12.5,
     color: Colors.textSecondary,
   },
-  bannerTextAdvisory: {
-    color: Colors.warnText,
+  textAdvisory: {
+    color: Colors.textPrimary,
   },
   link: {
-    fontSize: 12.5,
-    fontWeight: '600',
+    ...Type.action,
     color: Colors.primaryBlue,
   },
-  modalOverlay: {
+  overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.4)',
+    backgroundColor: 'rgba(14,44,75,0.45)',
     justifyContent: 'flex-end',
   },
-  pickerSheet: {
-    backgroundColor: '#fff',
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
-    paddingBottom: 34,
+  sheet: {
+    backgroundColor: Colors.sectionBg,
+    borderTopLeftRadius: Radius.lg,
+    borderTopRightRadius: Radius.lg,
+    paddingBottom: Spacing.xxl,
   },
-  pickerHeader: {
+  sheetHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 14,
+    paddingHorizontal: Spacing.xl,
+    paddingVertical: Spacing.lg,
     borderBottomWidth: 1,
     borderBottomColor: Colors.divider,
   },
-  pickerTitle: {
-    fontSize: 16,
-    fontWeight: '500',
+  sheetTitle: {
+    ...Type.subtitle,
     color: Colors.textPrimary,
   },
-  pickerDone: {
-    fontSize: 16,
+  done: {
+    ...Type.action,
     color: Colors.primaryBlue,
-    fontWeight: '500',
   },
   picker: {
     width: '100%',

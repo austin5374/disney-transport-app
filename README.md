@@ -1,64 +1,101 @@
-# ParkWays 🚝
+# ParkWays
 
-This is a Walt Disney World transportation app I built for fun. It shows "live" status for all the monorails, the Skyliner gondolas, boats, and buses, plus a trip planner that tells you how to get from any park/resort to any other one.
+A trip planner for Walt Disney World transportation — monorails, the Skyliner, boats, and buses. Pick where you are and where you're going; it routes you across the property and shows what's running.
 
-**[Try the live demo →](https://disney-transport-app.vercel.app)** (no install needed, just click)
+**[Live demo →](https://disney-transport-app.vercel.app)**
 
-![status](https://img.shields.io/badge/status-demo-blue) ![stack](https://img.shields.io/badge/stack-Expo%20%2B%20React%20Native-4F46A5)
+Built with Expo + React Native (TypeScript), running on iOS, Android, and the web from one codebase.
+
+---
 
 ## What it does
 
-Disney doesn't have a public API for their transportation system, so there's no way to actually pull real bus/monorail data. So instead I built a fake version that updates itself over time, kind of like a simulation, so it at least *feels* like a real live app instead of just static screens.
+**Routes across the whole network.** 33 destinations, 400+ hand-authored route entries covering every park, resort, water park, and Disney Springs. Where no direct route exists, the planner composes one through a transfer hub the way a guest actually would — bus to a park, then transfer.
 
-- **Live status board**: all 19 real transit lines (monorail, Skyliner, boats, buses) show Operating / Delayed / Down, and the status actually changes on its own every 20 seconds. All the screens read from the same shared state, so if a line goes down on the Status tab, it also shows down on the Map and in the trip planner.
-- **Trip planner**: pick a starting point and a destination (33 options each) and it gives you a route. I wrote out routing data by hand for basically every combination, and if there's no direct route it tries to figure out a path through a transfer point instead of just giving up.
-- **Time-aware routing**: some routes only work at certain times of day (like park-to-park buses only running after 10am), so the planner checks the time and adjusts what it shows you.
-- **Transit map**: a schematic map I drew with SVG. You can tap a line to highlight it and see its status.
-- **"Use my location"**: if you let it, it can guess which park/resort you're at using GPS and auto-fill the trip planner.
+**Ranks by the journey, not the ride.** A trip costs *wait + time aboard + walking*. Expected wait comes from each line's real headway (half the mean interval, since you arrive at a random moment); walking legs and transfer walks are counted; the detail screen breaks the total back into its parts so the headline number reconciles with the steps below it.
 
-## Why everything is fake data
+This matters more than it sounds. An earlier version ranked on time aboard alone, which charged transit nothing for standing at the stop and made a paid Minnie Van the single fastest option on 60% of all pairs — the app's own headline advice was "call a car." Paid rides are now estimated from real distance and grouped separately, below transit.
 
-Since there's no real API to hit, I had to fake one myself. There's a file (`src/utils/liveStatus.ts`) that acts like a mini backend, it randomly decides when a line should go down or get delayed, comes up with a reason ("Suspended for lightning in the area"), and counts down realistic wait times. Every screen in the app subscribes to this same state so it all stays in sync. This was honestly the most fun part to build, and also the part I got stuck on the most.
+**Time-of-day rules.** Park-to-park buses don't run before 10 AM, Blue Flag launches start at 3 PM, and Disney Springs park service starts at 4 PM. The planner checks the clock and swaps in the documented workaround — before opening, Magic Kingdom to Hollywood Studios routes you through a monorail resort instead of offering a bus that isn't running yet.
 
-The actual transit lines and route info (which lines exist, roughly how long a ride takes) are based on the real WDW transportation system, I just made up the live status part.
+**A live status board that doesn't lie to you on reload.** Every monorail beam, Skyliner line, boat route, and bus group carries a service level, next departures, and crowding. Disruptions are coordinated by system: a storm cell takes every Seven Seas Lagoon boat at once, never one boat while its dock-mates keep running, and monorail lightning escalates from the EPCOT beam to all three.
 
-## Stack
+**A schematic transit map.** SVG, hand-placed, with live line status. Select a line to highlight it.
 
-- [Expo](https://expo.dev) + React Native, also works in a browser thanks to react-native-web
-- TypeScript (still learning it honestly, but it caught a bunch of bugs while I was building this)
-- [React Navigation](https://reactnavigation.org) for the tabs and screens
-- [react-native-svg](https://github.com/software-mansion/react-native-svg) for the map
-- No backend or database, everything runs on the device/browser
+---
 
-## Running it yourself
+## The interesting part: a simulation with no randomness in it
+
+Disney publishes no transportation API, so the live data is modeled. The naive way to do that is `Math.random()` on a timer — which is what this app did first, and it had a tell: refreshing the browser re-rolled the whole board. You could watch the Skyliner get suspended for lightning, hit reload, and find it running.
+
+The engine is now a **pure function of the wall clock**. There is no stored state, nothing mutates on a tick, and `src/utils/liveStatus.ts` contains no call to `Math.random()`.
+
+Each line's status is derived by hashing `(lineId, 30-minute episode index)` through a splitmix mixer into a uniform value, then reading a disruption window out of it. Departure boards are a fixed schedule with a per-line phase offset, so countdowns fall smoothly and never jump backwards. Coordinated weather works by hashing the *group* key rather than the line key, which makes the coordination structural — there's no shared mutable state for the code to keep in sync.
+
+What that buys:
+
+- Reload the page and the board is identical.
+- Every device sees the same thing at the same moment.
+- The whole engine is testable: freeze `Date.now()`, assert exact behavior.
+- No persistence layer, no seeding ceremony, no cleanup.
+
+The interval that remains exists only to re-render countdowns, and it pauses when the tab is backgrounded.
+
+---
+
+## Running it
 
 ```bash
 git clone https://github.com/austin5374/disney-transport-app.git
 cd disney-transport-app
-npm install --legacy-peer-deps
+npm install --legacy-peer-deps   # some peer ranges lag React 19
 
-npx expo start --web       # opens it in your browser
-npx expo start             # scan the QR code with Expo Go on your phone
+npx expo start --web             # browser
+npx expo start                   # scan the QR code with Expo Go
 ```
 
-Note: you need the `--legacy-peer-deps` flag because some of the package versions don't fully agree with each other yet. It still works fine, npm just complains without it.
-
-## How it's organized
-
+```bash
+npm test         # 45 tests
+npm run typecheck
 ```
-src/
-  screens/       the main pages (Status, Map, Planner, More)
-  components/    smaller reusable pieces like cards and pickers
-  data/          all the transit lines, destinations, and routes
-  utils/
-    liveStatus.ts   the fake "live" simulation
-    routing.ts      figures out routes between two places
-```
-
-## Disclaimer
-
-This is just a fan project I made for practice, it's not affiliated with or endorsed by Disney in any way. All the live status/wait times are made up. Disney park and resort names are only used so people know what the app is actually referring to.
 
 ---
 
-Made by [Austin](https://github.com/austin5374). Still learning, so feedback is always welcome!
+## Tests
+
+The route graph is 400+ entries written by hand, so it gets a validation suite rather than trust. Every check in `src/__tests__/routeData.test.ts` guards a defect that was actually present at some point:
+
+- Totals that disagreed with the sum of their own legs (5 routes)
+- Bus legs that resolved to no transit line at all (22 legs)
+- A field carried on every leg of every route and read by nothing (485 instances)
+
+`routing.test.ts` covers the cost model and the filters, including the invariant that a paid ride never outranks transit on any of the 1,056 ordered pairs. `liveStatus.test.ts` pins the clock and asserts the board is byte-identical across fresh module loads.
+
+---
+
+## Layout
+
+```
+src/
+  screens/       Planner, Results, Detail, Status, Map, About
+  components/
+    ui/          Section, PillButton, LinkAction, ActionRow, StatBlock, OutlinedBox
+  data/          transit lines, destinations, route graph
+  utils/
+    theme.ts        design tokens — 5 type roles, one accent color, 4pt spacing
+    routing.ts      journey cost model, transfer synthesis, filters
+    liveStatus.ts   the clock-derived simulation
+  __tests__/
+```
+
+The design system is five type roles and three weights. Anything needing a size off that ramp is a design mistake rather than a missing token — the previous build had 17 distinct font sizes, including 10.5, 11.5, 12.5, and 13.5.
+
+---
+
+## Disclaimer
+
+Service levels, departure countdowns, and crowd levels are modeled, not live operational data. Route structure — which lines exist, where they stop, how long a ride takes — follows the real Walt Disney World network.
+
+ParkWays is an independent project, not affiliated with, endorsed by, or sponsored by The Walt Disney Company. Park, resort, and attraction names are trademarks of their respective owners and appear here for identification only.
+
+Built by [Austin Vodrazka](https://github.com/austin5374).

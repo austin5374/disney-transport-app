@@ -1,78 +1,128 @@
 import React from 'react';
 import { ScrollView, TouchableOpacity, Text, StyleSheet, View } from 'react-native';
-import { ActiveFilters } from '../types';
-import { Colors } from '../utils/theme';
+import { LinearGradient } from 'expo-linear-gradient';
+import { ActiveFilters, SortMode } from '../types';
+import { Colors, Type, Spacing, Radius } from '../utils/theme';
 
 interface FilterPillsProps {
   filters: ActiveFilters;
   onChange: (filters: ActiveFilters) => void;
 }
 
-const PILLS: { key: keyof ActiveFilters; label: string }[] = [
-  { key: 'fastestFirst', label: 'Fastest first' },
-  { key: 'scenic',       label: 'Scenic'        },
-  { key: 'noWater',      label: 'No water'      },
-  { key: 'accessible',   label: 'Accessible'    },
-  { key: 'noTransfer',   label: 'No transfer'   },
+// Sort is a three-way choice, not three independent switches. The old version
+// had a "Fastest first" toggle whose off-state changed nothing, because the
+// sort fell through to the same comparator either way.
+const SORTS: { key: SortMode; label: string }[] = [
+  { key: 'fastest',   label: 'Fastest' },
+  { key: 'transfers', label: 'Fewest transfers' },
+  { key: 'scenic',    label: 'Scenic' },
+];
+
+const TOGGLES: { key: 'noWater' | 'accessible'; label: string }[] = [
+  { key: 'noWater',    label: 'No boats' },
+  { key: 'accessible', label: 'Step-free' },
 ];
 
 export default function FilterPills({ filters, onChange }: FilterPillsProps) {
-  const toggle = (key: keyof ActiveFilters) => {
-    const next = { ...filters, [key]: !filters[key] };
-    // fastestFirst and scenic are mutually exclusive
-    if (key === 'fastestFirst' && next.fastestFirst) next.scenic = false;
-    if (key === 'scenic'       && next.scenic)       next.fastestFirst = false;
-    onChange(next);
-  };
-
   return (
-    <ScrollView
-      horizontal
-      showsHorizontalScrollIndicator={false}
-      contentContainerStyle={styles.row}
-    >
-      {PILLS.map(({ key, label }) => {
-        const active = filters[key];
-        return (
-          <TouchableOpacity
-            key={key}
-            onPress={() => toggle(key)}
-            style={[styles.pill, active && styles.pillActive]}
-            activeOpacity={0.8}
-          >
-            <Text style={[styles.pillText, active && styles.pillTextActive]}>{label}</Text>
-          </TouchableOpacity>
-        );
-      })}
-    </ScrollView>
+    <View style={styles.wrap}>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.row}
+      >
+        {SORTS.map(({ key, label }) => {
+          const active = filters.sort === key;
+          return (
+            <TouchableOpacity
+              key={key}
+              onPress={() => onChange({ ...filters, sort: key })}
+              style={[styles.pill, active && styles.pillActive]}
+              activeOpacity={0.75}
+              accessibilityRole="radio"
+              accessibilityState={{ selected: active }}
+            >
+              <Text style={[styles.pillText, active && styles.pillTextActive]}>{label}</Text>
+            </TouchableOpacity>
+          );
+        })}
+
+        <View style={styles.separator} />
+
+        {TOGGLES.map(({ key, label }) => {
+          const active = filters[key];
+          return (
+            <TouchableOpacity
+              key={key}
+              onPress={() => onChange({ ...filters, [key]: !active })}
+              style={[styles.pill, active && styles.pillActive]}
+              activeOpacity={0.75}
+              accessibilityRole="switch"
+              accessibilityState={{ checked: active }}
+            >
+              <Text style={[styles.pillText, active && styles.pillTextActive]}>{label}</Text>
+            </TouchableOpacity>
+          );
+        })}
+      </ScrollView>
+
+      {/* The row runs past the right edge on every phone width. Without this
+          the last pill is sliced mid-word with no hint that it scrolls. */}
+      <LinearGradient
+        colors={['rgba(255,255,255,0)', Colors.sectionBg]}
+        start={{ x: 0, y: 0.5 }}
+        end={{ x: 1, y: 0.5 }}
+        pointerEvents="none"
+        style={styles.fade}
+      />
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
+  wrap: {
+    position: 'relative',
+    backgroundColor: Colors.sectionBg,
+  },
   row: {
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    gap: 8,
+    paddingHorizontal: Spacing.lg,
+    paddingRight: Spacing.xxl + Spacing.lg,
+    paddingVertical: Spacing.md,
+    gap: Spacing.sm,
     flexDirection: 'row',
+    alignItems: 'center',
+  },
+  separator: {
+    width: 1,
+    alignSelf: 'stretch',
+    marginHorizontal: Spacing.xs,
+    marginVertical: Spacing.xs,
+    backgroundColor: Colors.divider,
   },
   pill: {
-    paddingHorizontal: 14,
-    paddingVertical: 7,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.6)',
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.sm,
+    borderRadius: Radius.pill,
+    backgroundColor: Colors.sectionBg,
     borderWidth: 1,
-    borderColor: Colors.cardBorder,
+    borderColor: Colors.dividerStrong,
   },
   pillActive: {
-    backgroundColor: 'rgba(255,215,0,0.15)',
-    borderColor: Colors.gold,
+    backgroundColor: Colors.primaryBlue,
+    borderColor: Colors.primaryBlue,
   },
   pillText: {
-    fontSize: 13,
+    ...Type.label,
     color: Colors.textSecondary,
-    fontWeight: '500',
   },
   pillTextActive: {
-    color: Colors.warnText,
+    color: Colors.textOnDark,
+  },
+  fade: {
+    position: 'absolute',
+    right: 0,
+    top: 0,
+    bottom: 0,
+    width: Spacing.xxl,
   },
 });

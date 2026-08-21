@@ -1,13 +1,17 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RouteProp } from '@react-navigation/native';
 import { RootStackParamList } from '../types';
-import { Colors } from '../utils/theme';
+import { Colors, Type, Spacing } from '../utils/theme';
+import { journeyMinutes, waitMinutesFor, modeLabel } from '../utils/routing';
 import AppHeader from '../components/AppHeader';
 import JourneyDiagram from '../components/JourneyDiagram';
 import StepCard from '../components/StepCard';
+import InfoSheet from '../components/InfoSheet';
+import Section from '../components/ui/Section';
+import ActionRow from '../components/ui/ActionRow';
+import StatBlock from '../components/ui/StatBlock';
 
 type Props = {
   navigation: StackNavigationProp<RootStackParamList, 'Detail'>;
@@ -15,21 +19,15 @@ type Props = {
 };
 
 export default function DetailScreen({ navigation, route: navRoute }: Props) {
-  const { routeData, from, to, timeOverride } = navRoute.params;
-  const timeDate = timeOverride ? new Date(timeOverride) : undefined;
+  const { routeData, from, to } = navRoute.params;
+  const [info, setInfo] = useState<{ title: string; message: string } | null>(null);
 
-  const timeStr = routeData.totalRideRange
-    ? `${routeData.totalRideRange[0]}–${routeData.totalRideRange[1]} min`
-    : `${routeData.totalRideMinutes} min`;
-
-  // The journey starts at step 1; nothing is pre-completed
-  const currentStep = 0;
-
-  const getStepState = (i: number): 'done' | 'current' | 'upcoming' => {
-    if (i < currentStep) return 'done';
-    if (i === currentStep) return 'current';
-    return 'upcoming';
-  };
+  const ride = routeData.legs.reduce((s, l) => s + l.rideMinutes, 0);
+  const walk = routeData.legs.reduce((s, l) => s + (l.walkMinutes ?? 0), 0);
+  const wait = waitMinutesFor(routeData);
+  const total = journeyMinutes(routeData);
+  const transfers = routeData.legs.filter(l => l.mode !== 'walk').length - 1;
+  const modes = Array.from(new Set(routeData.legs.map(l => modeLabel(l.mode)))).join(', ');
 
   return (
     <View style={styles.screen}>
@@ -37,39 +35,79 @@ export default function DetailScreen({ navigation, route: navRoute }: Props) {
         showBack
         onBack={() => navigation.goBack()}
         title={routeData.name}
-        subtitle={`${from.label} → ${to.label} · ${timeStr}`}
-        timeOverride={timeDate ?? null}
-        onResetTime={() => {}}
+        subtitle={`${from.label} to ${to.label}`}
       />
 
       <ScrollView contentContainerStyle={styles.scroll}>
-        {/* Journey diagram */}
-        <JourneyDiagram route={routeData} />
+        {/* Three-up action row, the shape the reference app opens every
+            detail page with. */}
+        <Section flush>
+          <ActionRow
+            items={[
+              {
+                icon: 'map-outline',
+                label: 'Find on Map',
+                onPress: () => navigation.getParent()?.navigate('Map' as never),
+              },
+              {
+                icon: 'alert-circle-outline',
+                label: 'Line Status',
+                onPress: () => navigation.getParent()?.navigate('Status' as never),
+              },
+              {
+                icon: 'bookmark-outline',
+                label: 'Save Trip',
+                onPress: () => setInfo({
+                  title: 'Saved trips',
+                  message: 'Saving a trip for later is not available in this build.',
+                }),
+              },
+            ]}
+          />
+        </Section>
 
-        {/* Step-by-step cards */}
-        <Text style={styles.sectionTitle}>Step-by-step</Text>
+        <Section flush>
+          <JourneyDiagram route={routeData} />
+        </Section>
+
+        {/* Centered label-over-value stack with hairline rules. The total is
+            broken out into its parts so the headline number and the steps
+            visibly reconcile. */}
+        <Section>
+          <StatBlock label="Total Journey" value={`${total} min`} />
+          <StatBlock label="Typical Wait" value={wait > 0 ? `${wait} min` : 'None'} />
+          <StatBlock label="Time Aboard" value={`${ride} min`} />
+          {walk > 0 && <StatBlock label="Walking" value={`${walk} min`} />}
+          <StatBlock label="Transfers" value={transfers > 0 ? String(transfers) : 'None'} />
+          <StatBlock label="Transportation" value={modes} last />
+        </Section>
+
+        {routeData.notes ? (
+          <Section eyebrow="Good To Know">
+            <Text style={styles.notes}>{routeData.notes}</Text>
+          </Section>
+        ) : null}
+
+        <View style={styles.stepsHeader}>
+          <Text style={styles.stepsTitle}>Step By Step</Text>
+        </View>
 
         {routeData.legs.map((leg, i) => (
           <StepCard
-            key={i}
+            key={`${leg.from}-${leg.to}-${i}`}
             leg={leg}
             stepNum={i + 1}
             totalSteps={routeData.legs.length}
-            state={getStepState(i)}
           />
         ))}
-
-        {/* Notes */}
-        {routeData.notes && (
-          <View style={styles.notesCard}>
-            <Ionicons name="information-circle-outline" size={15} color={Colors.textSecondary} />
-            <Text style={styles.notesText}>{routeData.notes}</Text>
-          </View>
-        )}
-
-        <View style={{ height: 20 }} />
       </ScrollView>
 
+      <InfoSheet
+        visible={info !== null}
+        title={info?.title ?? ''}
+        message={info?.message ?? ''}
+        onClose={() => setInfo(null)}
+      />
     </View>
   );
 }
@@ -80,42 +118,19 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.pageBg,
   },
   scroll: {
-    paddingBottom: 20,
+    paddingBottom: Spacing.xl,
   },
-  progressBar: {
-    height: 3,
-    backgroundColor: Colors.cardBorder,
-    marginTop: 0,
-  },
-  progressFill: {
-    height: '100%',
-    backgroundColor: Colors.primaryBlue,
-    borderRadius: 2,
-  },
-  sectionTitle: {
-    fontSize: 13,
-    fontWeight: '500',
+  notes: {
+    ...Type.body,
     color: Colors.textSecondary,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    marginHorizontal: 16,
-    marginTop: 4,
-    marginBottom: 4,
   },
-  notesCard: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 8,
-    marginHorizontal: 16,
-    marginTop: 10,
-    padding: 12,
-    backgroundColor: Colors.lightBlueTint,
-    borderRadius: 10,
+  stepsHeader: {
+    paddingHorizontal: Spacing.lg,
+    paddingTop: Spacing.lg,
+    paddingBottom: Spacing.sm,
   },
-  notesText: {
-    flex: 1,
-    fontSize: 12,
+  stepsTitle: {
+    ...Type.eyebrow,
     color: Colors.textSecondary,
-    lineHeight: 18,
   },
 });

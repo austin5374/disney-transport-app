@@ -1,14 +1,17 @@
 import React, { useMemo, useState } from 'react';
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { View, Text, ScrollView, StyleSheet } from 'react-native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RouteProp } from '@react-navigation/native';
-import { RootStackParamList, Route } from '../types';
-import { Colors } from '../utils/theme';
-import { getActiveRoutes, applyFilters } from '../utils/routing';
+import { RootStackParamList, ActiveFilters } from '../types';
+import { Colors, Type, Spacing } from '../utils/theme';
+import { getActiveRoutes, applyFilters, describeExclusions } from '../utils/routing';
 import AppHeader from '../components/AppHeader';
 import TimeBanner from '../components/TimeBanner';
+import FilterPills from '../components/FilterPills';
 import RouteCard from '../components/RouteCard';
+import Section from '../components/ui/Section';
+import PillButton from '../components/ui/PillButton';
+import LinkAction from '../components/ui/LinkAction';
 
 type Props = {
   navigation: StackNavigationProp<RootStackParamList, 'Results'>;
@@ -16,107 +19,105 @@ type Props = {
 };
 
 export default function ResultsScreen({ navigation, route: navRoute }: Props) {
-  const { from, to, filters, timeOverride: initialTimeOverride } = navRoute.params;
+  const { from, to, filters: initialFilters, timeOverride: initialTimeOverride } = navRoute.params;
+  const [filters, setFilters] = useState<ActiveFilters>(initialFilters);
   const [timeDate, setTimeDate] = useState<Date | null>(
     initialTimeOverride ? new Date(initialTimeOverride) : null
   );
 
-  const routes = useMemo(() => {
-    const active = getActiveRoutes(from.id, to.id, timeDate ?? undefined);
-    return applyFilters(active, filters);
-  }, [from.id, to.id, timeDate, filters]);
+  const all = useMemo(
+    () => getActiveRoutes(from.id, to.id, timeDate ?? undefined),
+    [from.id, to.id, timeDate]
+  );
+  const routes = useMemo(() => applyFilters(all, filters), [all, filters]);
 
-  const hasWaterRoutes = routes.some(r => r.tags.includes('water'));
-  const showWaterNudge = !filters.noWater && hasWaterRoutes;
+  // Transit options come first; a paid car is never the headline answer.
+  const transit = routes.filter(r => !r.legs.some(l => l.mode === 'minnie_van'));
+  const paid = routes.filter(r => r.legs.some(l => l.mode === 'minnie_van'));
 
-  // The planner auto-navigates here the instant both fields are filled, so
-  // there's no moment on that screen where both are set and a swap button
-  // would do anything visible. This is where "reverse my trip" actually
-  // belongs — updates this screen's own params in place.
-  const reverseTrip = () => {
-    navigation.setParams({ from: to, to: from });
-  };
+  // Naming the filters that are actually removing routes, rather than
+  // blaming the network for an empty list the user's own settings produced.
+  const excluded = describeExclusions(all, filters);
+
+  const clearFilters = () =>
+    setFilters({ sort: filters.sort, noWater: false, accessible: false });
+
+  const reverseTrip = () => navigation.setParams({ from: to, to: from });
 
   return (
     <View style={styles.screen}>
       <AppHeader
         showBack
         onBack={() => navigation.goBack()}
-        title={`${routes.length} route${routes.length !== 1 ? 's' : ''} to ${to.label}`}
-        subtitle={`${from.label} → ${to.label}`}
-        timeOverride={timeDate}
-        onResetTime={() => setTimeDate(null)}
+        title={to.label}
+        subtitle={`From ${from.label}`}
       />
 
-      <View style={styles.reverseRow}>
-        <TouchableOpacity style={styles.reverseChip} onPress={reverseTrip} activeOpacity={0.7}>
-          <Ionicons name="swap-vertical" size={13} color={Colors.primaryBlue} />
-          <Text style={styles.reverseChipText}>Reverse trip</Text>
-        </TouchableOpacity>
-      </View>
-
-      <TimeBanner
-        timeOverride={timeDate}
-        onTimeChange={setTimeDate}
-      />
+      <FilterPills filters={filters} onChange={setFilters} />
+      <TimeBanner timeOverride={timeDate} onTimeChange={setTimeDate} />
 
       <ScrollView contentContainerStyle={styles.scroll}>
-        {routes.length === 0 ? (
-          <View style={styles.emptyState}>
-            {filters.noWater ? (
+        <View style={styles.summaryBar}>
+          <Text style={styles.summaryText}>
+            {transit.length > 0
+              ? `${transit.length} transit option${transit.length === 1 ? '' : 's'}`
+              : 'No transit options'}
+          </Text>
+          <LinkAction label="Reverse Trip" onPress={reverseTrip} noChevron />
+        </View>
+
+        {transit.length === 0 && (
+          <Section flush={false}>
+            {excluded.length > 0 ? (
               <>
-                <Text style={styles.emptyTitle}>No land-only routes available</Text>
+                <Text style={styles.emptyTitle}>Your filters hid every route</Text>
                 <Text style={styles.emptyBody}>
-                  Water transport or rideshare is your best option for this trip. Try turning off "No water" to see all routes.
+                  {excluded.join(' ')} Turn a filter off to see the rest.
                 </Text>
+                <PillButton label="Clear Filters" onPress={clearFilters} style={styles.emptyBtn} />
               </>
             ) : (
               <>
-                <Text style={styles.emptyTitle}>No Disney transport available</Text>
+                <Text style={styles.emptyTitle}>No Disney transport on this route</Text>
                 <Text style={styles.emptyBody}>
-                  No direct Disney transport connects these two locations right now.
+                  Disney does not connect {from.label} and {to.label} directly, and no
+                  reasonable transfer exists at this time of day.
                 </Text>
-                <View style={styles.minnieCta}>
-                  <Ionicons name="car" size={16} color={Colors.primaryBlue} />
-                  <Text style={styles.minnieCtaText}>Try Minnie Van or Uber/Lyft</Text>
-                </View>
               </>
             )}
-          </View>
-        ) : (
-          routes.map((r, i) => {
-            const isBest   = i === 0 && filters.fastestFirst;
-            const isScenic = filters.scenic && (r.tags.includes('water') || r.tags.includes('scenic'));
-            return (
+          </Section>
+        )}
+
+        {transit.map((r, i) => (
+          <RouteCard
+            key={r.id}
+            route={r}
+            isBest={i === 0 && filters.sort === 'fastest'}
+            isScenic={i === 0 && filters.sort === 'scenic'}
+            onPress={() => navigation.navigate('Detail', {
+              routeData: r, from, to, timeOverride: timeDate?.toISOString(),
+            })}
+          />
+        ))}
+
+        {paid.length > 0 && (
+          <>
+            <View style={styles.groupHeader}>
+              <Text style={styles.groupTitle}>Other Ways To Get There</Text>
+              <Text style={styles.groupSub}>Paid rides, not included with your stay</Text>
+            </View>
+            {paid.map(r => (
               <RouteCard
                 key={r.id}
                 route={r}
-                index={i}
-                isBest={isBest}
-                isScenic={isScenic}
                 onPress={() => navigation.navigate('Detail', {
                   routeData: r, from, to, timeOverride: timeDate?.toISOString(),
                 })}
-                onSteps={() => navigation.navigate('Detail', {
-                  routeData: r, from, to, timeOverride: timeDate?.toISOString(),
-                })}
               />
-            );
-          })
+            ))}
+          </>
         )}
-
-        {showWaterNudge && (
-          <View style={styles.waterNudge}>
-            <Ionicons name="bulb-outline" size={14} color={Colors.textSecondary} />
-            <Text style={styles.waterNudgeText}>
-              Turn on "No water" to hide boat routes and show land-only alternatives
-            </Text>
-          </View>
-        )}
-
-        <View style={{ height: 20 }} />
       </ScrollView>
-
     </View>
   );
 }
@@ -126,79 +127,44 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.pageBg,
   },
-  reverseRow: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    paddingHorizontal: 16,
-    paddingTop: 10,
-  },
-  reverseChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    backgroundColor: Colors.lightBlueTint,
-    borderRadius: 12,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-  },
-  reverseChipText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: Colors.primaryBlue,
-  },
   scroll: {
-    paddingTop: 10,
-    paddingBottom: 20,
+    paddingBottom: Spacing.xl,
   },
-  emptyState: {
-    margin: 24,
-    padding: 20,
-    backgroundColor: Colors.cardBg,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: Colors.cardBorder,
+  summaryBar: {
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.md,
+  },
+  summaryText: {
+    ...Type.eyebrow,
+    color: Colors.textSecondary,
   },
   emptyTitle: {
-    fontSize: 16,
-    fontWeight: '500',
+    ...Type.title,
     color: Colors.textPrimary,
-    marginBottom: 8,
-    textAlign: 'center',
+    marginBottom: Spacing.sm,
   },
   emptyBody: {
-    fontSize: 13,
+    ...Type.body,
     color: Colors.textSecondary,
-    textAlign: 'center',
-    lineHeight: 20,
   },
-  minnieCta: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginTop: 16,
-    backgroundColor: Colors.lightBlueTint,
-    borderRadius: 10,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
+  emptyBtn: {
+    marginTop: Spacing.lg,
   },
-  minnieCtaText: {
-    color: Colors.primaryBlue,
-    fontSize: 14,
-    fontWeight: '500',
+  groupHeader: {
+    paddingHorizontal: Spacing.lg,
+    paddingTop: Spacing.lg,
+    paddingBottom: Spacing.sm,
   },
-  waterNudge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginHorizontal: 16,
-    marginTop: 10,
-    paddingHorizontal: 4,
-  },
-  waterNudgeText: {
-    flex: 1,
-    fontSize: 12,
+  groupTitle: {
+    ...Type.eyebrow,
     color: Colors.textSecondary,
-    lineHeight: 18,
+  },
+  groupSub: {
+    ...Type.caption,
+    color: Colors.textPlaceholder,
+    marginTop: 2,
   },
 });

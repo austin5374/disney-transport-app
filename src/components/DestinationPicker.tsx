@@ -1,107 +1,133 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity,
   SectionList, StyleSheet, KeyboardAvoidingView, Platform,
 } from 'react-native';
-import AppModal from './AppModal';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
-import { Ionicons } from '@expo/vector-icons';
+import Ionicons from '@expo/vector-icons/Ionicons';
+import AppModal from './AppModal';
 import { Destination, DestinationGroup } from '../types';
 import { DESTINATIONS } from '../data/destinations';
-import { Colors, Gradients, groupBadgeColors } from '../utils/theme';
+import { Colors, Type, Spacing, Radius, groupBadgeColors } from '../utils/theme';
 
 interface DestinationPickerProps {
   visible: boolean;
+  /** "Where from?" for the origin field, "Where to?" for the destination.
+   *  Previously hardcoded, so picking a starting point asked where you were
+   *  going. */
+  title: string;
   onClose: () => void;
   onSelect: (dest: Destination) => void;
   recent: Destination[];
   excludeId?: string;
 }
 
-function fuzzyMatch(text: string, query: string): boolean {
-  const t = text.toLowerCase();
-  const q = query.toLowerCase();
-  return t.includes(q);
-}
+const GROUP_ORDER: DestinationGroup[] = [
+  'Parks', 'Water Parks', 'Transportation', 'Entertainment',
+  'Deluxe MK Area', 'Deluxe EPCOT Area', 'Deluxe AK Area',
+  'Moderate Resorts', 'Value Resorts', 'DVC / Other',
+];
 
 export default function DestinationPicker({
-  visible, onClose, onSelect, recent, excludeId,
+  visible, title, onClose, onSelect, recent, excludeId,
 }: DestinationPickerProps) {
   const [query, setQuery] = useState('');
   const insets = useSafeAreaInsets();
+  const inputRef = useRef<TextInput>(null);
+
+  // The reference app opens its destination field with the keyboard already
+  // up and the cursor in place. Opening a full-screen directory with an
+  // unfocused input costs the user an extra tap every single search.
+  useEffect(() => {
+    if (!visible) return;
+    const t = setTimeout(() => inputRef.current?.focus(), 220);
+    return () => clearTimeout(t);
+  }, [visible]);
 
   const filtered = useMemo(() => {
     const all = DESTINATIONS.filter(d => d.id !== excludeId);
-    if (!query.trim()) return all;
+    const q = query.trim().toLowerCase();
+    if (!q) return all;
     return all.filter(d =>
-      fuzzyMatch(d.label, query) || fuzzyMatch(d.id, query) || fuzzyMatch(d.abbrev, query)
+      d.label.toLowerCase().includes(q) ||
+      d.id.toLowerCase().includes(q) ||
+      d.abbrev.toLowerCase().includes(q)
     );
   }, [query, excludeId]);
 
   const sections = useMemo(() => {
     if (query.trim()) {
-      return [{ title: 'Results', data: filtered }];
+      return filtered.length ? [{ title: 'Results', data: filtered }] : [];
     }
-    const groups: DestinationGroup[] = [
-      'Parks', 'Water Parks', 'Transportation', 'Entertainment',
-      'Deluxe MK Area', 'Deluxe EPCOT Area', 'Deluxe AK Area',
-      'Moderate Resorts', 'Value Resorts', 'DVC / Other',
-    ];
     const result: { title: string; data: Destination[] }[] = [];
     const recentVisible = recent.filter(d => d.id !== excludeId);
-    if (recentVisible.length > 0) {
-      result.push({ title: 'Recent', data: recentVisible });
-    }
-    for (const g of groups) {
+    if (recentVisible.length > 0) result.push({ title: 'Recent', data: recentVisible });
+    for (const g of GROUP_ORDER) {
       const data = filtered.filter(d => d.group === g);
       if (data.length) result.push({ title: g, data });
     }
     return result;
   }, [filtered, recent, excludeId, query]);
 
+  const choose = (item: Destination) => {
+    onSelect(item);
+    onClose();
+    setQuery('');
+  };
+
   return (
     <AppModal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
-      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.flex}>
         <View style={[styles.container, { paddingTop: insets.top }]}>
-          {/* Header */}
-          <LinearGradient colors={Gradients.sky} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.header}>
-            <Text style={styles.headerTitle}>Where to?</Text>
-            <TouchableOpacity onPress={onClose} style={styles.closeBtn}>
-              <Text style={styles.closeText}>Cancel</Text>
+          {/* Flat white bar with a close control and a centered title — the
+              same header shape the reference app's Get Directions sheet uses. */}
+          <View style={styles.header}>
+            <TouchableOpacity
+              onPress={onClose}
+              style={styles.closeBtn}
+              accessibilityRole="button"
+              accessibilityLabel="Close"
+              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+            >
+              <Ionicons name="close" size={26} color={Colors.primaryBlue} />
             </TouchableOpacity>
-          </LinearGradient>
+            <Text style={styles.headerTitle}>{title}</Text>
+            <View style={styles.closeBtn} />
+          </View>
 
-          {/* Search */}
           <View style={styles.searchWrap}>
-            <Ionicons name="search" size={16} color={Colors.textPlaceholder} style={{ marginRight: 8 }} />
+            <Ionicons name="search" size={18} color={Colors.textPlaceholder} />
             <TextInput
+              ref={inputRef}
               style={styles.searchInput}
-              placeholder="Search destinations..."
+              placeholder="Search parks and resorts"
               placeholderTextColor={Colors.textPlaceholder}
               value={query}
               onChangeText={setQuery}
               returnKeyType="search"
+              autoCorrect={false}
+              onSubmitEditing={() => { if (filtered.length) choose(filtered[0]); }}
             />
             {query.length > 0 && (
-              <TouchableOpacity onPress={() => setQuery('')} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-                <Ionicons name="close-circle" size={16} color={Colors.textPlaceholder} />
+              <TouchableOpacity
+                onPress={() => setQuery('')}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                accessibilityRole="button"
+                accessibilityLabel="Clear search"
+              >
+                <Ionicons name="close-circle" size={18} color={Colors.textPlaceholder} />
               </TouchableOpacity>
             )}
           </View>
 
-          {/* List */}
           <SectionList
             sections={sections}
             keyExtractor={item => item.id}
             renderItem={({ item }) => (
-              <TouchableOpacity
-                style={styles.item}
-                onPress={() => { onSelect(item); onClose(); setQuery(''); }}
-              >
+              <TouchableOpacity style={styles.item} onPress={() => choose(item)} activeOpacity={0.6}>
                 <Text style={styles.itemLabel}>{item.label}</Text>
                 <Text style={[
-                  styles.itemId,
+                  styles.itemBadge,
                   {
                     backgroundColor: groupBadgeColors(item.group).bg,
                     color: groupBadgeColors(item.group).text,
@@ -114,8 +140,16 @@ export default function DestinationPicker({
                 <Text style={styles.sectionTitle}>{section.title}</Text>
               </View>
             )}
+            ListEmptyComponent={
+              <View style={styles.empty}>
+                <Text style={styles.emptyTitle}>No matches</Text>
+                <Text style={styles.emptyBody}>
+                  Nothing on property matches "{query.trim()}". Try a shorter search.
+                </Text>
+              </View>
+            }
             keyboardShouldPersistTaps="handled"
-            contentContainerStyle={{ paddingBottom: insets.bottom + 20 }}
+            contentContainerStyle={{ paddingBottom: insets.bottom + Spacing.xl }}
           />
         </View>
       </KeyboardAvoidingView>
@@ -124,67 +158,58 @@ export default function DestinationPicker({
 }
 
 const styles = StyleSheet.create({
+  flex: { flex: 1 },
   container: {
     flex: 1,
-    backgroundColor: Colors.pageBg,
+    backgroundColor: Colors.sectionBg,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-  },
-  headerTitle: {
-    color: '#fff',
-    fontSize: 17,
-    fontWeight: '500',
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.divider,
   },
   closeBtn: {
-    padding: 4,
+    width: 34,
   },
-  closeText: {
-    color: 'rgba(255,255,255,0.8)',
-    fontSize: 15,
+  headerTitle: {
+    ...Type.subtitle,
+    flex: 1,
+    textAlign: 'center',
+    color: Colors.textPrimary,
   },
   searchWrap: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
-    marginHorizontal: 16,
-    marginVertical: 10,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: Colors.cardBorder,
-    paddingHorizontal: 12,
-    height: 44,
+    gap: Spacing.sm,
+    backgroundColor: Colors.pageBg,
+    marginHorizontal: Spacing.lg,
+    marginVertical: Spacing.md,
+    borderRadius: Radius.md,
+    paddingHorizontal: Spacing.md,
+    height: 46,
   },
   searchInput: {
+    ...Type.body,
     flex: 1,
-    fontSize: 15,
     color: Colors.textPrimary,
-  },
-  clearBtn: {
-    fontSize: 14,
-    color: Colors.textPlaceholder,
-    padding: 4,
+    // react-native-web renders a focus ring that clashes with the field
+    ...(Platform.OS === 'web' ? { outlineStyle: 'none' as never } : {}),
   },
   sectionHeader: {
     backgroundColor: Colors.pageBg,
-    paddingHorizontal: 16,
-    paddingVertical: 6,
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.sm,
   },
   sectionTitle: {
-    fontSize: 11,
-    fontWeight: '500',
+    ...Type.eyebrow,
     color: Colors.textSecondary,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
   },
   item: {
-    backgroundColor: '#fff',
-    paddingHorizontal: 16,
-    paddingVertical: 14,
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.lg,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -192,15 +217,31 @@ const styles = StyleSheet.create({
     borderBottomColor: Colors.divider,
   },
   itemLabel: {
-    fontSize: 15,
+    ...Type.body,
+    flex: 1,
     color: Colors.textPrimary,
   },
-  itemId: {
-    fontSize: 12,
-    fontWeight: '600',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 6,
+  itemBadge: {
+    ...Type.caption,
+    fontFamily: Type.label.fontFamily,
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 3,
+    borderRadius: Radius.sm,
     overflow: 'hidden',
+    marginLeft: Spacing.md,
+  },
+  empty: {
+    padding: Spacing.xxl,
+    alignItems: 'center',
+  },
+  emptyTitle: {
+    ...Type.subtitle,
+    color: Colors.textPrimary,
+    marginBottom: Spacing.xs,
+  },
+  emptyBody: {
+    ...Type.body,
+    color: Colors.textSecondary,
+    textAlign: 'center',
   },
 });

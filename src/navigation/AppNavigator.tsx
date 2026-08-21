@@ -1,11 +1,11 @@
 import React from 'react';
-import { Platform } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Ionicons } from '@expo/vector-icons';
+import { createBottomTabNavigator, BottomTabNavigationOptions } from '@react-navigation/bottom-tabs';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { RootStackParamList } from '../types';
-import { Colors } from '../utils/theme';
+import { Colors, Brand } from '../utils/theme';
 import StatusScreen from '../screens/StatusScreen';
 import MapScreen from '../screens/MapScreen';
 import MoreScreen from '../screens/MoreScreen';
@@ -32,8 +32,8 @@ function PlannerStack() {
           },
         }),
         transitionSpec: {
-          open:  { animation: 'timing', config: { duration: 350 } },
-          close: { animation: 'timing', config: { duration: 350 } },
+          open:  { animation: 'timing', config: { duration: 280 } },
+          close: { animation: 'timing', config: { duration: 280 } },
         },
       }}
     >
@@ -44,38 +44,94 @@ function PlannerStack() {
   );
 }
 
+// Five icon-only slots with a raised center action, matching the reference
+// app's tab bar silhouette. The old bar carried four labeled tabs and used an
+// EKG "pulse" glyph for service status — a dashboard metaphor, not one a
+// guest would read.
 const TAB_ICONS: Record<string, { active: keyof typeof Ionicons.glyphMap; inactive: keyof typeof Ionicons.glyphMap }> = {
-  Status:  { active: 'pulse',            inactive: 'pulse-outline' },
-  Map:     { active: 'map',              inactive: 'map-outline' },
-  Planner: { active: 'navigate-circle',  inactive: 'navigate-circle-outline' },
-  More:    { active: 'menu',             inactive: 'menu-outline' },
+  Planner: { active: 'home',           inactive: 'home-outline' },
+  Map:     { active: 'location',       inactive: 'location-outline' },
+  NewTrip: { active: 'add-circle',     inactive: 'add-circle-outline' },
+  Status:  { active: 'alert-circle',   inactive: 'alert-circle-outline' },
+  More:    { active: 'menu',           inactive: 'menu-outline' },
 };
+
+const TAB_LABELS: Record<string, string> = {
+  Planner: 'Home',
+  Map:     'Transit map',
+  NewTrip: 'Start a new trip',
+  Status:  'Transportation status',
+  More:    'More',
+};
+
+// The center slot is an action, not a destination — it resets the planner and
+// sends you back to a blank form.
+function NewTripPlaceholder() {
+  return <View style={styles.placeholder} />;
+}
+
+const screenOptions = ({ route }: { route: { name: string } }): BottomTabNavigationOptions => ({
+  headerShown: false,
+  tabBarShowLabel: false,
+  tabBarActiveTintColor: Colors.primaryBlue,
+  tabBarInactiveTintColor: Colors.textPlaceholder,
+  tabBarAccessibilityLabel: TAB_LABELS[route.name],
+  tabBarStyle: {
+    backgroundColor: Colors.sectionBg,
+    borderTopColor: Colors.divider,
+    borderTopWidth: 1,
+    height: 64,
+    paddingTop: 6,
+    paddingBottom: 8,
+  },
+  tabBarIcon: ({ focused, color }) => {
+    const icons = TAB_ICONS[route.name];
+    const isCenter = route.name === 'NewTrip';
+    return (
+      <Ionicons
+        name={focused && !isCenter ? icons.active : icons.inactive}
+        size={isCenter ? 32 : 26}
+        color={isCenter ? Colors.primaryBlue : color}
+      />
+    );
+  },
+});
 
 export default function AppNavigator() {
   return (
-    <NavigationContainer>
-      <Tab.Navigator
-        initialRouteName="Planner"
-        screenOptions={({ route }) => ({
-          headerShown: false,
-          tabBarActiveTintColor: Colors.primaryBlue,
-          tabBarInactiveTintColor: Colors.textPlaceholder,
-          tabBarStyle: {
-            borderTopColor: Colors.cardBorder,
-            ...(Platform.OS === 'web' ? { height: 60, paddingBottom: 8 } : {}),
-          },
-          tabBarLabelStyle: { fontSize: 10.5, fontWeight: '600' },
-          tabBarIcon: ({ focused, color, size }) => {
-            const icons = TAB_ICONS[route.name];
-            return <Ionicons name={focused ? icons.active : icons.inactive} size={size} color={color} />;
-          },
-        })}
-      >
+    <NavigationContainer
+      // Without this the browser tab title becomes the raw route name, so the
+      // window chrome reads "Search", then "Results", then "Detail".
+      documentTitle={{
+        formatter: () => `${Brand.name} — ${Brand.tagline}`,
+      }}
+    >
+      <Tab.Navigator initialRouteName="Planner" screenOptions={screenOptions}>
         <Tab.Screen name="Planner" component={PlannerStack} />
-        <Tab.Screen name="Status"  component={StatusScreen} />
         <Tab.Screen name="Map"     component={MapScreen} />
+        <Tab.Screen
+          name="NewTrip"
+          component={NewTripPlaceholder}
+          listeners={({ navigation }) => ({
+            tabPress: e => {
+              e.preventDefault();
+              navigation.navigate('Planner', {
+                screen: 'Search',
+                params: { reset: Date.now() },
+              });
+            },
+          })}
+        />
+        <Tab.Screen name="Status"  component={StatusScreen} />
         <Tab.Screen name="More"    component={MoreScreen} />
       </Tab.Navigator>
     </NavigationContainer>
   );
 }
+
+const styles = StyleSheet.create({
+  placeholder: {
+    flex: 1,
+    backgroundColor: Colors.pageBg,
+  },
+});

@@ -2,48 +2,48 @@ import { Destination, GeofenceZone } from '../types';
 
 export const DESTINATIONS: Destination[] = [
   // Parks
-  { id: 'MK',   label: 'Magic Kingdom',              group: 'Parks',              abbrev: 'MK'  },
-  { id: 'EP',   label: 'EPCOT',                       group: 'Parks',              abbrev: 'EP'  },
-  { id: 'HS',   label: 'Hollywood Studios',           group: 'Parks',              abbrev: 'HS'  },
-  { id: 'AK',   label: 'Animal Kingdom',              group: 'Parks',              abbrev: 'AK'  },
+  { id: 'MK',   label: 'Magic Kingdom',              group: 'Parks',              abbrev: 'MK', lat: 28.4177, lng: -81.5812 },
+  { id: 'EP',   label: 'EPCOT',                       group: 'Parks',              abbrev: 'EP', lat: 28.3747, lng: -81.5494 },
+  { id: 'HS',   label: 'Hollywood Studios',           group: 'Parks',              abbrev: 'HS', lat: 28.3575, lng: -81.5582 },
+  { id: 'AK',   label: 'Animal Kingdom',              group: 'Parks',              abbrev: 'AK', lat: 28.3553, lng: -81.5901 },
   // Water Parks
-  { id: 'TL',   label: 'Typhoon Lagoon',              group: 'Water Parks',        abbrev: 'TL'  },
-  { id: 'BB',   label: 'Blizzard Beach',              group: 'Water Parks',        abbrev: 'BB'  },
+  { id: 'TL',   label: 'Typhoon Lagoon',              group: 'Water Parks',        abbrev: 'TL', lat: 28.365, lng: -81.527 },
+  { id: 'BB',   label: 'Blizzard Beach',              group: 'Water Parks',        abbrev: 'BB', lat: 28.3565, lng: -81.5825 },
   // Transportation
-  { id: 'TTC',  label: 'Transportation & Ticket Center', group: 'Transportation',  abbrev: 'TTC' },
+  { id: 'TTC',  label: 'Transportation & Ticket Center', group: 'Transportation',  abbrev: 'TTC', lat: 28.4101, lng: -81.5847 },
   // Entertainment
-  { id: 'DS',   label: 'Disney Springs',              group: 'Entertainment',      abbrev: 'DS'  },
-  { id: 'BW',   label: "Disney's BoardWalk",          group: 'Entertainment',      abbrev: 'BW'  },
+  { id: 'DS',   label: 'Disney Springs',              group: 'Entertainment',      abbrev: 'DS', lat: 28.3694, lng: -81.5163 },
+  { id: 'BW',   label: "Disney's BoardWalk",          group: 'Entertainment',      abbrev: 'BW', lat: 28.37, lng: -81.557 },
   // Deluxe MK Area
-  { id: 'CON',  label: 'Contemporary Resort',         group: 'Deluxe MK Area',     abbrev: 'CON' },
-  { id: 'GF',   label: 'Grand Floridian',             group: 'Deluxe MK Area',     abbrev: 'GF'  },
-  { id: 'POLY', label: 'Polynesian Village',          group: 'Deluxe MK Area',     abbrev: 'POL' },
-  { id: 'WL',   label: 'Wilderness Lodge',            group: 'Deluxe MK Area',     abbrev: 'WL'  },
-  { id: 'FW',   label: 'Fort Wilderness',             group: 'Deluxe MK Area',     abbrev: 'FW'  },
+  { id: 'CON',  label: 'Contemporary Resort',         group: 'Deluxe MK Area',     abbrev: 'CON', lat: 28.4152, lng: -81.5745 },
+  { id: 'GF',   label: 'Grand Floridian',             group: 'Deluxe MK Area',     abbrev: 'GF', lat: 28.4108, lng: -81.5866 },
+  { id: 'POLY', label: 'Polynesian Village',          group: 'Deluxe MK Area',     abbrev: 'POL', lat: 28.4056, lng: -81.5836 },
+  { id: 'WL',   label: 'Wilderness Lodge',            group: 'Deluxe MK Area',     abbrev: 'WL', lat: 28.4106, lng: -81.5698 },
+  { id: 'FW',   label: 'Fort Wilderness',             group: 'Deluxe MK Area',     abbrev: 'FW', lat: 28.4128, lng: -81.5623 },
   // Deluxe EPCOT Area
-  { id: 'YC',   label: 'Yacht Club Resort',           group: 'Deluxe EPCOT Area',  abbrev: 'YC'  },
-  { id: 'BC',   label: 'Beach Club Resort',           group: 'Deluxe EPCOT Area',  abbrev: 'BC'  },
-  { id: 'BWI',  label: 'BoardWalk Inn',               group: 'Deluxe EPCOT Area',  abbrev: 'BWI' },
-  { id: 'SW',   label: 'Swan Hotel',                  group: 'Deluxe EPCOT Area',  abbrev: 'SW'  },
-  { id: 'DO',   label: 'Dolphin Hotel',               group: 'Deluxe EPCOT Area',  abbrev: 'DO'  },
-  { id: 'SR',   label: 'Swan Reserve',                group: 'Deluxe EPCOT Area',  abbrev: 'SR'  },
+  { id: 'YC',   label: 'Yacht Club Resort',           group: 'Deluxe EPCOT Area',  abbrev: 'YC', lat: 28.3706, lng: -81.5537 },
+  { id: 'BC',   label: 'Beach Club Resort',           group: 'Deluxe EPCOT Area',  abbrev: 'BC', lat: 28.3721, lng: -81.5545 },
+  { id: 'BWI',  label: 'BoardWalk Inn',               group: 'Deluxe EPCOT Area',  abbrev: 'BWI', lat: 28.3697, lng: -81.5591 },
+  { id: 'SW',   label: 'Swan Hotel',                  group: 'Deluxe EPCOT Area',  abbrev: 'SW', lat: 28.3667, lng: -81.5581 },
+  { id: 'DO',   label: 'Dolphin Hotel',               group: 'Deluxe EPCOT Area',  abbrev: 'DO', lat: 28.3653, lng: -81.5573 },
+  { id: 'SR',   label: 'Swan Reserve',                group: 'Deluxe EPCOT Area',  abbrev: 'SR', lat: 28.3684, lng: -81.5601 },
   // Deluxe AK Area
-  { id: 'AKL',  label: 'Animal Kingdom Lodge',        group: 'Deluxe AK Area',     abbrev: 'AKL' },
+  { id: 'AKL',  label: 'Animal Kingdom Lodge',        group: 'Deluxe AK Area',     abbrev: 'AKL', lat: 28.3529, lng: -81.6019 },
   // Moderate Resorts
-  { id: 'CBR',  label: 'Caribbean Beach Resort',      group: 'Moderate Resorts',   abbrev: 'CBR' },
-  { id: 'COR',  label: 'Coronado Springs',            group: 'Moderate Resorts',   abbrev: 'COR' },
-  { id: 'POFQ', label: 'Port Orleans French Quarter', group: 'Moderate Resorts',   abbrev: 'FQ'  },
-  { id: 'POR',  label: 'Port Orleans Riverside',      group: 'Moderate Resorts',   abbrev: 'POR' },
+  { id: 'CBR',  label: 'Caribbean Beach Resort',      group: 'Moderate Resorts',   abbrev: 'CBR', lat: 28.3596, lng: -81.5424 },
+  { id: 'COR',  label: 'Coronado Springs',            group: 'Moderate Resorts',   abbrev: 'COR', lat: 28.3549, lng: -81.5721 },
+  { id: 'POFQ', label: 'Port Orleans French Quarter', group: 'Moderate Resorts',   abbrev: 'FQ', lat: 28.3872, lng: -81.5185 },
+  { id: 'POR',  label: 'Port Orleans Riverside',      group: 'Moderate Resorts',   abbrev: 'POR', lat: 28.3811, lng: -81.5195 },
   // Value Resorts
-  { id: 'ASMo', label: 'All-Star Movies',             group: 'Value Resorts',      abbrev: 'ASM' },
-  { id: 'ASMu', label: 'All-Star Music',              group: 'Value Resorts',      abbrev: 'ASU' },
-  { id: 'ASS',  label: 'All-Star Sports',             group: 'Value Resorts',      abbrev: 'ASS' },
-  { id: 'POP',  label: 'Pop Century Resort',          group: 'Value Resorts',      abbrev: 'POP' },
-  { id: 'AOA',  label: 'Art of Animation',            group: 'Value Resorts',      abbrev: 'AOA' },
+  { id: 'ASMo', label: 'All-Star Movies',             group: 'Value Resorts',      abbrev: 'ASM', lat: 28.3376, lng: -81.5789 },
+  { id: 'ASMu', label: 'All-Star Music',              group: 'Value Resorts',      abbrev: 'ASU', lat: 28.34, lng: -81.576 },
+  { id: 'ASS',  label: 'All-Star Sports',             group: 'Value Resorts',      abbrev: 'ASS', lat: 28.339, lng: -81.5711 },
+  { id: 'POP',  label: 'Pop Century Resort',          group: 'Value Resorts',      abbrev: 'POP', lat: 28.352, lng: -81.5406 },
+  { id: 'AOA',  label: 'Art of Animation',            group: 'Value Resorts',      abbrev: 'AOA', lat: 28.3492, lng: -81.539 },
   // DVC / Other
-  { id: 'RIV',  label: 'Riviera Resort',              group: 'DVC / Other',        abbrev: 'RIV' },
-  { id: 'OKW',  label: 'Old Key West Resort',         group: 'DVC / Other',        abbrev: 'OKW' },
-  { id: 'SS',   label: 'Saratoga Springs',            group: 'DVC / Other',        abbrev: 'SS'  },
+  { id: 'RIV',  label: 'Riviera Resort',              group: 'DVC / Other',        abbrev: 'RIV', lat: 28.363, lng: -81.5473 },
+  { id: 'OKW',  label: 'Old Key West Resort',         group: 'DVC / Other',        abbrev: 'OKW', lat: 28.3743, lng: -81.5192 },
+  { id: 'SS',   label: 'Saratoga Springs',            group: 'DVC / Other',        abbrev: 'SS', lat: 28.3705, lng: -81.5194 },
 ];
 
 export const DESTINATION_MAP: Record<string, Destination> = Object.fromEntries(

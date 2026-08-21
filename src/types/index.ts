@@ -22,7 +22,6 @@ export type RouteTag =
   | 'transfer'
   | 'before_10am_only'
   | 'scenic'
-  | 'no_water_alt'
   | 'time_restricted';
 
 // ─── Leg ────────────────────────────────────────────────────────────────────
@@ -30,9 +29,12 @@ export interface Leg {
   mode: TransportMode;
   from: string;
   to: string;
+  /** Time aboard the vehicle, excluding any wait or walk. */
   rideMinutes: number;
-  simRange: [number, number];
-  walkMinutes?: number; // walk TO this leg (before boarding)
+  /** Walk TO this leg, before boarding. Rendered by StepCard and counted in
+   *  the journey total — previously stored on 55 legs and displayed nowhere,
+   *  which is why some route totals did not add up from their own steps. */
+  walkMinutes?: number;
   tip?: string;
   accessible: boolean;
 }
@@ -52,12 +54,16 @@ export interface Route {
 }
 
 // ─── Filters ────────────────────────────────────────────────────────────────
+// Sort is one three-way choice rather than two mutually-exclusive booleans
+// plus a "fastest first" switch whose off-state changed nothing.
+export type SortMode = 'fastest' | 'transfers' | 'scenic';
+
 export interface ActiveFilters {
-  fastestFirst: boolean;
-  scenic: boolean;
+  sort: SortMode;
+  /** Exclude any route with a watercraft leg. */
   noWater: boolean;
+  /** Exclude any route with a leg that is not step-free. */
   accessible: boolean;
-  noTransfer: boolean;
 }
 
 // ─── Geofence zone ──────────────────────────────────────────────────────────
@@ -75,6 +81,11 @@ export interface Destination {
   label: string;
   group: DestinationGroup;
   abbrev: string; // 2–3 char for journey diagram
+  /** Approximate center of the property, used to estimate drive time for the
+   *  paid-ride option. Accurate to roughly a block, which is all a duration
+   *  estimate needs. */
+  lat: number;
+  lng: number;
 }
 
 export type DestinationGroup =
@@ -91,7 +102,9 @@ export type DestinationGroup =
 
 // ─── Navigation param types ─────────────────────────────────────────────────
 export type RootStackParamList = {
-  Search: undefined;
+  /** `reset` is a timestamp bumped by the tab bar's center action to clear
+   *  the planner back to a blank form. */
+  Search: { reset?: number } | undefined;
   Results: {
     from: Destination;
     to: Destination;

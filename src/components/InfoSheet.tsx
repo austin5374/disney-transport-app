@@ -1,7 +1,8 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import AppModal from './AppModal';
-import { Colors } from '../utils/theme';
+import { Colors, Type, Spacing, Radius } from '../utils/theme';
+import PillButton from './ui/PillButton';
 
 interface InfoSheetProps {
   visible: boolean;
@@ -12,8 +13,8 @@ interface InfoSheetProps {
 
 // A small in-app bottom sheet for one-off informational messages — used
 // instead of Alert.alert, which react-native-web ships as a total no-op, and
-// instead of a raw window.alert(), which looks like a browser-chrome popup
-// rather than part of the app.
+// instead of a raw window.alert(), which looks like browser chrome rather
+// than part of the app.
 export default function InfoSheet({ visible, title, message, onClose }: InfoSheetProps) {
   return (
     <AppModal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
@@ -21,9 +22,7 @@ export default function InfoSheet({ visible, title, message, onClose }: InfoShee
         <View style={styles.sheet}>
           <Text style={styles.title}>{title}</Text>
           <Text style={styles.message}>{message}</Text>
-          <TouchableOpacity style={styles.button} onPress={onClose} activeOpacity={0.85}>
-            <Text style={styles.buttonText}>Got it</Text>
-          </TouchableOpacity>
+          <PillButton label="Got It" onPress={onClose} style={styles.button} />
         </View>
       </TouchableOpacity>
     </AppModal>
@@ -33,42 +32,30 @@ export default function InfoSheet({ visible, title, message, onClose }: InfoShee
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.4)',
+    backgroundColor: 'rgba(14,44,75,0.45)',
     justifyContent: 'flex-end',
   },
   sheet: {
-    backgroundColor: '#fff',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    padding: 24,
-    paddingBottom: 40,
+    backgroundColor: Colors.sectionBg,
+    borderTopLeftRadius: Radius.lg,
+    borderTopRightRadius: Radius.lg,
+    padding: Spacing.xl,
+    paddingBottom: Spacing.xxl + Spacing.sm,
     alignItems: 'center',
   },
   title: {
-    fontSize: 17,
-    fontWeight: '700',
+    ...Type.title,
     color: Colors.textPrimary,
-    marginBottom: 8,
+    marginBottom: Spacing.sm,
     textAlign: 'center',
   },
   message: {
-    fontSize: 14,
+    ...Type.body,
     color: Colors.textSecondary,
-    lineHeight: 20,
     textAlign: 'center',
-    marginBottom: 20,
+    marginBottom: Spacing.xl,
   },
   button: {
-    backgroundColor: Colors.primaryBlue,
-    borderRadius: 12,
-    paddingVertical: 14,
-    paddingHorizontal: 32,
-    alignItems: 'center',
     alignSelf: 'stretch',
-  },
-  buttonText: {
-    color: '#fff',
-    fontSize: 15,
-    fontWeight: '600',
   },
 });

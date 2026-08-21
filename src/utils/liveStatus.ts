@@ -1,11 +1,21 @@
 import { useSyncExternalStore } from 'react';
+import { Platform, AppState, AppStateStatus } from 'react-native';
 import { TRANSIT_LINES, TransitLine } from '../data/lines';
 
-// ─── Simulated live status engine ────────────────────────────────────────────
-// A single shared store drives every screen so the whole app agrees on what's
-// running. Statuses drift over time (weighted random transitions on a tick),
-// outages carry a return-to-service countdown, and arrival times are real
-// timestamps so countdowns are smooth and consistent.
+// ─── Deterministic live-status engine ────────────────────────────────────────
+//
+// Every value here is a pure function of (line, wall-clock time). Nothing is
+// stored, nothing is mutated on a timer, and no call to Math.random() appears
+// anywhere in this file.
+//
+// The previous engine re-seeded itself with Math.random() on every page load:
+// refreshing the browser re-rolled which lines were down, so a reader could
+// watch the Skyliner get suspended for lightning, reload, and find it running
+// again. Deriving state from the clock instead means the board is stable
+// across reloads, identical on every device, reproducible in a test, and free
+// of any persistence layer.
+//
+// The ticker that remains exists only to re-render countdowns.
 
 export type ServiceStatus = 'operating' | 'delayed' | 'down';
 export type CrowdLevel = 'light' | 'moderate' | 'heavy';
@@ -14,39 +24,57 @@ export interface LineStatus {
   lineId: string;
   status: ServiceStatus;
   detail: string | null;
-  etaMinutes: number | null;     // for 'down': estimated minutes to restore
-  nextArrivals: number[];        // minutes until next departures (0 = boarding)
+  /** For 'down': estimated minutes until service is restored. */
+  etaMinutes: number | null;
+  /** Minutes until the next departures (0 = boarding now). */
+  nextArrivals: number[];
   crowd: CrowdLevel;
   updatedAt: number;
-  headwayMinutes: [number, number]; // effective headway (monorail: derived from trainsInService)
-  trainsInService: number | null;   // monorail only: how many trains are running this beam
-}
-
-interface InternalLineState {
-  status: ServiceStatus;
-  detail: string | null;
-  restoreAt: number | null;      // epoch ms when a disruption clears
-  arrivalTimestamps: number[];   // epoch ms of upcoming departures
-  crowd: CrowdLevel;
+  headwayMinutes: [number, number];
+  /** Monorail only: how many trains are running this beam. */
   trainsInService: number | null;
 }
 
 const TICK_MS = 20_000;
+const MINUTE = 60_000;
+/** Disruptions are decided per half-hour window. */
+const EPISODE_MS = 30 * MINUTE;
 
-const rand = (min: number, max: number) => Math.random() * (max - min) + min;
-const randInt = (min: number, max: number) => Math.round(rand(min, max));
-const pick = <T,>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
+// ─── Hashing ─────────────────────────────────────────────────────────────────
+// A stable string hash plus a splitmix-style mixer gives a uniform value in
+// [0, 1) for any key. Same key, same value, on every device and every reload.
+
+function hash(key: string): number {
+  let h = 2166136261 >>> 0;
+  for (let i = 0; i < key.length; i++) {
+    h ^= key.charCodeAt(i);
+    h = Math.imul(h, 16777619) >>> 0;
+  }
+  return h >>> 0;
+}
+
+function unit(...parts: (string | number)[]): number {
+  let x = hash(parts.join('|'));
+  x ^= x >>> 16; x = Math.imul(x, 0x7feb352d) >>> 0;
+  x ^= x >>> 15; x = Math.imul(x, 0x846ca68b) >>> 0;
+  x ^= x >>> 16;
+  return (x >>> 0) / 4294967296;
+}
+
+const pick = <T,>(arr: T[], ...seed: (string | number)[]): T =>
+  arr[Math.floor(unit(...seed) * arr.length) % arr.length];
+
+const between = (lo: number, hi: number, ...seed: (string | number)[]): number =>
+  Math.round(lo + unit(...seed) * (hi - lo));
 
 // ─── Monorail headway model ──────────────────────────────────────────────────
-// Each monorail line ("beam") runs a fixed number of trains at a time, and
-// headway follows directly from that count rather than being a flat range.
-//   EPCOT line:   always 2 trains  → 8–10 min headway
-//   Express line: 3 trains → 3–4 min · 4 trains → 2–3 min
-//   Resort line:  3 trains → 8–9 min · 4 trains (typical) → 4–5 min
-function rollTrainsInService(lineId: string): number | null {
+// Each beam runs a fixed number of trains, and headway follows from that count
+// rather than being a flat range.
+
+function rollTrainsInService(lineId: string, episode: number): number | null {
   if (lineId === 'mono-epcot') return 2;
-  if (lineId === 'mono-express') return Math.random() < 0.5 ? 3 : 4;
-  if (lineId === 'mono-resort') return Math.random() < 0.7 ? 4 : 3;
+  if (lineId === 'mono-express') return unit('trains', lineId, episode) < 0.5 ? 3 : 4;
+  if (lineId === 'mono-resort') return unit('trains', lineId, episode) < 0.7 ? 4 : 3;
   return null;
 }
 
@@ -61,16 +89,12 @@ function effectiveHeadway(line: TransitLine, trains: number | null): [number, nu
 }
 
 // ─── Disruption copy ─────────────────────────────────────────────────────────
-// Weather-caused outages (lightning, high wind) are handled separately below
-// so they can be coordinated across a whole area/system at once, instead of
-// each line independently rolling its own "it's storming" outage. These pools
-// are for the ordinary, single-line, non-weather reasons a line goes down.
 
 const DOWN_MESSAGES: Record<string, string[]> = {
   Monorail: [
     'Down for mechanical inspection',
-    'Down for a maintenance issue',
-    'Temporarily out of service',
+    'Track switching issue near the TTC, crews on scene',
+    'Train being cycled out of service',
   ],
   Skyliner: [
     'Paused for an extended guest boarding',
@@ -105,260 +129,346 @@ const DELAY_MESSAGES: Record<string, string[]> = {
   ],
 };
 
-// ─── Coordinated weather outages ─────────────────────────────────────────────
-// Real WDW watercraft and the Skyliner are grouped by the body of water / cable
-// system they actually run on, so a storm cell takes out everything on that
-// system together — never the whole property's boats at once, and never one
-// boat alone while its dock-mates keep running. Monorail is lightning-only
-// (never grounded for wind or rain) and escalates: the EPCOT beam is longest
-// and most exposed, so it goes down first; if the storm continues, the Resort
-// and Express beams go down together right after. All three come back at once
-// once the beam is confirmed clear.
+// ─── Coordinated weather ─────────────────────────────────────────────────────
+// Watercraft and the Skyliner are grouped by the body of water or cable system
+// they actually run on, so a storm cell takes out everything on that system
+// together — never the whole property's boats at once, and never one boat
+// alone while its dock-mates keep running. Because each group's outage is a
+// function of the same episode key, the coordination is structural rather than
+// something the code has to keep in sync.
 
-const SEVEN_SEAS_LAGOON_BOATS = ['boat-ferry', 'boat-gold', 'boat-red', 'boat-green', 'boat-blue'];
-const CRESCENT_LAKE_BOATS = ['boat-friendship'];
-const DISNEY_SPRINGS_BOATS = ['boat-sassagoula'];
-const BOAT_ZONES = [SEVEN_SEAS_LAGOON_BOATS, CRESCENT_LAKE_BOATS, DISNEY_SPRINGS_BOATS];
-const SKYLINER_SYSTEM = ['sky-epcot', 'sky-hs', 'sky-pop'];
+const WEATHER_GROUPS: { key: string; lines: string[]; messages: string[]; chance: number }[] = [
+  {
+    key: 'seven-seas',
+    lines: ['boat-ferry', 'boat-gold', 'boat-red', 'boat-green', 'boat-blue'],
+    messages: ['Docked for lightning in the area', 'Docked for weather, high winds on the water'],
+    chance: 0.06,
+  },
+  {
+    key: 'crescent-lake',
+    lines: ['boat-friendship'],
+    messages: ['Docked for lightning in the area', 'Docked for weather, high winds on the water'],
+    chance: 0.06,
+  },
+  {
+    key: 'disney-springs-water',
+    lines: ['boat-sassagoula'],
+    messages: ['Docked for lightning in the area', 'Docked for weather, high winds on the water'],
+    chance: 0.05,
+  },
+  {
+    key: 'skyliner',
+    lines: ['sky-epcot', 'sky-hs', 'sky-pop'],
+    messages: ['Suspended for lightning in the area', 'Suspended for high winds'],
+    chance: 0.05,
+  },
+];
 
-const BOAT_WEATHER_MESSAGES = ['Docked for lightning in the area', 'Docked for weather, high winds on the water'];
-const SKYLINER_WEATHER_MESSAGES = ['Suspended for lightning in the area', 'Suspended for high winds'];
-const MONORAIL_LIGHTNING_STAGE1 = 'Suspended for lightning in the area — EPCOT Line affected first, its beam runs longest';
-const MONORAIL_LIGHTNING_STAGE2 = 'Lightning in the area, all monorail beams suspended until it clears';
+const MONORAIL_LIGHTNING_STAGE1 =
+  'Suspended for lightning in the area — the EPCOT beam runs longest and is affected first';
+const MONORAIL_LIGHTNING_STAGE2 =
+  'Lightning in the area, all monorail beams suspended until it clears';
 
-// Puts every line in a group down together on a shared restoreAt, so the
-// existing per-line "clear expired disruption" check in tick() naturally
-// brings the whole group back in the same tick — no separate recovery path
-// needed. Skips lines already down (weather or otherwise) so one event
-// doesn't stomp another already in progress.
-function maybeStartGroupWeather(lineIds: string[], messages: string[], chance: number, durationMinutes: [number, number]) {
-  if (lineIds.some(id => state.get(id)!.status === 'down')) return;
-  if (Math.random() >= chance) return;
-  const restoreAt = Date.now() + randInt(durationMinutes[0], durationMinutes[1]) * 60_000;
-  const message = pick(messages);
-  for (const id of lineIds) {
-    const s = state.get(id)!;
-    s.status = 'down';
-    s.detail = message;
-    s.restoreAt = restoreAt;
-    s.arrivalTimestamps = [];
-  }
+interface Episode {
+  status: ServiceStatus;
+  detail: string;
+  /** ms offset from the episode start */
+  startOffset: number;
+  durationMs: number;
 }
 
-function maybeAdvanceMonorailLightning() {
-  const epcot = state.get('mono-epcot')!;
-  const resort = state.get('mono-resort')!;
-  const express = state.get('mono-express')!;
+/** Weather episode covering a whole system, if one is active this episode. */
+function weatherEpisode(lineId: string, episode: number): Episode | null {
+  for (const g of WEATHER_GROUPS) {
+    if (!g.lines.includes(lineId)) continue;
+    if (unit('weather', g.key, episode) >= g.chance) return null;
+    const startOffset = between(0, EPISODE_MS - 12 * MINUTE, 'weather-start', g.key, episode);
+    const durationMs = between(10, 28, 'weather-dur', g.key, episode) * MINUTE;
+    return {
+      status: 'down',
+      detail: pick(g.messages, 'weather-msg', g.key, episode),
+      startOffset,
+      durationMs,
+    };
+  }
+  return null;
+}
 
-  const stage2 = resort.status === 'down' && resort.detail === MONORAIL_LIGHTNING_STAGE2;
-  if (stage2) return; // already worst-case; shared restoreAt will clear all three together
+/** Monorail lightning escalates: the EPCOT beam goes first, and if the cell
+ *  persists all three beams go down together and come back together. */
+function monorailLightning(lineId: string, episode: number): Episode | null {
+  if (!lineId.startsWith('mono-')) return null;
+  const strike = unit('mono-lightning', episode);
+  if (strike >= 0.05) return null;
 
-  const stage1 = epcot.status === 'down' && epcot.detail === MONORAIL_LIGHTNING_STAGE1;
-  if (stage1) {
-    if (Math.random() < 0.05) {
-      const restoreAt = Date.now() + randInt(15, 30) * 60_000;
-      for (const s of [epcot, resort, express]) {
-        s.status = 'down';
-        s.detail = MONORAIL_LIGHTNING_STAGE2;
-        s.restoreAt = restoreAt;
-        s.arrivalTimestamps = [];
-      }
+  const escalates = unit('mono-escalate', episode) < 0.4;
+  const startOffset = between(0, EPISODE_MS - 15 * MINUTE, 'mono-start', episode);
+
+  if (lineId === 'mono-epcot') {
+    return {
+      status: 'down',
+      detail: escalates ? MONORAIL_LIGHTNING_STAGE2 : MONORAIL_LIGHTNING_STAGE1,
+      startOffset,
+      durationMs: between(12, 26, 'mono-dur', episode) * MINUTE,
+    };
+  }
+  if (!escalates) return null;
+  return {
+    status: 'down',
+    detail: MONORAIL_LIGHTNING_STAGE2,
+    // The other two beams follow a few minutes behind and clear with EPCOT.
+    startOffset: startOffset + 4 * MINUTE,
+    durationMs: between(12, 26, 'mono-dur', episode) * MINUTE - 4 * MINUTE,
+  };
+}
+
+/** An ordinary, single-line, non-weather disruption. */
+function ordinaryEpisode(line: TransitLine, episode: number): Episode | null {
+  const r = unit('disrupt', line.id, episode);
+  const startOffset = between(0, EPISODE_MS - 8 * MINUTE, 'disrupt-start', line.id, episode);
+  if (r < 0.035) {
+    return {
+      status: 'down',
+      detail: pick(DOWN_MESSAGES[line.group], 'down-msg', line.id, episode),
+      startOffset,
+      durationMs: between(8, 24, 'down-dur', line.id, episode) * MINUTE,
+    };
+  }
+  if (r < 0.14) {
+    return {
+      status: 'delayed',
+      detail: pick(DELAY_MESSAGES[line.group], 'delay-msg', line.id, episode),
+      startOffset,
+      durationMs: between(6, 18, 'delay-dur', line.id, episode) * MINUTE,
+    };
+  }
+  return null;
+}
+
+/** Resolve which episode, if any, has this line disrupted right now. Looks at
+ *  the previous episode too, so an outage that started near the end of one
+ *  window can still be in progress. */
+function activeDisruption(line: TransitLine, now: number): { detail: string; status: ServiceStatus; endsAt: number } | null {
+  const current = Math.floor(now / EPISODE_MS);
+  for (const episode of [current - 1, current]) {
+    const base = episode * EPISODE_MS;
+    const ep =
+      weatherEpisode(line.id, episode) ??
+      monorailLightning(line.id, episode) ??
+      ordinaryEpisode(line, episode);
+    if (!ep) continue;
+    const start = base + ep.startOffset;
+    const end = start + ep.durationMs;
+    if (now >= start && now < end) {
+      return { detail: ep.detail, status: ep.status, endsAt: end };
     }
-    return;
   }
-
-  if (epcot.status === 'operating' && Math.random() < 0.0025) {
-    epcot.status = 'down';
-    epcot.detail = MONORAIL_LIGHTNING_STAGE1;
-    epcot.restoreAt = Date.now() + randInt(10, 20) * 60_000;
-    epcot.arrivalTimestamps = [];
-  }
+  return null;
 }
 
-// ─── Store ───────────────────────────────────────────────────────────────────
+// ─── Arrivals ────────────────────────────────────────────────────────────────
+// A fixed schedule per line: departures land on a repeating interval with a
+// per-line phase offset, so countdowns tick down smoothly and never jump
+// backwards on a re-render.
 
-const state = new Map<string, InternalLineState>();
-let snapshot: Record<string, LineStatus> = {};
-let lastUpdated = Date.now();
-const listeners = new Set<() => void>();
-let ticker: ReturnType<typeof setInterval> | null = null;
+function nextArrivals(line: TransitLine, headway: [number, number], now: number, delayed: boolean): number[] {
+  const [lo, hi] = headway;
+  if (hi <= 1) return []; // continuous loading
+  const meanMs = ((lo + hi) / 2) * MINUTE * (delayed ? 1.6 : 1);
+  const phase = unit('phase', line.id) * meanMs;
+  const sincePhase = now - phase;
+  const nextIndex = Math.ceil(sincePhase / meanMs);
+  return [0, 1].map(k => {
+    const at = phase + (nextIndex + k) * meanMs;
+    return Math.max(0, Math.round((at - now) / MINUTE));
+  });
+}
 
-function crowdBaseline(): CrowdLevel {
-  const h = new Date().getHours();
-  if (h >= 7 && h < 11) return 'heavy';     // morning rush to parks
-  if (h >= 20 && h < 23) return 'heavy';    // park-close exodus
-  if (h >= 11 && h < 14) return 'moderate';
-  if (h >= 17 && h < 20) return 'moderate';
+// ─── Crowding ────────────────────────────────────────────────────────────────
+
+function crowdBaseline(hour: number): CrowdLevel {
+  if (hour >= 7 && hour < 11) return 'heavy';    // morning rush to parks
+  if (hour >= 20 && hour < 23) return 'heavy';   // park-close exodus
+  if (hour >= 11 && hour < 14) return 'moderate';
+  if (hour >= 17 && hour < 20) return 'moderate';
   return 'light';
 }
 
-function rollCrowd(): CrowdLevel {
-  const base = crowdBaseline();
-  const r = Math.random();
-  if (base === 'heavy')    return r < 0.6 ? 'heavy' : r < 0.9 ? 'moderate' : 'light';
-  if (base === 'moderate') return r < 0.55 ? 'moderate' : r < 0.8 ? 'light' : 'heavy';
+function crowdFor(lineId: string, now: number): CrowdLevel {
+  const d = new Date(now);
+  const base = crowdBaseline(d.getHours());
+  // Re-rolled every 20 minutes so the board moves without flickering.
+  const r = unit('crowd', lineId, Math.floor(now / (20 * MINUTE)));
+  if (base === 'heavy')    return r < 0.6  ? 'heavy'    : r < 0.9 ? 'moderate' : 'light';
+  if (base === 'moderate') return r < 0.55 ? 'moderate' : r < 0.8 ? 'light'    : 'heavy';
   return r < 0.7 ? 'light' : r < 0.95 ? 'moderate' : 'heavy';
 }
 
-function seedArrivals(headway: [number, number], from = Date.now()): number[] {
-  const [minH, maxH] = headway;
-  if (maxH <= 1) return []; // continuous loading (Skyliner)
-  const first = from + rand(0.3, maxH) * 60_000;
-  const second = first + rand(Math.max(minH, 3), maxH) * 60_000;
-  return [first, second];
+// ─── Snapshot ────────────────────────────────────────────────────────────────
+
+function computeLine(line: TransitLine, now: number): LineStatus {
+  const episode = Math.floor(now / EPISODE_MS);
+  const trainsInService = rollTrainsInService(line.id, episode);
+  const headway = effectiveHeadway(line, trainsInService);
+  const disruption = activeDisruption(line, now);
+  const status: ServiceStatus = disruption?.status ?? 'operating';
+
+  return {
+    lineId: line.id,
+    status,
+    detail: disruption?.detail ?? null,
+    etaMinutes: status === 'down' && disruption
+      ? Math.max(1, Math.ceil((disruption.endsAt - now) / MINUTE))
+      : null,
+    nextArrivals: status === 'down' ? [] : nextArrivals(line, headway, now, status === 'delayed'),
+    crowd: crowdFor(line.id, now),
+    updatedAt: now,
+    headwayMinutes: headway,
+    trainsInService,
+  };
 }
 
-function applyDisruption(line: TransitLine, s: InternalLineState, kind: ServiceStatus) {
-  s.status = kind;
-  if (kind === 'down') {
-    s.detail = pick(DOWN_MESSAGES[line.group]);
-    s.restoreAt = Date.now() + randInt(8, 25) * 60_000;
-  } else if (kind === 'delayed') {
-    s.detail = pick(DELAY_MESSAGES[line.group]);
-    s.restoreAt = Date.now() + randInt(5, 15) * 60_000;
-  } else {
-    s.detail = null;
-    s.restoreAt = null;
-  }
+function sameStatus(a: LineStatus | undefined, b: LineStatus): boolean {
+  if (!a) return false;
+  return a.status === b.status &&
+    a.detail === b.detail &&
+    a.etaMinutes === b.etaMinutes &&
+    a.crowd === b.crowd &&
+    a.trainsInService === b.trainsInService &&
+    a.headwayMinutes[0] === b.headwayMinutes[0] &&
+    a.headwayMinutes[1] === b.headwayMinutes[1] &&
+    a.nextArrivals.length === b.nextArrivals.length &&
+    a.nextArrivals.every((n, i) => n === b.nextArrivals[i]);
 }
 
-function initState() {
-  const now = Date.now();
-  for (const line of TRANSIT_LINES) {
-    const trainsInService = rollTrainsInService(line.id);
-    state.set(line.id, {
-      status: 'operating',
-      detail: null,
-      restoreAt: null,
-      trainsInService,
-      arrivalTimestamps: seedArrivals(effectiveHeadway(line, trainsInService), now),
-      crowd: rollCrowd(),
-    });
-  }
-  // Seed an interesting board: one line down, two delayed
-  const shuffled = [...TRANSIT_LINES].sort(() => Math.random() - 0.5);
-  applyDisruption(shuffled[0], state.get(shuffled[0].id)!, 'down');
-  applyDisruption(shuffled[1], state.get(shuffled[1].id)!, 'delayed');
-  applyDisruption(shuffled[2], state.get(shuffled[2].id)!, 'delayed');
-}
+let snapshot: Record<string, LineStatus> = {};
+let lastUpdated = 0;
 
-function tick() {
-  const now = Date.now();
+const boardListeners = new Set<() => void>();
+const lineListeners = new Map<string, Set<() => void>>();
+let ticker: ReturnType<typeof setInterval> | null = null;
 
-  // Coordinated weather first, so the per-line loop below sees these lines
-  // already 'down' and skips rolling an independent disruption on top.
-  for (const zone of BOAT_ZONES) {
-    maybeStartGroupWeather(zone, BOAT_WEATHER_MESSAGES, 0.0015, [10, 30]);
-  }
-  maybeStartGroupWeather(SKYLINER_SYSTEM, SKYLINER_WEATHER_MESSAGES, 0.002, [8, 25]);
-  maybeAdvanceMonorailLightning();
-
-  for (const line of TRANSIT_LINES) {
-    const s = state.get(line.id)!;
-
-    const headway = effectiveHeadway(line, s.trainsInService);
-
-    // Clear expired disruptions
-    if (s.restoreAt && now >= s.restoreAt) {
-      applyDisruption(line, s, 'operating');
-      s.arrivalTimestamps = seedArrivals(headway, now);
-    }
-
-    // Random new disruptions (rare per tick; steady-state ≈ 2-3 advisories
-    // across the 19 lines, mostly delays)
-    if (s.status === 'operating') {
-      const r = Math.random();
-      if (r < 0.0015) applyDisruption(line, s, 'down');
-      else if (r < 0.006) applyDisruption(line, s, 'delayed');
-    }
-
-    // Advance the arrival board
-    if (s.status !== 'down') {
-      s.arrivalTimestamps = s.arrivalTimestamps.filter(t => t > now - 30_000);
-      const [minH, maxH] = headway;
-      const delayFactor = s.status === 'delayed' ? 1.6 : 1;
-      while (s.arrivalTimestamps.length < 2 && maxH > 1) {
-        const base = s.arrivalTimestamps.length
-          ? s.arrivalTimestamps[s.arrivalTimestamps.length - 1]
-          : now;
-        s.arrivalTimestamps.push(base + rand(Math.max(minH, 2), maxH) * delayFactor * 60_000);
-      }
-    } else {
-      s.arrivalTimestamps = [];
-    }
-
-    // Occasionally re-roll crowding
-    if (Math.random() < 0.1) s.crowd = rollCrowd();
-  }
-  lastUpdated = now;
-  publish();
-}
-
-function publish() {
+function recompute() {
   const now = Date.now();
   const next: Record<string, LineStatus> = {};
+  const changed: string[] = [];
+
   for (const line of TRANSIT_LINES) {
-    const s = state.get(line.id)!;
-    next[line.id] = {
-      lineId: line.id,
-      status: s.status,
-      detail: s.detail,
-      etaMinutes: s.restoreAt && s.status === 'down'
-        ? Math.max(1, Math.ceil((s.restoreAt - now) / 60_000))
-        : null,
-      nextArrivals: s.arrivalTimestamps
-        .map(t => Math.max(0, Math.round((t - now) / 60_000)))
-        .slice(0, 2),
-      crowd: s.crowd,
-      updatedAt: lastUpdated,
-      headwayMinutes: effectiveHeadway(line, s.trainsInService),
-      trainsInService: s.trainsInService,
-    };
+    const fresh = computeLine(line, now);
+    // Reusing the previous object when nothing meaningful changed is what
+    // lets a single card subscribe to a single line without re-rendering on
+    // every tick of the whole board.
+    if (sameStatus(snapshot[line.id], fresh)) {
+      next[line.id] = snapshot[line.id];
+    } else {
+      next[line.id] = fresh;
+      changed.push(line.id);
+    }
   }
+
+  lastUpdated = now;
+  if (changed.length === 0 && Object.keys(snapshot).length > 0) return;
+
   snapshot = next;
-  listeners.forEach(cb => cb());
+  boardListeners.forEach(cb => cb());
+  for (const id of changed) lineListeners.get(id)?.forEach(cb => cb());
+}
+
+function startTicker() {
+  if (ticker) return;
+  ticker = setInterval(recompute, TICK_MS);
+}
+
+function stopTicker() {
+  if (!ticker) return;
+  clearInterval(ticker);
+  ticker = null;
+}
+
+function hasListeners(): boolean {
+  if (boardListeners.size > 0) return true;
+  for (const set of lineListeners.values()) if (set.size > 0) return true;
+  return false;
+}
+
+// A 20-second interval that keeps firing in a backgrounded tab is pure waste,
+// and the old engine never cleared its interval at all.
+let visibilityBound = false;
+function bindVisibility() {
+  if (visibilityBound) return;
+  visibilityBound = true;
+
+  if (Platform.OS === 'web') {
+    if (typeof document === 'undefined') return;
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'hidden') {
+        stopTicker();
+      } else if (hasListeners()) {
+        recompute();
+        startTicker();
+      }
+    });
+    return;
+  }
+
+  AppState.addEventListener('change', (state: AppStateStatus) => {
+    if (state === 'active') {
+      if (hasListeners()) { recompute(); startTicker(); }
+    } else {
+      stopTicker();
+    }
+  });
 }
 
 function ensureRunning() {
-  if (state.size === 0) {
-    initState();
-    publish();
-  }
-  if (!ticker) ticker = setInterval(tick, TICK_MS);
+  if (Object.keys(snapshot).length === 0) recompute();
+  bindVisibility();
+  if (hasListeners()) startTicker();
 }
 
 // ─── Public API ──────────────────────────────────────────────────────────────
 
 export function getLiveStatus(): Record<string, LineStatus> {
-  ensureRunning();
+  if (Object.keys(snapshot).length === 0) recompute();
   return snapshot;
 }
 
 export function subscribeLiveStatus(cb: () => void): () => void {
+  boardListeners.add(cb);
   ensureRunning();
-  listeners.add(cb);
-  return () => listeners.delete(cb);
+  return () => {
+    boardListeners.delete(cb);
+    if (!hasListeners()) stopTicker();
+  };
 }
 
-/** Pull-to-refresh: nudge arrival estimates and re-publish immediately. */
-export function refreshLiveStatus() {
+export function subscribeLine(lineId: string, cb: () => void): () => void {
+  let set = lineListeners.get(lineId);
+  if (!set) { set = new Set(); lineListeners.set(lineId, set); }
+  set.add(cb);
   ensureRunning();
-  for (const line of TRANSIT_LINES) {
-    const s = state.get(line.id)!;
-    if (s.status !== 'down' && Math.random() < 0.4) {
-      s.arrivalTimestamps = s.arrivalTimestamps.map(t => t + randInt(-45, 45) * 1000);
-    }
-  }
-  lastUpdated = Date.now();
-  publish();
+  return () => {
+    set!.delete(cb);
+    if (!hasListeners()) stopTicker();
+  };
+}
+
+/** Recompute now. With a clock-derived model there is nothing to re-roll —
+ *  this just advances countdowns to the current second. */
+export function refreshLiveStatus() {
+  recompute();
 }
 
 export function useLiveStatus(): Record<string, LineStatus> {
   return useSyncExternalStore(subscribeLiveStatus, getLiveStatus, getLiveStatus);
 }
 
-export function useLineStatus(lineId: string): LineStatus | undefined {
-  return useLiveStatus()[lineId];
+/** Subscribe to a single line. A card using this re-renders only when its own
+ *  service actually changes, not on every tick of the whole board. */
+export function useLineStatus(lineId: string | undefined): LineStatus | undefined {
+  const subscribe = (cb: () => void) => (lineId ? subscribeLine(lineId, cb) : () => {});
+  const get = () => (lineId ? getLiveStatus()[lineId] : undefined);
+  return useSyncExternalStore(subscribe, get, get);
 }
 
 export function getLastUpdated(): number {
@@ -367,7 +477,7 @@ export function getLastUpdated(): number {
 
 // ─── Temporary bus bridges ───────────────────────────────────────────────────
 // Derived entirely from monorail/ferry status, not simulated lines of their
-// own — Disney brings up shuttle buses to cover a beam outage, and pulls them
+// own — Disney brings up shuttle buses to cover a beam outage and pulls them
 // once the monorail is running again, so these exist only for as long as
 // their trigger condition holds.
 
@@ -388,16 +498,16 @@ export function getTemporaryBridges(status: Record<string, LineStatus>): Tempora
   if (epcotMono?.status === 'down') {
     bridges.push({
       id: 'temp-bus-epcot',
-      name: 'Temporary Bus: TTC ↔ EPCOT',
+      name: 'Temporary Bus: TTC to EPCOT',
       stations: ['Transportation & Ticket Center', 'EPCOT'],
       note: 'Running while the EPCOT Monorail is down. Ends as soon as monorail service resumes.',
     });
   }
 
-  if (resortMono?.status === 'down' && (resortMono.etaMinutes ?? 0) >= 30) {
+  if (resortMono?.status === 'down' && (resortMono.etaMinutes ?? 0) >= 20) {
     bridges.push({
       id: 'temp-bus-resort-loop',
-      name: 'Temporary Bus: TTC · Polynesian · Grand Floridian · Contemporary',
+      name: 'Temporary Bus: TTC, Polynesian, Grand Floridian, Contemporary',
       stations: ['Transportation & Ticket Center', 'Polynesian Village', 'Grand Floridian', 'Contemporary'],
       note: 'Added because the Resort Monorail outage is expected to run long. Ends as soon as monorail service resumes.',
     });
@@ -406,26 +516,13 @@ export function getTemporaryBridges(status: Record<string, LineStatus>): Tempora
   if (expressMono?.status === 'down' && ferry?.status === 'down') {
     bridges.push({
       id: 'temp-bus-mk',
-      name: 'Temporary Bus: TTC ↔ Magic Kingdom',
+      name: 'Temporary Bus: TTC to Magic Kingdom',
       stations: ['Transportation & Ticket Center', 'Magic Kingdom'],
       note: 'Running while both the Express Monorail and the ferry are down. Ends as soon as monorail service resumes.',
     });
   }
 
   return bridges;
-}
-
-// Status display helpers
-
-// Disney is deliberately vague about outages in guest-facing communication —
-// never a live ticking countdown to the exact minute. This buckets the
-// precise internal restoreAt into a rounded window for display, while the
-// exact number underneath still drives things like the 30-minute bridge
-// threshold above.
-export function formatEtaRange(minutes: number): string {
-  if (minutes < 10) return 'under 10 min';
-  const lower = Math.floor(minutes / 10) * 10;
-  return `${lower}–${lower + 10} min`;
 }
 
 export const STATUS_LABEL: Record<ServiceStatus, string> = {

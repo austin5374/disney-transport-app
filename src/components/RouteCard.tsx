@@ -1,49 +1,31 @@
-import React, { useEffect, useRef } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Animated } from 'react-native';
+import React from 'react';
+import { View, Text, StyleSheet } from 'react-native';
 import { Route } from '../types';
-import { Colors, StatusColors } from '../utils/theme';
+import { Colors, Type, Spacing, Radius, StatusColors, SECTION_GAP } from '../utils/theme';
 import { lineForLeg } from '../data/lines';
 import { useLiveStatus, ServiceStatus } from '../utils/liveStatus';
+import { journeyMinutes } from '../utils/routing';
 import TransportChip from './TransportChip';
 import LiveArrival from './LiveArrival';
+import ModeGlyph from './ModeGlyph';
+import OutlinedBox from './ui/OutlinedBox';
+import LinkAction from './ui/LinkAction';
 
 interface RouteCardProps {
   route: Route;
-  index: number;
   isBest?: boolean;
   isScenic?: boolean;
   onPress: () => void;
-  onSteps: () => void;
-  timeOverride?: Date | null;
 }
 
-export default function RouteCard({
-  route, index, isBest, isScenic, onPress, onSteps,
-}: RouteCardProps) {
-  const anim = useRef(new Animated.Value(0)).current;
-  const translateY = useRef(new Animated.Value(16)).current;
-
-  useEffect(() => {
-    Animated.parallel([
-      Animated.timing(anim, {
-        toValue: 1,
-        duration: 300,
-        delay: index * 80,
-        useNativeDriver: true,
-      }),
-      Animated.timing(translateY, {
-        toValue: 0,
-        duration: 300,
-        delay: index * 80,
-        useNativeDriver: true,
-      }),
-    ]).start();
-  }, []);
-
+// One full-bleed white section per route, shaped like the reference app's
+// list rows: bold navy name, gray meta line, illustration on the right, and
+// the key number inside a blue-bordered box with the action beside it.
+export default function RouteCard({ route, isBest, isScenic, onPress }: RouteCardProps) {
   const live = useLiveStatus();
 
-  const isWater = route.tags.includes('water');
-  const isBefore10 = route.tags.includes('before_10am_only') || route.tags.includes('time_restricted');
+  const isWater  = route.tags.includes('water');
+  const isPaid   = route.legs.some(l => l.mode === 'minnie_van');
   const firstLeg = route.legs[0];
 
   // Worst live disruption across this route's legs
@@ -58,211 +40,172 @@ export default function RouteCard({
     }
   }
 
-  const borderStyle = isBest
-    ? { borderColor: Colors.primaryBlue, borderWidth: 1.5 }
-    : isWater
-    ? { borderColor: 'rgba(55,138,221,0.2)' }
-    : {};
+  const total = journeyMinutes(route);
+  const transfers = route.legs.filter(l => l.mode !== 'walk').length - 1;
 
-  const bgStyle = isWater
-    ? { backgroundColor: 'rgba(55,138,221,0.03)' }
-    : {};
-
-  const timeStr = route.totalRideRange
-    ? `${route.totalRideRange[0]}–${route.totalRideRange[1]}`
-    : `${route.totalRideMinutes}`;
+  const meta = [
+    transfers > 0 ? `${transfers} transfer${transfers > 1 ? 's' : ''}` : 'No transfers',
+    isWater ? 'Water route' : null,
+  ].filter(Boolean).join(' · ');
 
   return (
-    <Animated.View style={{ opacity: anim, transform: [{ translateY }] }}>
-      <TouchableOpacity
-        onPress={onPress}
-        activeOpacity={0.85}
-        style={[styles.card, borderStyle, bgStyle]}
-      >
-        {/* Badge */}
-        {isBest && (
-          <View style={[styles.badge, styles.badgeBest]}>
-            <Text style={styles.badgeBestText}>Fastest</Text>
-          </View>
-        )}
-        {isScenic && !isBest && (
-          <View style={[styles.badge, styles.badgeScenic]}>
-            <Text style={styles.badgeScenicText}>Scenic</Text>
-          </View>
-        )}
-        {isWater && !isScenic && !isBest && (
-          <View style={[styles.badge, styles.badgeWater]}>
-            <Text style={styles.badgeWaterText}>Water route</Text>
-          </View>
-        )}
-        {isBefore10 && (
-          <View style={[styles.badge, styles.badgeBefore10]}>
-            <Text style={styles.badgeBefore10Text}>Before 10am route</Text>
-          </View>
-        )}
-        {disruption && (
-          <View style={[
-            styles.badge,
-            {
-              backgroundColor: StatusColors[disruption.status].bg,
-              borderWidth: 1,
-              borderColor: StatusColors[disruption.status].border,
-            },
-          ]}>
-            <Text style={[styles.badgeBestText, { color: StatusColors[disruption.status].text }]}>
-              {disruption.status === 'down'
-                ? `${disruption.name} temporarily down`
-                : `${disruption.name} delays`}
-            </Text>
+    <>
+      <View style={styles.section}>
+        {/* Badges */}
+        {(isBest || isScenic || isPaid || disruption) && (
+          <View style={styles.badgeRow}>
+            {isBest && !isPaid && (
+              <View style={[styles.badge, styles.badgePrimary]}>
+                <Text style={styles.badgePrimaryText}>Fastest</Text>
+              </View>
+            )}
+            {isScenic && !isBest && (
+              <View style={[styles.badge, styles.badgePrimary]}>
+                <Text style={styles.badgePrimaryText}>Scenic</Text>
+              </View>
+            )}
+            {isPaid && (
+              <View style={[styles.badge, styles.badgeNeutral]}>
+                <Text style={styles.badgeNeutralText}>Paid ride</Text>
+              </View>
+            )}
+            {disruption && (
+              <View style={[
+                styles.badge,
+                {
+                  backgroundColor: StatusColors[disruption.status].bg,
+                  borderColor: StatusColors[disruption.status].border,
+                },
+              ]}>
+                <Text style={[styles.badgeNeutralText, { color: StatusColors[disruption.status].text }]}>
+                  {disruption.status === 'down'
+                    ? `${disruption.name} temporarily down`
+                    : `${disruption.name} delays`}
+                </Text>
+              </View>
+            )}
           </View>
         )}
 
-        {/* Header row */}
+        {/* Title + illustration */}
         <View style={styles.headerRow}>
-          <Text style={styles.routeName} numberOfLines={2}>{route.name}</Text>
-          <View style={styles.timeBox}>
-            <Text style={styles.timeNum}>{timeStr}</Text>
-            <Text style={styles.timeLabel}>min</Text>
+          <View style={styles.headerText}>
+            <Text style={styles.routeName}>{route.name}</Text>
+            <Text style={styles.routeMeta}>{meta}</Text>
           </View>
+          <ModeGlyph mode={firstLeg.mode} size={34} tile />
         </View>
 
-        {/* Transport chips */}
+        {/* Legs */}
         <View style={styles.chipsRow}>
           {route.legs.map((leg, i) => (
-            <React.Fragment key={i}>
-              <TransportChip mode={leg.mode} />
-              {i < route.legs.length - 1 && (
-                <Text style={styles.arrow}> › </Text>
-              )}
-            </React.Fragment>
+            <TransportChip key={`${leg.mode}-${i}`} mode={leg.mode} />
           ))}
         </View>
 
-        {/* Divider */}
-        <View style={styles.divider} />
+        {/* Key number + action, the reference app's signature list component */}
+        <OutlinedBox style={styles.box}>
+          <View>
+            <Text style={styles.boxLabel}>Total Time</Text>
+            <Text style={styles.boxValue}>
+              {total} <Text style={styles.boxUnit}>min</Text>
+            </Text>
+          </View>
+          <LinkAction label="View Steps" onPress={onPress} />
+        </OutlinedBox>
 
-        {/* Bottom row */}
-        <View style={styles.bottomRow}>
-          {firstLeg && <LiveArrival mode={firstLeg.mode} from={firstLeg.from} to={firstLeg.to} compact />}
-          <TouchableOpacity onPress={onSteps} style={styles.stepsLink} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-            <Text style={styles.stepsText}>Steps ›</Text>
-          </TouchableOpacity>
-        </View>
-      </TouchableOpacity>
-    </Animated.View>
+        {/* Live departure for the first leg */}
+        {firstLeg.mode !== 'walk' && firstLeg.mode !== 'minnie_van' && (
+          <View style={styles.liveRow}>
+            <LiveArrival mode={firstLeg.mode} from={firstLeg.from} to={firstLeg.to} compact />
+          </View>
+        )}
+      </View>
+      <View style={styles.gutter} />
+    </>
   );
 }
 
 const styles = StyleSheet.create({
-  card: {
-    backgroundColor: Colors.cardBg,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: Colors.cardBorder,
-    marginHorizontal: 16,
-    marginVertical: 5,
-    padding: 14,
+  section: {
+    backgroundColor: Colors.sectionBg,
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.lg,
+  },
+  gutter: {
+    height: SECTION_GAP,
+    backgroundColor: Colors.pageBg,
+  },
+  badgeRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: Spacing.sm,
+    marginBottom: Spacing.md,
   },
   badge: {
-    alignSelf: 'flex-start',
-    borderRadius: 6,
-    paddingHorizontal: 8,
+    borderRadius: Radius.sm,
+    borderWidth: 1,
+    paddingHorizontal: Spacing.sm,
     paddingVertical: 3,
-    marginBottom: 8,
   },
-  badgeBest: {
-    backgroundColor: 'rgba(255,215,0,0.18)',
-    borderWidth: 1,
-    borderColor: Colors.gold,
+  badgePrimary: {
+    backgroundColor: Colors.primaryBlue,
+    borderColor: Colors.primaryBlue,
   },
-  badgeBestText: {
-    color: Colors.warnText,
-    fontSize: 11,
-    fontWeight: '500',
+  badgePrimaryText: {
+    ...Type.caption,
+    fontFamily: Type.label.fontFamily,
+    color: Colors.textOnDark,
   },
-  badgeScenic: {
-    backgroundColor: Colors.waterBg,
-    borderWidth: 1,
-    borderColor: Colors.waterBorder,
+  badgeNeutral: {
+    backgroundColor: Colors.pageBg,
+    borderColor: Colors.dividerStrong,
   },
-  badgeScenicText: {
-    color: Colors.waterText,
-    fontSize: 11,
-    fontWeight: '500',
-  },
-  badgeWater: {
-    backgroundColor: Colors.lightBlueTint,
-    borderWidth: 1,
-    borderColor: Colors.blueBorder,
-  },
-  badgeWaterText: {
-    color: Colors.primaryBlue,
-    fontSize: 11,
-    fontWeight: '500',
-  },
-  badgeBefore10: {
-    backgroundColor: Colors.warnBg,
-    borderWidth: 1,
-    borderColor: Colors.warnBorder,
-  },
-  badgeBefore10Text: {
-    color: Colors.warnText,
-    fontSize: 11,
-    fontWeight: '500',
+  badgeNeutralText: {
+    ...Type.caption,
+    fontFamily: Type.label.fontFamily,
+    color: Colors.textSecondary,
   },
   headerRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    marginBottom: 10,
+    gap: Spacing.md,
+  },
+  headerText: {
+    flex: 1,
   },
   routeName: {
-    flex: 1,
-    fontSize: 14,
-    fontWeight: '500',
+    ...Type.subtitle,
     color: Colors.textPrimary,
-    marginRight: 10,
   },
-  timeBox: {
-    alignItems: 'center',
-    minWidth: 36,
-  },
-  timeNum: {
-    fontSize: 22,
-    fontWeight: '500',
-    color: Colors.textPrimary,
-    lineHeight: 24,
-  },
-  timeLabel: {
-    fontSize: 11,
+  routeMeta: {
+    ...Type.bodySmall,
     color: Colors.textSecondary,
+    marginTop: 2,
   },
   chipsRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    alignItems: 'center',
-    gap: 4,
-    marginBottom: 10,
+    gap: Spacing.sm,
+    marginTop: Spacing.md,
   },
-  arrow: {
+  box: {
+    marginTop: Spacing.lg,
+  },
+  boxLabel: {
+    ...Type.label,
+    color: Colors.textPrimary,
+  },
+  boxValue: {
+    ...Type.stat,
+    color: Colors.textPrimary,
+    marginTop: 2,
+  },
+  boxUnit: {
+    ...Type.body,
     color: Colors.textSecondary,
-    fontSize: 13,
   },
-  divider: {
-    height: 1,
-    backgroundColor: Colors.divider,
-    marginBottom: 10,
-  },
-  bottomRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  stepsLink: {
-    marginLeft: 'auto',
-  },
-  stepsText: {
-    color: Colors.warnText,
-    fontSize: 13,
-    fontWeight: '500',
+  liveRow: {
+    marginTop: Spacing.md,
   },
 });

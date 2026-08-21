@@ -1,12 +1,12 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { Leg } from '../types';
-import { Colors, transportColor } from '../utils/theme';
-import { modeLabel } from '../utils/routing';
+import { Colors, Type, Spacing, Radius, SECTION_GAP } from '../utils/theme';
 import { DESTINATION_MAP } from '../data/destinations';
 import LiveArrival from './LiveArrival';
 import InfoSheet from './InfoSheet';
+import ModeGlyph from './ModeGlyph';
 
 const placeLabel = (id: string) => DESTINATION_MAP[id]?.label ?? id;
 
@@ -35,34 +35,6 @@ interface StepCardProps {
   leg: Leg;
   stepNum: number;
   totalSteps: number;
-  state: 'done' | 'current' | 'upcoming';
-}
-
-function ModeIcon({ mode, color }: { mode: string; color: string }) {
-  switch (mode) {
-    case 'skyliner':
-      return <MaterialCommunityIcons name="gondola" size={22} color={color} />;
-    case 'bus':
-      return <Ionicons name="bus" size={22} color={color} />;
-    case 'monorail_express':
-    case 'monorail_resort':
-    case 'monorail_epcot':
-      return <MaterialCommunityIcons name="train" size={22} color={color} />;
-    case 'ferry_ttc_mk':
-    case 'friendship_boat':
-    case 'sassagoula_boat':
-    case 'water_taxi_gold':
-    case 'water_taxi_red':
-    case 'water_taxi_green':
-    case 'water_taxi_blue':
-      return <Ionicons name="boat" size={22} color={color} />;
-    case 'walk':
-      return <Ionicons name="walk" size={22} color={color} />;
-    case 'minnie_van':
-      return <Ionicons name="car" size={22} color={color} />;
-    default:
-      return <Ionicons name="navigate" size={22} color={color} />;
-  }
 }
 
 function instructionTitle(leg: Leg): string {
@@ -79,190 +51,156 @@ function instructionTitle(leg: Leg): string {
     case 'water_taxi_red':   return `Board Red Flag Water Launch at ${placeLabel(leg.from)}`;
     case 'water_taxi_green': return `Board Green Flag Water Launch at ${placeLabel(leg.from)}`;
     case 'water_taxi_blue':  return `Board Blue Flag Water Launch at ${placeLabel(leg.from)}`;
-    case 'walk':             return `Walk to ${placeLabel(leg.to)} (~${leg.rideMinutes} min)`;
-    case 'minnie_van':       return `Book Minnie Van via Lyft`;
+    case 'walk':             return `Walk to ${placeLabel(leg.to)}`;
+    case 'minnie_van':       return 'Request a Minnie Van in the Lyft app';
     default:                 return `Travel to ${placeLabel(leg.to)}`;
   }
 }
 
-export default function StepCard({ leg, stepNum, totalSteps, state }: StepCardProps) {
-  const isDone     = state === 'done';
-  const isCurrent  = state === 'current';
-  const isUpcoming = state === 'upcoming';
-  const isMinnie   = leg.mode === 'minnie_van';
-  const accentColor = transportColor(leg.mode);
+export default function StepCard({ leg, stepNum, totalSteps }: StepCardProps) {
+  const isMinnie = leg.mode === 'minnie_van';
+  const isWalk = leg.mode === 'walk';
   const boardingPoint = boardingPointNoun(leg.mode);
   const [showWalkInfo, setShowWalkInfo] = React.useState(false);
 
   return (
-    <View style={[
-      styles.card,
-      isDone     && styles.cardDone,
-      isCurrent  && styles.cardCurrent,
-      isCurrent  && { borderColor: accentColor },
-    ]}>
-      {/* Step label */}
-      <Text style={[
-        styles.stepLabel,
-        isDone    && styles.stepLabelDone,
-        isCurrent && styles.stepLabelCurrent,
-        isCurrent && { color: accentColor },
-      ]}>
-        Step {stepNum} of {totalSteps}{isDone ? ' · complete' : isCurrent ? ' · now' : ''}
-      </Text>
+    <>
+      <View style={styles.section}>
+        <Text style={styles.stepLabel}>Step {stepNum} of {totalSteps}</Text>
 
-      {/* Instruction row */}
-      <View style={styles.instructionRow}>
-        <View style={[styles.iconWrap, isDone && styles.faded]}>
-          <ModeIcon mode={leg.mode} color={transportColor(leg.mode)} />
-        </View>
-        <View style={styles.instructionText}>
-          <Text style={[styles.instructionTitle, isDone && styles.faded]}>
-            {instructionTitle(leg)}
-          </Text>
-          {leg.mode !== 'walk' && leg.mode !== 'minnie_van' && (
-            <Text style={[styles.subDetail, isDone && styles.faded]}>
-              Ride time: {leg.rideMinutes} min · Destination: {placeLabel(leg.to)}
+        {/* The walk that precedes boarding. This value lives on 55 legs in the
+            route data and was previously rendered nowhere, which is why some
+            routes' totals did not visibly add up from their steps. */}
+        {leg.walkMinutes ? (
+          <View style={styles.walkPrefix}>
+            <Ionicons name="walk" size={16} color={Colors.textSecondary} />
+            <Text style={styles.walkPrefixText}>
+              Walk {leg.walkMinutes} min to the {boardingPoint ?? 'next stop'}
             </Text>
-          )}
+          </View>
+        ) : null}
+
+        <View style={styles.instructionRow}>
+          <ModeGlyph mode={leg.mode} size={32} tile />
+          <View style={styles.instructionText}>
+            <Text style={styles.instructionTitle}>{instructionTitle(leg)}</Text>
+            <Text style={styles.subDetail}>
+              {isWalk
+                ? `About ${leg.rideMinutes} min on foot`
+                : isMinnie
+                  ? `About ${leg.rideMinutes} min · paid ride`
+                  : `${leg.rideMinutes} min ride · get off at ${placeLabel(leg.to)}`}
+            </Text>
+          </View>
         </View>
+
+        {leg.tip ? (
+          <View style={styles.tipBox}>
+            <Text style={styles.tipText}>{leg.tip}</Text>
+          </View>
+        ) : null}
+
+        {!isMinnie && !isWalk && (
+          <View style={styles.arrivalRow}>
+            <LiveArrival mode={leg.mode} from={leg.from} to={leg.to} />
+          </View>
+        )}
+
+        {boardingPoint && (
+          <TouchableOpacity
+            style={styles.walkRow}
+            onPress={() => setShowWalkInfo(true)}
+            activeOpacity={0.6}
+            accessibilityRole="button"
+          >
+            <Text style={styles.walkText}>Walking directions to the {boardingPoint}</Text>
+            <Ionicons name="chevron-forward" size={16} color={Colors.primaryBlue} />
+          </TouchableOpacity>
+        )}
+
+        {boardingPoint && (
+          <InfoSheet
+            visible={showWalkInfo}
+            title="Walking directions"
+            message={`Turn-by-turn walking guidance to the ${boardingPoint} at ${placeLabel(leg.from)} is not available in this build.`}
+            onClose={() => setShowWalkInfo(false)}
+          />
+        )}
       </View>
-
-      {/* Tip box: only for the current step — advice for a step you haven't
-          reached yet is premature and just adds noise */}
-      {leg.tip && isCurrent && (
-        <View style={styles.tipBox}>
-          <Text style={styles.tipText}>{leg.tip}</Text>
-        </View>
-      )}
-
-      {/* Live arrival: current step only */}
-      {isCurrent && !isMinnie && (
-        <View style={styles.arrivalRow}>
-          <LiveArrival mode={leg.mode} from={leg.from} to={leg.to} />
-        </View>
-      )}
-
-      {/* Minnie Van book button */}
-      {isCurrent && isMinnie && (
-        <View style={[styles.arrivalRow, styles.lyftRow]}>
-          <Ionicons name="phone-portrait-outline" size={14} color={Colors.primaryBlue} />
-          <Text style={styles.lyftBtn}>Book via Lyft app</Text>
-        </View>
-      )}
-
-      {/* Walking directions concept: current step only, transit modes only */}
-      {isCurrent && boardingPoint && (
-        <TouchableOpacity style={styles.walkRow} onPress={() => setShowWalkInfo(true)} activeOpacity={0.7}>
-          <Ionicons name="walk-outline" size={15} color={Colors.primaryBlue} />
-          <Text style={styles.walkText}>Walking directions to the {boardingPoint}</Text>
-          <Ionicons name="chevron-forward" size={14} color={Colors.primaryBlue} />
-        </TouchableOpacity>
-      )}
-
-      {boardingPoint && (
-        <InfoSheet
-          visible={showWalkInfo}
-          title="Walking directions"
-          message={`This is a demo, so it can't route you for real — but here's the idea: tapping this would open turn-by-turn walking directions from where you are to the ${boardingPoint} at ${placeLabel(leg.from)}.`}
-          onClose={() => setShowWalkInfo(false)}
-        />
-      )}
-    </View>
+      <View style={styles.gutter} />
+    </>
   );
 }
 
 const styles = StyleSheet.create({
-  card: {
-    backgroundColor: Colors.cardBg,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: Colors.cardBorder,
-    marginHorizontal: 16,
-    marginVertical: 5,
-    padding: 14,
+  section: {
+    backgroundColor: Colors.sectionBg,
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.lg,
   },
-  cardDone: {
-    opacity: 0.45,
-  },
-  cardCurrent: {
-    borderWidth: 1.5,
+  gutter: {
+    height: SECTION_GAP,
+    backgroundColor: Colors.pageBg,
   },
   stepLabel: {
-    fontSize: 11,
-    color: Colors.textPlaceholder,
-    marginBottom: 8,
+    ...Type.eyebrow,
+    color: Colors.textSecondary,
+    marginBottom: Spacing.md,
   },
-  stepLabelDone: {
-    color: Colors.textPlaceholder,
+  walkPrefix: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    marginBottom: Spacing.md,
+    paddingBottom: Spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.divider,
   },
-  stepLabelCurrent: {
-    fontWeight: '500',
+  walkPrefixText: {
+    ...Type.bodySmall,
+    color: Colors.textSecondary,
   },
   instructionRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    gap: 10,
-  },
-  iconWrap: {
-    marginTop: 1,
-  },
-  faded: {
-    opacity: 0.6,
+    gap: Spacing.md,
   },
   instructionText: {
     flex: 1,
   },
   instructionTitle: {
-    fontSize: 14,
-    fontWeight: '500',
+    ...Type.subtitle,
     color: Colors.textPrimary,
-    marginBottom: 3,
   },
   subDetail: {
-    fontSize: 12,
+    ...Type.bodySmall,
     color: Colors.textSecondary,
+    marginTop: 2,
   },
   tipBox: {
-    marginTop: 10,
-    borderLeftWidth: 3,
-    borderLeftColor: Colors.gold,
-    paddingLeft: 10,
-    paddingVertical: 6,
-    backgroundColor: 'rgba(255,215,0,0.06)',
-    borderRadius: 4,
+    marginTop: Spacing.md,
+    padding: Spacing.md,
+    borderRadius: Radius.md,
+    backgroundColor: Colors.primaryTint,
   },
   tipText: {
-    fontSize: 12,
-    color: Colors.warnText,
-    lineHeight: 18,
+    ...Type.bodySmall,
+    color: Colors.textPrimary,
   },
   arrivalRow: {
-    marginTop: 10,
-  },
-  lyftRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  lyftBtn: {
-    fontSize: 13,
-    color: Colors.primaryBlue,
-    fontWeight: '500',
+    marginTop: Spacing.md,
   },
   walkRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    marginTop: 10,
-    paddingTop: 10,
+    justifyContent: 'space-between',
+    marginTop: Spacing.lg,
+    paddingTop: Spacing.md,
     borderTopWidth: 1,
     borderTopColor: Colors.divider,
   },
   walkText: {
-    flex: 1,
-    fontSize: 12.5,
+    ...Type.action,
     color: Colors.primaryBlue,
-    fontWeight: '500',
   },
 });

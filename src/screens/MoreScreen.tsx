@@ -1,68 +1,75 @@
 import React from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
-import { Ionicons } from '@expo/vector-icons';
-import { Colors, Brand, Gradients } from '../utils/theme';
+import Ionicons from '@expo/vector-icons/Ionicons';
+import { Colors, Type, Spacing, Radius, Brand } from '../utils/theme';
+import AppHeader from '../components/AppHeader';
+import Section from '../components/ui/Section';
+import Divider from '../components/ui/Divider';
 
-const ROWS: { icon: keyof typeof Ionicons.glyphMap; title: string; body: string }[] = [
-  {
-    icon: 'pulse-outline',
-    title: 'Live status board',
-    body: 'Every monorail, Skyliner, boat, and bus line with current service level, next departures, and crowd levels. Statuses update automatically.',
-  },
+const FEATURES: { icon: keyof typeof Ionicons.glyphMap; title: string; body: string }[] = [
   {
     icon: 'navigate-outline',
-    title: 'Trip planner',
-    body: 'Point-to-point routing between every park, resort, and Disney Springs, with time-of-day rules (park-to-park buses after 10 AM, Blue Flag launches after 3 PM, and more).',
+    title: 'Trip Planner',
+    body: 'Point-to-point routing between every park, resort, and Disney Springs, ranked by the whole journey — typical wait, time aboard, and walking — not just time on the vehicle.',
   },
   {
-    icon: 'map-outline',
-    title: 'Transit map',
-    body: 'A schematic map of the monorail, Skyliner, and watercraft network. Tap a line in the legend to highlight it and see its live status.',
+    icon: 'alert-circle-outline',
+    title: 'Transportation Status',
+    body: 'Every monorail beam, Skyliner line, boat route, and bus group with its current service level, next departures, and crowding.',
+  },
+  {
+    icon: 'location-outline',
+    title: 'Transit Map',
+    body: 'A schematic of the monorail, Skyliner, and watercraft network. Select any line to highlight it and read its current status.',
   },
 ];
 
 export default function MoreScreen() {
-  const insets = useSafeAreaInsets();
-
   return (
     <View style={styles.screen}>
-      <LinearGradient colors={Gradients.sky} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={[styles.header, { paddingTop: insets.top + 10 }]}>
-        <Text style={styles.headerTitle}>About</Text>
-        <Text style={styles.headerSub}>{Brand.tagline}</Text>
-      </LinearGradient>
+      <AppHeader title="About" subtitle={Brand.tagline} />
 
       <ScrollView contentContainerStyle={styles.scroll}>
-        {ROWS.map(r => (
-          <View key={r.title} style={styles.row}>
-            <View style={styles.rowIcon}>
-              <Ionicons name={r.icon} size={20} color={Colors.primaryBlue} />
+        <Section eyebrow="What's Inside" flush>
+          {FEATURES.map((f, i) => (
+            <View key={f.title}>
+              {i > 0 && <Divider />}
+              <View style={styles.row}>
+                <View style={styles.rowIcon}>
+                  <Ionicons name={f.icon} size={22} color={Colors.primaryBlue} />
+                </View>
+                <View style={styles.rowText}>
+                  <Text style={styles.rowTitle}>{f.title}</Text>
+                  <Text style={styles.rowBody}>{f.body}</Text>
+                </View>
+              </View>
             </View>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.rowTitle}>{r.title}</Text>
-              <Text style={styles.rowBody}>{r.body}</Text>
-            </View>
-          </View>
-        ))}
+          ))}
+        </Section>
 
-        <View style={styles.disclaimer}>
-          <Text style={styles.disclaimerTitle}>Demo notice</Text>
-          <Text style={styles.disclaimerBody}>
-            This app is a technology demo. All service statuses, wait times, arrival estimates,
-            and crowd levels are simulated. Disney does not publish a public transportation API,
-            so no data here reflects actual operations.{'\n\n'}
-            Route structure (monorail lines, Skyliner stations, boat launches, and bus patterns)
-            is modeled on the real Walt Disney World transportation network as documented by
-            official guides and guest resources.{'\n\n'}
-            {Brand.name} is an unofficial fan project. It is not affiliated with, endorsed by,
-            or sponsored by The Walt Disney Company. All Disney park, resort, and attraction
-            names are trademarks of their respective owners and are used solely for
-            identification.
+        {/* One disclaimer, in one place. The previous build repeated some form
+            of "this is not real" in five separate spots across the UI. */}
+        <Section eyebrow="About This App">
+          <Text style={styles.body}>
+            {Brand.name} models the Walt Disney World transportation network: which lines
+            exist, where they stop, how long a ride takes, and which routes run at which
+            times of day. That structure follows the real network.
           </Text>
-        </View>
+          <Text style={styles.body}>
+            Service levels, departure countdowns, and crowd levels are generated by a
+            simulation in this app. Disney publishes no public transportation API, so no
+            figure here reflects live operations.
+          </Text>
+          <Text style={styles.body}>
+            {Brand.name} is an independent project. It is not affiliated with, endorsed by,
+            or sponsored by The Walt Disney Company. Park, resort, and attraction names are
+            trademarks of their respective owners and appear here for identification only.
+          </Text>
+        </Section>
 
-        <Text style={styles.version}>Version 2.0 · simulated data</Text>
+        <Section last>
+          <Text style={styles.version}>Version 2.1.0</Text>
+        </Section>
       </ScrollView>
     </View>
   );
@@ -73,80 +80,43 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.pageBg,
   },
-  header: {
-    paddingHorizontal: 20,
-    paddingBottom: 14,
-  },
-  headerTitle: {
-    color: '#fff',
-    fontSize: 24,
-    fontWeight: '700',
-  },
-  headerSub: {
-    color: 'rgba(255,255,255,0.75)',
-    fontSize: 12.5,
-    marginTop: 3,
-  },
   scroll: {
-    paddingTop: 16,
-    paddingBottom: 32,
+    paddingBottom: Spacing.xl,
   },
   row: {
     flexDirection: 'row',
-    backgroundColor: Colors.cardBg,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: Colors.cardBorder,
-    marginHorizontal: 16,
-    marginVertical: 4,
-    padding: 14,
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.lg,
+    gap: Spacing.md,
   },
   rowIcon: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
-    backgroundColor: Colors.lightBlueTint,
+    width: 40,
+    height: 40,
+    borderRadius: Radius.md,
+    backgroundColor: Colors.primaryTint,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 12,
+  },
+  rowText: {
+    flex: 1,
   },
   rowTitle: {
-    fontSize: 14,
-    fontWeight: '600',
+    ...Type.subtitle,
     color: Colors.textPrimary,
-    marginBottom: 3,
+    marginBottom: 2,
   },
   rowBody: {
-    fontSize: 12.5,
+    ...Type.bodySmall,
     color: Colors.textSecondary,
-    lineHeight: 18,
   },
-  disclaimer: {
-    backgroundColor: Colors.cardBg,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: Colors.cardBorder,
-    marginHorizontal: 16,
-    marginTop: 16,
-    padding: 16,
-  },
-  disclaimerTitle: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: Colors.textPrimary,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    marginBottom: 8,
-  },
-  disclaimerBody: {
-    fontSize: 12.5,
+  body: {
+    ...Type.bodySmall,
     color: Colors.textSecondary,
-    lineHeight: 19,
+    marginBottom: Spacing.md,
   },
   version: {
-    textAlign: 'center',
-    fontSize: 11.5,
+    ...Type.caption,
     color: Colors.textPlaceholder,
-    marginTop: 18,
+    textAlign: 'center',
   },
 });

@@ -1,6 +1,51 @@
 import { Route, ActiveFilters, TransportMode, Leg } from '../types';
 import { ALL_ROUTES } from '../data/routes';
-import { DESTINATION_MAP } from '../data/destinations';
+import { DESTINATION_MAP, GEOFENCE_ZONES } from '../data/destinations';
+import { lineForLeg } from '../data/lines';
+
+// ─── Geometry ────────────────────────────────────────────────────────────────
+
+export function haversineDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const R = 6371000; // Earth radius in meters
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLng = (lng2 - lng1) * Math.PI / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+    Math.sin(dLng / 2) * Math.sin(dLng / 2);
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+// ─── Journey cost model ──────────────────────────────────────────────────────
+// A trip costs wait + ride + walk. Ranking on ride time alone made every paid
+// car ride look faster than transit, because a car has no headway and the old
+// model charged transit nothing for standing at the stop.
+
+/** Expected wait for a rider who shows up at a random moment: half the mean
+ *  headway. Continuous-loading systems (the Skyliner) cost nothing. */
+export function expectedWait(mode: TransportMode, from: string, to: string): number {
+  if (mode === 'walk' || mode === 'minnie_van') return 0;
+  const line = lineForLeg(mode, from, to);
+  if (!line) return 5;
+  const [lo, hi] = line.headwayMinutes;
+  if (hi <= 1) return 0;
+  return Math.round((lo + hi) / 4);
+}
+
+export function waitMinutesFor(route: Route): number {
+  return route.legs.reduce((sum, l) => sum + expectedWait(l.mode, l.from, l.to), 0);
+}
+
+/** Total door-to-door minutes: waiting, riding, and walking. */
+export function journeyMinutes(route: Route): number {
+  const ride = route.legs.reduce((s, l) => s + l.rideMinutes, 0);
+  const walk = route.legs.reduce((s, l) => s + (l.walkMinutes ?? 0), 0);
+  return ride + walk + waitMinutesFor(route);
+}
+
+export function transferCount(route: Route): number {
+  return Math.max(0, route.legs.filter(l => l.mode !== 'walk').length - 1);
+}
 
 // ─── Time rules engine ───────────────────────────────────────────────────────
 
@@ -35,16 +80,33 @@ function nameForLegs(legs: Leg[]): string {
 }
 
 // Reverse an existing route so a pair defined one way also works the other way.
+//
+// Transfer walks are carried across to the same physical station rather than
+// replaced with a flat guess: in the original, legs[i].walkMinutes is the walk
+// at the transfer *before* leg i, so in the reversal that same transfer sits
+// before mirrored leg (n - i).
+//
+// `timeRestriction` is preserved deliberately. Dropping it would invent
+// service in a direction and hour where the network does not run.
 function mirrorRoute(r: Route): Route {
-  const legs: Leg[] = [...r.legs].reverse().map((l, i) => ({
-    mode: l.mode,
-    from: l.to,
-    to: l.from,
-    rideMinutes: l.rideMinutes,
-    simRange: l.simRange,
-    accessible: l.accessible,
-    ...(i > 0 ? { walkMinutes: 3 } : {}),
-  }));
+  const n = r.legs.length;
+  const legs: Leg[] = [...r.legs].reverse().map((l, i) => {
+    const walk = i > 0 ? r.legs[n - i]?.walkMinutes : undefined;
+    return {
+      mode: l.mode,
+      from: l.to,
+      to: l.from,
+      rideMinutes: l.rideMinutes,
+      accessible: l.accessible,
+      // The original tip described boarding at the other end of this leg, so
+      // it cannot be reused verbatim. A generic, true instruction beats
+      // silently dropping guidance on a third of all pairs.
+      tip: l.mode === 'walk' || l.mode === 'minnie_van'
+        ? undefined
+        : `Board at the ${modeLabel(l.mode)} stop at ${destLabel(l.to)}.`,
+      ...(walk ? { walkMinutes: walk } : {}),
+    };
+  });
   return {
     id: `${r.id}-rev`,
     from: r.to,
@@ -54,6 +116,7 @@ function mirrorRoute(r: Route): Route {
     totalRideRange: r.totalRideRange,
     tags: r.tags,
     timeRestriction: r.timeRestriction,
+    notes: r.notes,
     name: nameForLegs(legs),
   };
 }
@@ -63,8 +126,8 @@ function directRoutes(from: string, to: string, timeOverride?: Date): Route[] {
   const hasRealExplicit = explicit.some(r => r.legs.every(l => l.mode !== 'minnie_van'));
   if (hasRealExplicit) return explicit;
 
-  // Explicit data for this pair is missing or minnie-only — check whether the
-  // reverse direction has a real (non-minnie) route worth mirroring.
+  // Explicit data for this pair is missing or paid-ride-only — check whether
+  // the reverse direction has a real route worth mirroring.
   const mirrored = ALL_ROUTES
     .filter(r => r.from === to && r.to === from && timeValid(r, timeOverride))
     .filter(r => r.legs.every(l => l.mode !== 'minnie_van'))
@@ -83,7 +146,7 @@ function bestSegment(from: string, to: string, timeOverride?: Date): Route | nul
     .filter(r => !r.timeRestriction)
     .filter(r => r.legs.length <= 2);
   if (candidates.length === 0) return null;
-  return candidates.reduce((a, b) => (a.totalRideMinutes <= b.totalRideMinutes ? a : b));
+  return candidates.reduce((a, b) => (journeyMinutes(a) <= journeyMinutes(b) ? a : b));
 }
 
 function synthesizeViaHub(from: string, to: string, timeOverride?: Date): Route[] {
@@ -99,28 +162,48 @@ function synthesizeViaHub(from: string, to: string, timeOverride?: Date): Route[
       { ...b.legs[0], walkMinutes: 5 },
       ...b.legs.slice(1),
     ];
-    const totalRideMinutes = legs.reduce((sum, l) => sum + l.rideMinutes, 0);
     options.push({
       id: `synth-${from}-${hub}-${to}`,
-      from, to, legs, totalRideMinutes,
+      from, to, legs,
+      totalRideMinutes: legs.reduce((sum, l) => sum + l.rideMinutes, 0),
       tags: ['transfer'],
       name: nameForLegs(legs),
-      notes: `Transfer at ${destLabel(hub)}.`,
+      notes: `Transfer at ${destLabel(hub)}. Connection times are estimates — the wait for the second vehicle is included in the journey total.`,
     });
   }
-  options.sort((x, y) => x.totalRideMinutes - y.totalRideMinutes);
+  options.sort((x, y) => journeyMinutes(x) - journeyMinutes(y));
   // Keep alternates only if they're competitive with the best option
-  return options.slice(0, 2).filter((r, i) => i === 0 || r.totalRideMinutes <= options[0].totalRideMinutes + 20);
+  const best = options[0];
+  return options.slice(0, 2).filter((r, i) => i === 0 || journeyMinutes(r) <= journeyMinutes(best) + 20);
+}
+
+// ─── Paid rides ──────────────────────────────────────────────────────────────
+// A Minnie Van used to be a flat 18 minutes between any two points on
+// property, which made it the single fastest option on 60% of all pairs and
+// handed a paid car the "Fastest" badge on the app's own results screen.
+
+const PICKUP_MINUTES = 5;      // request, match, and load
+const ROAD_DETOUR = 1.35;      // straight-line to road distance
+const PROPERTY_KMH = 40;       // internal roads, with lights and gates
+
+export function driveMinutes(fromId: string, toId: string): number {
+  const a = DESTINATION_MAP[fromId];
+  const b = DESTINATION_MAP[toId];
+  if (!a || !b) return 18;
+  const km = haversineDistance(a.lat, a.lng, b.lat, b.lng) / 1000;
+  return Math.max(6, Math.round(PICKUP_MINUTES + (km * ROAD_DETOUR) / PROPERTY_KMH * 60));
 }
 
 function minnieVanFallback(from: string, to: string): Route {
+  const minutes = driveMinutes(from, to);
   return {
     id: `minnie-${from}-${to}`,
     from, to,
-    legs: [{ mode: 'minnie_van', from, to, rideMinutes: 18, simRange: [0, 0], accessible: true }],
-    totalRideMinutes: 18,
+    legs: [{ mode: 'minnie_van', from, to, rideMinutes: minutes, accessible: true }],
+    totalRideMinutes: minutes,
     tags: [],
-    name: 'Minnie Van (Lyft)',
+    name: 'Minnie Van',
+    notes: 'A paid car service booked through the Lyft app. Not included with your stay.',
   };
 }
 
@@ -128,16 +211,17 @@ export function getActiveRoutes(from: string, to: string, timeOverride?: Date): 
   const origFrom = from, origTo = to;
   from = DEST_ALIAS[from] ?? from;
   to = DEST_ALIAS[to] ?? to;
+
   // Aliased neighbors (e.g. BoardWalk ↔ BoardWalk Inn) are a short walk apart
   if (from === to) {
     if (origFrom === origTo) return [];
     return [{
       id: `walk-${origFrom}-${origTo}`,
       from: origFrom, to: origTo,
-      legs: [{ mode: 'walk', from: origFrom, to: origTo, rideMinutes: 3, simRange: [0, 0], accessible: true }],
+      legs: [{ mode: 'walk', from: origFrom, to: origTo, rideMinutes: 3, accessible: true }],
       totalRideMinutes: 3,
       tags: ['walk_only'],
-      name: `Walk to ${destLabel(origTo)} (~3 min)`,
+      name: `Walk to ${destLabel(origTo)}`,
     }];
   }
 
@@ -146,73 +230,71 @@ export function getActiveRoutes(from: string, to: string, timeOverride?: Date): 
 
   if (!hasRealRoute) {
     routes = [...routes, ...synthesizeViaHub(from, to, timeOverride)];
-    if (!routes.some(r => r.legs.some(l => l.mode === 'minnie_van'))) {
-      routes = [...routes, minnieVanFallback(from, to)];
-    }
   }
+
+  // A paid ride is always offered, but as a separate option rather than as a
+  // competitor for the top transit slot. Any hand-authored paid entry is
+  // replaced so every pair uses the same distance-based estimate.
+  routes = routes.filter(r => !r.legs.some(l => l.mode === 'minnie_van'));
+  routes.push(minnieVanFallback(from, to));
 
   return routes;
 }
 
-// ─── Filter + sort logic ─────────────────────────────────────────────────────
+// ─── Filter + sort ───────────────────────────────────────────────────────────
+
+const isPaid  = (r: Route) => r.legs.some(l => l.mode === 'minnie_van');
+const isWater = (r: Route) => r.tags.includes('water');
+const isStepFree = (r: Route) => r.legs.every(l => l.accessible);
+
+function scenicScore(r: Route): number {
+  return r.tags.includes('water') || r.tags.includes('scenic') ||
+    r.legs.some(l => l.mode === 'skyliner' || l.mode === 'friendship_boat')
+    ? 0 : 1;
+}
 
 export function applyFilters(routes: Route[], filters: ActiveFilters): Route[] {
-  let result = [...routes];
+  let result = routes.filter(r => {
+    if (filters.noWater && isWater(r)) return false;
+    if (filters.accessible && !isStepFree(r)) return false;
+    return true;
+  });
 
+  const byJourney = (a: Route, b: Route) => journeyMinutes(a) - journeyMinutes(b);
+
+  switch (filters.sort) {
+    case 'transfers':
+      result = result.sort((a, b) => transferCount(a) - transferCount(b) || byJourney(a, b));
+      break;
+    case 'scenic':
+      result = result.sort((a, b) => scenicScore(a) - scenicScore(b) || byJourney(a, b));
+      break;
+    default:
+      result = result.sort(byJourney);
+  }
+
+  // A paid car never outranks transit, whatever the sort.
+  return result.sort((a, b) => Number(isPaid(a)) - Number(isPaid(b)));
+}
+
+/** Human-readable reasons the visible list is shorter than the full one, so an
+ *  empty results screen can name the filter responsible instead of blaming the
+ *  transportation network for the user's own settings. */
+export function describeExclusions(all: Route[], filters: ActiveFilters): string[] {
+  const transit = all.filter(r => !isPaid(r));
+  const reasons: string[] = [];
   if (filters.noWater) {
-    result = result.filter(r => !r.tags.includes('water'));
+    const n = transit.filter(isWater).length;
+    if (n > 0) reasons.push(`"No boats" is hiding ${n} route${n === 1 ? '' : 's'}.`);
   }
-
   if (filters.accessible) {
-    result = result.filter(r => r.legs.every(l => l.accessible));
+    const n = transit.filter(r => !isStepFree(r)).length;
+    if (n > 0) reasons.push(`"Step-free" is hiding ${n} route${n === 1 ? '' : 's'}.`);
   }
-
-  if (filters.noTransfer) {
-    result = result.filter(r => r.legs.filter(l => l.mode !== 'walk').length === 1);
-  }
-
-  if (filters.scenic) {
-    result = result.sort((a, b) => {
-      const scenicScore = (r: Route) =>
-        r.tags.includes('water') || r.tags.includes('scenic') ||
-        r.legs.some(l => l.mode === 'skyliner' || l.mode === 'friendship_boat')
-          ? -1 : 1;
-      return scenicScore(a) - scenicScore(b);
-    });
-  } else {
-    result = result.sort((a, b) => a.totalRideMinutes - b.totalRideMinutes);
-  }
-
-  return result;
+  return reasons;
 }
 
-// ─── Live arrival simulation ─────────────────────────────────────────────────
-
-export function simulateArrival(mode: TransportMode): number {
-  const ranges: Record<TransportMode, [number, number]> = {
-    bus:               [1, 20],
-    ferry_ttc_mk:      [1, 5],
-    water_taxi_gold:   [1, 12],
-    water_taxi_red:    [1, 12],
-    water_taxi_green:  [1, 12],
-    water_taxi_blue:   [1, 12],
-    friendship_boat:   [1, 12],
-    sassagoula_boat:   [1, 12],
-    skyliner:          [0, 0],
-    monorail_resort:   [1, 5],
-    monorail_epcot:    [1, 10],
-    monorail_express:  [1, 4],
-    walk:              [0, 0],
-    minnie_van:        [0, 0],
-  };
-  const [min, max] = ranges[mode];
-  if (min === 0 && max === 0) return 0;
-  return Math.round(Math.random() * (max - min) + min);
-}
-
-export function hasArrivalSim(mode: TransportMode): boolean {
-  return mode !== 'walk' && mode !== 'minnie_van';
-}
+// ─── Labels ──────────────────────────────────────────────────────────────────
 
 export function modeLabel(mode: TransportMode): string {
   const labels: Record<TransportMode, string> = {
@@ -234,45 +316,27 @@ export function modeLabel(mode: TransportMode): string {
   return labels[mode];
 }
 
-// ─── Time banner logic ───────────────────────────────────────────────────────
+// ─── Time banner ─────────────────────────────────────────────────────────────
 
 export function getTimeBannerMessage(timeOverride?: Date): string | null {
   const now = timeOverride ?? new Date();
-  const hour = now.getHours();
-  const minute = now.getMinutes();
-  const totalMinutes = hour * 60 + minute;
-
+  const totalMinutes = now.getHours() * 60 + now.getMinutes();
   const timeStr = now.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
 
   if (totalMinutes < 600) {
-    return `${timeStr}: before 10am, park-to-park buses aren't running. Routes adjusted.`;
+    return `Before 10:00 AM, park-to-park buses are not running. Routes shown for ${timeStr}.`;
   }
   return null;
 }
 
 // ─── Geofence detection ──────────────────────────────────────────────────────
 
-function haversineDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
-  const R = 6371000; // Earth radius in meters
-  const dLat = (lat2 - lat1) * Math.PI / 180;
-  const dLng = (lng2 - lng1) * Math.PI / 180;
-  const a =
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-    Math.sin(dLng / 2) * Math.sin(dLng / 2);
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-}
-
-import { GEOFENCE_ZONES } from '../data/destinations';
-
 export function detectZone(lat: number, lng: number): string | null {
   let closest: { id: string; dist: number } | null = null;
   for (const zone of GEOFENCE_ZONES) {
     const dist = haversineDistance(lat, lng, zone.lat, zone.lng);
-    if (dist <= zone.radiusMeters) {
-      if (!closest || dist < closest.dist) {
-        closest = { id: zone.id, dist };
-      }
+    if (dist <= zone.radiusMeters && (!closest || dist < closest.dist)) {
+      closest = { id: zone.id, dist };
     }
   }
   return closest ? closest.id : null;

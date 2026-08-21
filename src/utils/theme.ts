@@ -1,66 +1,133 @@
+// ─── Design tokens ───────────────────────────────────────────────────────────
+// Modeled on the My Disney Experience app: near-neutral gray page ground,
+// full-bleed white sections, near-black navy text, and exactly one bright
+// interactive blue. No gold — the reference app has none, and using it as an
+// accent was the loudest "this isn't the same app" signal in the old palette.
+
 export const Colors = {
-  // Primary brand: Disney "sky" blue family, modeled on the MDE app icon's gradient
-  skyTop:        '#4698CA',
-  skyMid:        '#3C7EB8',
-  skyBottom:     '#3773AF',
-  skySparkle:    '#9AD0EC',
-  skyCircle:     '#82ADCD',
-  skySoftDot:    '#96CFE3',
-  skyCloud:      '#94B4CD',
-  skyHighlight:  '#DAE7ED',
-  primaryBlue:   '#3773AF',
-  primaryDark:   '#2C5D82',
-  lightBlueTint: '#DAE7ED',
-  blueBorder:    '#82ADCD',
-  // Backgrounds
-  pageBg:        '#E8F1F6',
-  cardBg:        '#FFFFFF',
-  cardBorder:    '#DCE7EE',
-  divider:       '#E7EFF4',
+  // Interactive blue — links, buttons, active states, selected chips
+  primaryBlue:   '#0B79D0',
+  primaryHover:  '#1994DC',
+  primaryTint:   '#E7F2FB',   // wash behind blue content
+  primaryBorder: '#9CCBEC',
+
   // Text
-  textPrimary:   '#182B3A',
-  textSecondary: '#5C7488',
-  textPlaceholder:'#94A9B8',
-  // Live status
-  liveGreen:     '#1F9D55',
-  statusOperating:      '#1F9D55',
-  statusOperatingBg:    '#E7F6EC',
-  statusOperatingBorder:'#B7E2C6',
-  statusDelayed:        '#B97509',
-  statusDelayedBg:      '#FDF3E1',
-  statusDelayedBorder:  '#F0CE8B',
-  statusDown:           '#C43D3D',
-  statusDownBg:         '#FBEAEA',
-  statusDownBorder:     '#EDBABA',
-  // Warnings / accents
-  warnText:      '#7B5800',
-  warnBg:        '#FFF8E1',
-  warnBorder:    '#FFD54F',
-  warnIcon:      '#FFB300',
-  waterText:     '#1D6B52',
-  waterBg:       '#EAF4F0',
-  waterBorder:   '#A8D8C8',
-  // Gold accent
-  gold:          '#E0A93E',
-  // Transport colors
-  skyliner:      '#1E96A8',
-  bus:           '#639922',
-  monorailExpress:'#E8554D',
-  monorailResort: '#F2A93B',
-  monorailEpcot:  '#4C9F70',
-  ferryBoat:      '#378ADD',
-  waterTaxi:      '#378ADD',
-  friendshipBoat: '#2E9E8F',
-  sassagoula:     '#8C5A3C',
-  walk:           '#9C9BAE',
-  minnieVan:      '#D85A30',
-};
+  textPrimary:   '#0E2C4B',   // near-black navy — headings and body
+  textSecondary: '#5A6B7B',
+  textPlaceholder: '#8C97A3',
+  textOnDark:    '#FFFFFF',
+  textOnDarkSub: 'rgba(255,255,255,0.78)',
+
+  // Surfaces
+  sectionBg:     '#FFFFFF',   // full-bleed section fill
+  pageBg:        '#EDF1F5',   // the gutter between sections
+  divider:       '#E3E8EE',
+  dividerStrong: '#D5DDE5',
+
+  // Hero gradient (planner / status / map headers)
+  heroTop:       '#1B7FC4',
+  heroMid:       '#136BAE',
+  heroBottom:    '#0E5490',
+
+  // Service status — amber and red are reserved for real disruptions only,
+  // never for decoration or emphasis.
+  statusOperating:      '#1B8A4B',
+  statusOperatingBg:    '#E8F6ED',
+  statusOperatingBorder:'#A9DCBD',
+  statusDelayed:        '#9A6206',
+  statusDelayedBg:      '#FDF4E3',
+  statusDelayedBorder:  '#EFCE93',
+  statusDown:           '#B3261E',
+  statusDownBg:         '#FBEBEA',
+  statusDownBorder:     '#EDB9B6',
+
+  // Transport line colors — these identify real WDW lines on the map and on
+  // status cards. They are data, not UI accent.
+  skyliner:        '#1E96A8',
+  bus:             '#4E7D1F',
+  monorailExpress: '#D6453D',
+  monorailResort:  '#D68A15',
+  monorailEpcot:   '#2F8757',
+  ferryBoat:       '#2E6FC4',
+  waterTaxi:       '#2E6FC4',
+  friendshipBoat:  '#22857A',
+  sassagoula:      '#7A4E33',
+  walk:            '#7A8592',
+  minnieVan:       '#C24E27',
+
+  // Map
+  mapWater:        '#DCEBF7',
+  mapWaterStroke:  '#C7DFEF',
+} as const;
 
 export const StatusColors = {
   operating: { text: Colors.statusOperating, bg: Colors.statusOperatingBg, border: Colors.statusOperatingBorder },
   delayed:   { text: Colors.statusDelayed,   bg: Colors.statusDelayedBg,   border: Colors.statusDelayedBorder },
   down:      { text: Colors.statusDown,      bg: Colors.statusDownBg,      border: Colors.statusDownBorder },
 };
+
+// ─── Typography ──────────────────────────────────────────────────────────────
+// Nine roles on a 12/13/14/15/16/17/20/24/28 ramp, three weights. The old
+// palette had 17 distinct sizes — including 10.5, 11.5, 12.5 and 13.5 — and
+// used weight 500 for both headings and body, which left the UI with no
+// hierarchy at all. Anything that needs a size off this ramp is a design
+// mistake, not a missing token: spread a role, never override its fontSize.
+
+export const FontFamily = {
+  regular:  'NunitoSans_400Regular',
+  semibold: 'NunitoSans_600SemiBold',
+  bold:     'NunitoSans_700Bold',
+} as const;
+
+export const Type = {
+  /** Screen hero title */
+  display:    { fontFamily: FontFamily.bold,     fontSize: 28, lineHeight: 34 },
+  /** Section headers and route names */
+  title:      { fontFamily: FontFamily.bold,     fontSize: 20, lineHeight: 26 },
+  /** The one big number in a stat block or an outlined key-value box */
+  stat:       { fontFamily: FontFamily.bold,     fontSize: 24, lineHeight: 30 },
+  /** Sub-headings inside a section, list-row titles */
+  subtitle:   { fontFamily: FontFamily.semibold, fontSize: 17, lineHeight: 23 },
+  /** Default readable text */
+  body:       { fontFamily: FontFamily.regular,  fontSize: 16, lineHeight: 23 },
+  /** Supporting text under a title — the second line of a list row */
+  bodySmall:  { fontFamily: FontFamily.regular,  fontSize: 15, lineHeight: 21 },
+  /** Buttons, links, pill labels — anything tappable */
+  action:     { fontFamily: FontFamily.semibold, fontSize: 16, lineHeight: 22 },
+  /** Emphasized inline text that is not itself an action */
+  label:      { fontFamily: FontFamily.semibold, fontSize: 14, lineHeight: 19 },
+  /** Metadata, timestamps, field labels */
+  caption:    { fontFamily: FontFamily.regular,  fontSize: 13, lineHeight: 18 },
+  /** Small all-caps section eyebrow */
+  eyebrow:    { fontFamily: FontFamily.bold,     fontSize: 12, lineHeight: 16, letterSpacing: 0.7, textTransform: 'uppercase' as const },
+} as const;
+
+// ─── Spacing + radius ────────────────────────────────────────────────────────
+// A 4pt scale. Previously these existed in this file and were imported by
+// exactly zero components, which is why every screen invented its own numbers.
+
+export const Spacing = {
+  xs:  4,
+  sm:  8,
+  md:  12,
+  lg:  16,
+  xl:  24,
+  xxl: 32,
+} as const;
+
+export const Radius = {
+  /** chips, badges, small tags */
+  sm:  8,
+  /** inputs, inner bordered boxes */
+  md:  12,
+  /** bottom sheets */
+  lg:  20,
+  /** pill buttons and filter pills */
+  pill: 24,
+} as const;
+
+/** Height of the gray gutter that separates two full-bleed white sections. */
+export const SECTION_GAP = 8;
 
 export const transportColor = (mode: string): string => {
   switch (mode) {
@@ -82,9 +149,9 @@ export const transportColor = (mode: string): string => {
   }
 };
 
-// Destination badge tiers: parks (blue), water parks (green), everything
-// else — resorts, hubs, entertainment (gold). Single source of truth so the
-// search picker, results, and journey diagram all agree on a place's color.
+// Destination badge tiers. Parks read as primary blue, water parks as teal,
+// everything else as a neutral slate — the reference app tints by category
+// but never introduces a warm accent to do it.
 export const groupTier = (group: string): 'park' | 'water' | 'hub' => {
   if (group === 'Parks') return 'park';
   if (group === 'Water Parks') return 'water';
@@ -92,35 +159,18 @@ export const groupTier = (group: string): 'park' | 'water' | 'hub' => {
 };
 
 export const GroupTierColors: Record<'park' | 'water' | 'hub', { bg: string; text: string }> = {
-  park:  { bg: Colors.lightBlueTint,        text: Colors.primaryBlue },
-  water: { bg: Colors.waterBg,              text: Colors.waterText },
-  hub:   { bg: 'rgba(224,169,62,0.16)',     text: Colors.warnText },
+  park:  { bg: Colors.primaryTint, text: Colors.primaryBlue },
+  water: { bg: '#E4F3F1',          text: Colors.friendshipBoat },
+  hub:   { bg: '#EDF1F5',          text: Colors.textSecondary },
 };
 
 export const groupBadgeColors = (group: string) => GroupTierColors[groupTier(group)];
 
 export const Brand = {
   name: 'ParkWays',
-  tagline: 'Walt Disney World transit, unofficial',
+  tagline: 'Walt Disney World transportation',
 };
 
-// Sky gradient used behind headers, modeled on the MDE app icon
 export const Gradients = {
-  sky: [Colors.skyTop, Colors.skyMid, Colors.skyBottom] as const,
-};
-
-export const Spacing = {
-  xs:  4,
-  sm:  8,
-  md:  12,
-  lg:  16,
-  xl:  24,
-  xxl: 32,
-};
-
-export const Radius = {
-  sm:  8,
-  md:  12,
-  lg:  16,
-  xl:  18,
+  hero: [Colors.heroTop, Colors.heroMid, Colors.heroBottom] as const,
 };

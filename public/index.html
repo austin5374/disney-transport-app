@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="%LANG_ISO_CODE%">
+  <head>
+    <meta charset="utf-8" />
+    <meta httpEquiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no, viewport-fit=cover" />
+    <title>%WEB_TITLE%</title>
+
+    <!-- Link previews. Without these, sharing the URL anywhere renders a bare
+         string with no title, description, or image. -->
+    <!-- description and theme-color are injected from app.json's `web` block
+         at export time; declaring them here as well produces duplicates. -->
+    <meta name="author" content="Austin Vodrazka" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="ParkWays" />
+    <meta property="og:title" content="ParkWays — Walt Disney World transportation" />
+    <meta property="og:description" content="Plan a trip across Walt Disney World transportation: monorails, the Skyliner, boats, and buses. Routes ranked by total journey time, including the wait." />
+    <meta property="og:url" content="https://disney-transport-app.vercel.app/" />
+    <meta property="og:image" content="https://disney-transport-app.vercel.app/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="ParkWays, a Walt Disney World transportation planner" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="ParkWays — Walt Disney World transportation" />
+    <meta name="twitter:description" content="Plan a trip across Walt Disney World transportation: monorails, the Skyliner, boats, and buses." />
+    <meta name="twitter:image" content="https://disney-transport-app.vercel.app/og-image.png" />
+
+    <!-- The `react-native-web` recommended style reset: https://necolas.github.io/react-native-web/docs/setup/#root-element -->
+    <style id="expo-reset">
+      /* These styles make the body full-height */
+      html,
+      body {
+        height: 100%;
+      }
+      /* These styles disable body scrolling if you are using <ScrollView> */
+      body {
+        overflow: hidden;
+      }
+      /* These styles make the root element full-height */
+      #root {
+        display: flex;
+        height: 100%;
+        flex: 1;
+      }
+    </style>
+
+    <style id="parkways-boot">
+      /* The bundle is large enough that there is a visible gap before the
+         first React paint. Painting the app's own background here means that
+         gap reads as the app loading rather than as a blank white page. */
+      html, body {
+        margin: 0;
+        background: #0E5490;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+      #root { background: #0E5490; }
+    </style>
+  </head>
+
+  <body>
+    <noscript>
+      ParkWays needs JavaScript enabled to plan a route.
+    </noscript>
+    <div id="root"></div>
+  </body>
+</html>

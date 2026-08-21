@@ -1,78 +1,86 @@
-import React, { useRef, useEffect, useState } from 'react';
-import { Text, Animated, TouchableOpacity, StyleSheet } from 'react-native';
+import React, { useRef, useEffect } from 'react';
+import { Text, View, Animated, TouchableOpacity, StyleSheet } from 'react-native';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { TransportMode } from '../types';
-import { simulateArrival, hasArrivalSim, modeLabel } from '../utils/routing';
+import { modeLabel } from '../utils/routing';
 import { lineForLeg } from '../data/lines';
-import { useLiveStatus, refreshLiveStatus, formatEtaRange } from '../utils/liveStatus';
-import { Colors } from '../utils/theme';
+import { useLineStatus, refreshLiveStatus } from '../utils/liveStatus';
+import { Colors, Type, Spacing } from '../utils/theme';
 
 interface LiveArrivalProps {
   mode: TransportMode;
-  from?: string;
-  to?: string;
+  from: string;
+  to: string;
   compact?: boolean;
 }
 
 export default function LiveArrival({ mode, from, to, compact }: LiveArrivalProps) {
-  const live = useLiveStatus();
-  const [fallbackMinutes, setFallbackMinutes] = useState(() => simulateArrival(mode));
+  const line = lineForLeg(mode, from, to);
+  // Subscribing to one line instead of the whole board means this row only
+  // re-renders when its own service actually changes.
+  const status = useLineStatus(line?.id);
   const pulseAnim = useRef(new Animated.Value(1)).current;
 
+  const disrupted = !!status && status.status !== 'operating';
+
   useEffect(() => {
+    // Only a disrupted line has something to signal. Pulsing every row on
+    // every screen meant ~25 concurrent JS-thread animation loops on web,
+    // where useNativeDriver is unavailable.
+    if (!disrupted) {
+      pulseAnim.setValue(1);
+      return;
+    }
     const loop = Animated.loop(
       Animated.sequence([
-        Animated.timing(pulseAnim, { toValue: 0.4, duration: 750, useNativeDriver: true }),
-        Animated.timing(pulseAnim, { toValue: 1.0, duration: 750, useNativeDriver: true }),
+        Animated.timing(pulseAnim, { toValue: 0.35, duration: 750, useNativeDriver: true }),
+        Animated.timing(pulseAnim, { toValue: 1.0,  duration: 750, useNativeDriver: true }),
       ])
     );
     loop.start();
     return () => loop.stop();
-  }, []);
+  }, [disrupted, pulseAnim]);
 
-  if (!hasArrivalSim(mode)) return null;
-
-  const line = from && to ? lineForLeg(mode, from, to) : null;
-  const status = line ? live[line.id] : null;
+  if (!line || !status) return null;
 
   let label: string;
-  let color = Colors.liveGreen;
+  let color: string = Colors.statusOperating;
 
-  if (status?.status === 'down') {
+  if (status.status === 'down') {
     label = status.etaMinutes
-      ? `${line!.shortName} down · est. ${formatEtaRange(status.etaMinutes)}`
-      : `${line!.shortName} temporarily down`;
+      ? `${line.shortName} down · about ${status.etaMinutes} min`
+      : `${line.shortName} temporarily down`;
     color = Colors.statusDown;
-  } else if (status?.status === 'delayed') {
+  } else if (status.status === 'delayed') {
     const next = status.nextArrivals[0];
-    label = next != null && line!.headwayMinutes[1] > 1
-      ? `Delays · next in ~${next} min`
+    label = next != null && line.headwayMinutes[1] > 1
+      ? `Delays · next in about ${next} min`
       : 'Running with delays';
     color = Colors.statusDelayed;
-  } else if (status && line) {
-    if (line.headwayMinutes[1] <= 1) {
-      label = 'Boarding now';
-    } else {
-      const next = status.nextArrivals[0];
-      label = next == null || next === 0
-        ? `${modeLabel(mode)} arriving now`
-        : `Next ${modeLabel(mode)} in ${next} min`;
-    }
+  } else if (line.headwayMinutes[1] <= 1) {
+    label = 'Boarding now';
   } else {
-    label = mode === 'skyliner'
-      ? 'Boarding now'
-      : `Next ${modeLabel(mode)} in ${fallbackMinutes} min`;
+    const next = status.nextArrivals[0];
+    label = next == null || next === 0
+      ? `${modeLabel(mode)} arriving now`
+      : `Next ${modeLabel(mode)} in ${next} min`;
   }
 
-  const refresh = () => {
-    refreshLiveStatus();
-    setFallbackMinutes(simulateArrival(mode));
-  };
-
   return (
-    <TouchableOpacity onPress={refresh} activeOpacity={0.7} style={styles.row}>
+    <TouchableOpacity
+      onPress={refreshLiveStatus}
+      activeOpacity={0.6}
+      accessibilityRole="button"
+      accessibilityLabel={`${label}. Tap to refresh.`}
+      style={styles.row}
+    >
       <Animated.View style={[styles.dot, { opacity: pulseAnim, backgroundColor: color }]} />
-      <Text style={[styles.text, compact && styles.textCompact, { color }]}>{label}</Text>
-      <Text style={[styles.refresh, { color }]}> ↻</Text>
+      <Text style={[styles.text, compact && styles.textCompact, { color }]} numberOfLines={1}>
+        {label}
+      </Text>
+      <View style={styles.refresh}>
+        <Ionicons name="refresh" size={13} color={color} />
+      </View>
     </TouchableOpacity>
   );
 }
@@ -87,18 +95,17 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    marginRight: 6,
+    marginRight: Spacing.sm,
   },
   text: {
-    fontSize: 13,
-    fontWeight: '500',
+    ...Type.label,
     flexShrink: 1,
   },
   textCompact: {
-    fontSize: 12,
+    ...Type.caption,
   },
   refresh: {
-    fontSize: 13,
-    opacity: 0.7,
+    marginLeft: Spacing.xs + 2,
+    opacity: 0.75,
   },
 });

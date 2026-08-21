@@ -1,148 +1,106 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Platform } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Ionicons } from '@expo/vector-icons';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Colors, Gradients } from '../utils/theme';
+import { Colors, Type, Spacing, Gradients } from '../utils/theme';
 
 interface AppHeaderProps {
   title?: string;
+  subtitle?: string;
   showBack?: boolean;
   onBack?: () => void;
-  subtitle?: string;
-  timeOverride?: Date | null;
-  onResetTime?: () => void;
 }
 
-// Only the true tab-root screen (Trip Planner) gets the colorful gradient
-// hero — matching the real app, where drilled-into screens (a route's
-// results, its step-by-step) are plain white with dark text, and the big
-// hero treatment is reserved for tab-root/dashboard-style screens.
-export default function AppHeader({
-  title, showBack, onBack, subtitle, timeOverride, onResetTime,
-}: AppHeaderProps) {
+// Two header treatments, matching the reference app exactly:
+//
+//   Tab-root screens  → full-bleed gradient hero, white wordmark, no back.
+//   Drilled-in screens → white bar, centered navy title that may wrap to two
+//                        lines, blue chevron-back at the left, hairline rule.
+//
+// The old header put a gold title on a dusty blue strip on every screen and
+// carried a tappable time-override pill that, on the detail screen, was wired
+// to a no-op. Both are gone.
+export default function AppHeader({ title, subtitle, showBack, onBack }: AppHeaderProps) {
   const insets = useSafeAreaInsets();
-
-  const content = (
-    <View style={styles.row}>
-      {showBack ? (
-        <TouchableOpacity onPress={onBack} style={styles.backBtn} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-          <Ionicons name="chevron-back" size={24} color={showBack ? Colors.primaryBlue : '#fff'} />
-        </TouchableOpacity>
-      ) : (
-        <View style={styles.backPlaceholder} />
-      )}
-
-      <View style={styles.titleArea}>
-        <Text style={showBack ? styles.pageTitleDark : styles.appTitle} numberOfLines={1}>
-          {title ?? 'Trip Planner'}
-        </Text>
-        {subtitle ? (
-          <Text style={showBack ? styles.subtitleDark : styles.subtitle} numberOfLines={1}>{subtitle}</Text>
-        ) : !showBack ? (
-          <Text style={styles.subtitle}>Get anywhere on property</Text>
-        ) : null}
-      </View>
-
-      {timeOverride ? (
-        <TouchableOpacity onPress={onResetTime} style={showBack ? styles.timeOverridePillDark : styles.timeOverridePill}>
-          <Text style={showBack ? styles.timeOverrideTextDark : styles.timeOverrideText}>
-            {timeOverride.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })} ×
-          </Text>
-        </TouchableOpacity>
-      ) : (
-        <View style={styles.backPlaceholder} />
-      )}
-    </View>
-  );
 
   if (showBack) {
     return (
-      <View style={[styles.containerFlat, { paddingTop: insets.top + 8 }]}>
-        {content}
+      <View style={[styles.flatBar, { paddingTop: insets.top + Spacing.sm }]}>
+        <TouchableOpacity
+          onPress={onBack}
+          style={styles.backBtn}
+          accessibilityRole="button"
+          accessibilityLabel="Go back"
+          hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+        >
+          <Ionicons name="chevron-back" size={26} color={Colors.primaryBlue} />
+        </TouchableOpacity>
+
+        <View style={styles.flatTitleArea}>
+          <Text style={styles.pageTitle} numberOfLines={2}>{title}</Text>
+          {subtitle ? <Text style={styles.pageSubtitle} numberOfLines={1}>{subtitle}</Text> : null}
+        </View>
+
+        <View style={styles.backBtn} />
       </View>
     );
   }
 
   return (
     <LinearGradient
-      colors={Gradients.sky}
+      colors={Gradients.hero}
       start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
-      style={[styles.container, { paddingTop: insets.top + 8 }]}
+      end={{ x: 0, y: 1 }}
+      style={[styles.hero, { paddingTop: insets.top + Spacing.md }]}
     >
-      {content}
+      <Text style={styles.heroTitle}>{title}</Text>
+      {subtitle ? <Text style={styles.heroSubtitle}>{subtitle}</Text> : null}
     </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    paddingHorizontal: 16,
-    paddingBottom: 12,
-  },
-  containerFlat: {
-    paddingHorizontal: 16,
-    paddingBottom: 12,
-    backgroundColor: Colors.cardBg,
+  flatBar: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    paddingHorizontal: Spacing.md,
+    paddingBottom: Spacing.md,
+    backgroundColor: Colors.sectionBg,
     borderBottomWidth: 1,
     borderBottomColor: Colors.divider,
   },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
   backBtn: {
-    width: 36,
-    alignItems: 'flex-start',
+    width: 34,
+    paddingTop: 2,
   },
-  backPlaceholder: {
-    width: 36,
-  },
-  titleArea: {
+  flatTitleArea: {
     flex: 1,
     alignItems: 'center',
+    paddingHorizontal: Spacing.xs,
   },
-  appTitle: {
-    color: Colors.gold,
-    fontSize: 20,
-    fontWeight: '500',
-  },
-  pageTitleDark: {
+  pageTitle: {
+    ...Type.subtitle,
     color: Colors.textPrimary,
-    fontSize: 17,
-    fontWeight: '700',
+    textAlign: 'center',
   },
-  subtitle: {
-    color: 'rgba(255,255,255,0.7)',
-    fontSize: 12,
-    marginTop: 1,
-  },
-  subtitleDark: {
+  pageSubtitle: {
+    ...Type.caption,
     color: Colors.textSecondary,
-    fontSize: 12,
-    marginTop: 1,
+    textAlign: 'center',
+    marginTop: 2,
   },
-  timeOverridePill: {
-    backgroundColor: 'rgba(255,255,255,0.15)',
-    borderRadius: 12,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
+  hero: {
+    paddingHorizontal: Spacing.lg,
+    paddingBottom: Spacing.lg,
   },
-  timeOverrideText: {
-    color: Colors.gold,
-    fontSize: 11,
-    fontWeight: '500',
+  heroTitle: {
+    ...Type.display,
+    color: Colors.textOnDark,
   },
-  timeOverridePillDark: {
-    backgroundColor: Colors.lightBlueTint,
-    borderRadius: 12,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-  },
-  timeOverrideTextDark: {
-    color: Colors.primaryBlue,
-    fontSize: 11,
-    fontWeight: '600',
+  heroSubtitle: {
+    ...Type.bodySmall,
+    color: Colors.textOnDarkSub,
+    marginTop: 2,
   },
 });

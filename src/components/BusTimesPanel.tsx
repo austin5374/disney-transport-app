@@ -1,11 +1,10 @@
 import React, { useMemo, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, FlatList } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { Ionicons } from '@expo/vector-icons';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import AppModal from './AppModal';
 import { DESTINATIONS } from '../data/destinations';
 import { useLiveStatus } from '../utils/liveStatus';
-import { Colors, StatusColors, Gradients } from '../utils/theme';
+import { Colors, StatusColors, Type, Spacing, SECTION_GAP } from '../utils/theme';
 
 // MDE-style "next bus times from your resort" board: pick a resort, see the
 // estimated next departure to each park destination. Estimates are derived
@@ -67,7 +66,7 @@ export default function BusTimesPanel() {
             {st === 'down' ? (
               <Text style={[styles.destTime, { color: sc.text }]}>Service interrupted</Text>
             ) : row.minutesAway === 0 ? (
-              <Text style={[styles.destTime, { color: Colors.liveGreen }]}>Arriving now</Text>
+              <Text style={[styles.destTime, { color: Colors.statusOperating }]}>Arriving now</Text>
             ) : (
               <Text style={[styles.destTime, st === 'delayed' && { color: sc.text }]}>
                 {st === 'delayed' ? `~${row.minutesAway + 6} min (delays)` : `${row.minutesAway} min`}
@@ -79,12 +78,19 @@ export default function BusTimesPanel() {
 
       <AppModal visible={pickerOpen} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setPickerOpen(false)}>
         <View style={styles.pickerContainer}>
-          <LinearGradient colors={Gradients.sky} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.pickerHeader}>
-            <Text style={styles.pickerTitle}>Choose your resort</Text>
-            <TouchableOpacity onPress={() => setPickerOpen(false)}>
-              <Text style={styles.pickerCancel}>Cancel</Text>
+          <View style={styles.pickerHeader}>
+            <TouchableOpacity
+              onPress={() => setPickerOpen(false)}
+              accessibilityRole="button"
+              accessibilityLabel="Close"
+              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+              style={styles.pickerClose}
+            >
+              <Ionicons name="close" size={26} color={Colors.primaryBlue} />
             </TouchableOpacity>
-          </LinearGradient>
+            <Text style={styles.pickerTitle}>Choose Your Resort</Text>
+            <View style={styles.pickerClose} />
+          </View>
           <FlatList
             data={RESORTS}
             keyExtractor={r => r.id}
@@ -108,26 +114,22 @@ export default function BusTimesPanel() {
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: Colors.cardBg,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: Colors.cardBorder,
-    marginHorizontal: 16,
-    marginVertical: 4,
+    backgroundColor: Colors.sectionBg,
+    paddingVertical: Spacing.sm,
+    marginBottom: SECTION_GAP,
   },
   resortRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 12,
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.md,
   },
   resortLabel: {
-    fontSize: 11,
+    ...Type.caption,
     color: Colors.textSecondary,
-    marginBottom: 1,
   },
   resortName: {
-    fontSize: 15,
-    fontWeight: '600',
+    ...Type.subtitle,
     color: Colors.textPrimary,
   },
   divider: {
@@ -138,58 +140,58 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 12,
-    paddingVertical: 10,
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.md,
   },
   destRowBorder: {
     borderBottomWidth: 1,
     borderBottomColor: Colors.divider,
   },
   destName: {
-    fontSize: 13.5,
+    ...Type.bodySmall,
     color: Colors.textPrimary,
   },
   destTime: {
-    fontSize: 13.5,
-    fontWeight: '600',
+    ...Type.action,
     color: Colors.textPrimary,
   },
   pickerContainer: {
     flex: 1,
-    backgroundColor: Colors.pageBg,
+    backgroundColor: Colors.sectionBg,
   },
   pickerHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 14,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.divider,
+  },
+  pickerClose: {
+    width: 34,
   },
   pickerTitle: {
-    color: '#fff',
-    fontSize: 17,
-    fontWeight: '600',
-  },
-  pickerCancel: {
-    color: 'rgba(255,255,255,0.8)',
-    fontSize: 15,
+    ...Type.subtitle,
+    flex: 1,
+    textAlign: 'center',
+    color: Colors.textPrimary,
   },
   pickerItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#fff',
-    paddingHorizontal: 16,
-    paddingVertical: 14,
+    backgroundColor: Colors.sectionBg,
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.lg,
     borderBottomWidth: 1,
     borderBottomColor: Colors.divider,
   },
   pickerItemText: {
-    fontSize: 15,
+    ...Type.body,
     color: Colors.textPrimary,
   },
   pickerItemActive: {
+    ...Type.action,
     color: Colors.primaryBlue,
-    fontWeight: '600',
   },
 });

@@ -1,35 +1,38 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
-  View, Text, ScrollView, Animated, StyleSheet, RefreshControl, TouchableOpacity,
+  View, Text, ScrollView, StyleSheet, RefreshControl, TouchableOpacity, Platform,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
 import { TRANSIT_LINES, LineGroup } from '../data/lines';
 import { useLiveStatus, refreshLiveStatus, getTemporaryBridges } from '../utils/liveStatus';
-import { Colors, Gradients } from '../utils/theme';
+import { Colors, Type, Spacing, Radius } from '../utils/theme';
+import AppHeader from '../components/AppHeader';
 import StatusCard from '../components/StatusCard';
 import BusTimesPanel from '../components/BusTimesPanel';
 import TemporaryBridgeCard from '../components/TemporaryBridgeCard';
+import Section from '../components/ui/Section';
 
-const GROUPS: { key: LineGroup | 'All'; label: string }[] = [
-  { key: 'All',      label: 'All' },
-  { key: 'Monorail', label: 'Monorail' },
-  { key: 'Skyliner', label: 'Skyliner' },
-  { key: 'Boats',    label: 'Boats' },
-  { key: 'Buses',    label: 'Buses' },
+type Filter = LineGroup | 'All' | 'Advisories';
+
+const FILTERS: { key: Filter; label: string }[] = [
+  { key: 'All',        label: 'All' },
+  { key: 'Advisories', label: 'Advisories' },
+  { key: 'Monorail',   label: 'Monorail' },
+  { key: 'Skyliner',   label: 'Skyliner' },
+  { key: 'Boats',      label: 'Boats' },
+  { key: 'Buses',      label: 'Buses' },
 ];
+
+const ORDER: LineGroup[] = ['Monorail', 'Skyliner', 'Boats', 'Buses'];
 
 function Skeleton() {
   return (
     <>
-      {[0, 1, 2, 3, 4].map(i => (
-        <View key={i} style={skStyles.card}>
-          <View style={skStyles.stripe} />
-          <View style={{ flex: 1, padding: 12 }}>
-            <View style={[skStyles.bar, { width: '55%' }]} />
-            <View style={[skStyles.bar, { width: '80%', height: 8, marginTop: 8 }]} />
-            <View style={[skStyles.bar, { width: '35%', height: 8, marginTop: 8 }]} />
-          </View>
+      {[0, 1, 2, 3].map(i => (
+        <View key={i} style={skStyles.section}>
+          <View style={[skStyles.bar, { width: '55%' }]} />
+          <View style={[skStyles.bar, { width: '80%', height: 10, marginTop: 10 }]} />
+          <View style={[skStyles.bar, { width: '35%', height: 10, marginTop: 10 }]} />
+          <View style={[skStyles.bar, { width: '100%', height: 44, marginTop: 16, borderRadius: 12 }]} />
         </View>
       ))}
     </>
@@ -37,116 +40,139 @@ function Skeleton() {
 }
 
 export default function StatusScreen() {
-  const insets = useSafeAreaInsets();
   const live = useLiveStatus();
-  const [group, setGroup] = useState<LineGroup | 'All'>('All');
+  const [filter, setFilter] = useState<Filter>('All');
   const [refreshing, setRefreshing] = useState(false);
   const [booting, setBooting] = useState(true);
-  const [clock, setClock] = useState(Date.now());
-  const scrollY = useRef(new Animated.Value(0)).current;
-
-  const subOpacity = scrollY.interpolate({ inputRange: [0, 28], outputRange: [1, 0], extrapolate: 'clamp' });
-  const subHeight = scrollY.interpolate({ inputRange: [0, 28], outputRange: [19, 0], extrapolate: 'clamp' });
-  const subMarginTop = scrollY.interpolate({ inputRange: [0, 28], outputRange: [3, 0], extrapolate: 'clamp' });
-  const titleFontSize = scrollY.interpolate({ inputRange: [0, 40], outputRange: [24, 18], extrapolate: 'clamp' });
-  const headerPaddingBottom = scrollY.interpolate({ inputRange: [0, 40], outputRange: [16, 10], extrapolate: 'clamp' });
 
   useEffect(() => {
-    const t = setTimeout(() => setBooting(false), 700);
-    const c = setInterval(() => setClock(Date.now()), 30_000);
-    return () => { clearTimeout(t); clearInterval(c); };
+    const t = setTimeout(() => setBooting(false), 500);
+    return () => clearTimeout(t);
   }, []);
 
   const onRefresh = () => {
     setRefreshing(true);
     refreshLiveStatus();
-    setTimeout(() => setRefreshing(false), 600);
+    setTimeout(() => setRefreshing(false), 500);
   };
 
-  const lines = useMemo(
-    () => TRANSIT_LINES.filter(l => group === 'All' || l.group === group),
-    [group]
+  const disrupted = useMemo(
+    () => TRANSIT_LINES.filter(l => live[l.id] && live[l.id].status !== 'operating'),
+    [live]
   );
-
-  const disrupted = TRANSIT_LINES.filter(l => live[l.id]?.status !== 'operating');
-  const updated = new Date(Object.values(live)[0]?.updatedAt ?? clock);
   const bridges = useMemo(() => getTemporaryBridges(live), [live]);
+  const updated = new Date(Object.values(live)[0]?.updatedAt ?? Date.now());
+
+  const visibleGroups = filter === 'All' || filter === 'Advisories'
+    ? ORDER
+    : ORDER.filter(g => g === filter);
 
   return (
     <View style={styles.screen}>
-      {/* Header — shrinks as the list scrolls */}
-      <LinearGradient colors={Gradients.sky} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
-        <Animated.View style={[styles.header, { paddingTop: insets.top + 10, paddingBottom: headerPaddingBottom }]}>
-          <Animated.Text style={[styles.headerTitle, { fontSize: titleFontSize }]}>
-            Transportation Status
-          </Animated.Text>
-          <Animated.Text style={[styles.headerSub, { opacity: subOpacity, height: subHeight, marginTop: subMarginTop }]}>
-            {disrupted.length === 0
-              ? 'All systems operating normally'
-              : `${disrupted.length} ${disrupted.length === 1 ? 'line' : 'lines'} with service advisories`}
-          </Animated.Text>
-        </Animated.View>
+      <AppHeader
+        title="Transportation Status"
+        subtitle={
+          disrupted.length === 0
+            ? 'All lines operating normally'
+            : `${disrupted.length} line${disrupted.length === 1 ? '' : 's'} with advisories`
+        }
+      />
 
-        {/* Group filter */}
-        <View style={styles.chipsWrap}>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipsRow}>
-            {GROUPS.map(g => {
-              const active = group === g.key;
-              return (
-                <TouchableOpacity
-                  key={g.key}
-                  style={[styles.chip, active && styles.chipActive]}
-                  onPress={() => setGroup(g.key)}
-                  activeOpacity={0.8}
-                >
-                  <Text style={[styles.chipText, active && styles.chipTextActive]}>{g.label}</Text>
-                </TouchableOpacity>
-              );
-            })}
-          </ScrollView>
-        </View>
-      </LinearGradient>
+      <View style={styles.filterBar}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterRow}>
+          {FILTERS.map(f => {
+            const active = filter === f.key;
+            const count = f.key === 'Advisories' ? disrupted.length : 0;
+            if (f.key === 'Advisories' && count === 0) return null;
+            return (
+              <TouchableOpacity
+                key={f.key}
+                style={[styles.chip, active && styles.chipActive]}
+                onPress={() => setFilter(f.key)}
+                activeOpacity={0.75}
+                accessibilityRole="radio"
+                accessibilityState={{ selected: active }}
+              >
+                <Text style={[styles.chipText, active && styles.chipTextActive]}>
+                  {f.label}{count > 0 ? ` (${count})` : ''}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
+      </View>
 
-      <Animated.ScrollView
+      <ScrollView
         contentContainerStyle={styles.scroll}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.primaryBlue} />}
-        onScroll={Animated.event(
-          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
-          { useNativeDriver: false }
-        )}
-        scrollEventThrottle={16}
+        refreshControl={
+          Platform.OS === 'web'
+            ? undefined
+            : <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.primaryBlue} />
+        }
       >
+        <TouchableOpacity
+          style={styles.updatedRow}
+          onPress={onRefresh}
+          activeOpacity={0.6}
+          accessibilityRole="button"
+          accessibilityLabel="Refresh transportation status"
+        >
+          <Text style={styles.updatedText}>
+            Updated {updated.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}
+            {' · '}
+            <Text style={styles.updatedLink}>
+              {Platform.OS === 'web' ? 'Tap to refresh' : 'Pull to refresh'}
+            </Text>
+          </Text>
+        </TouchableOpacity>
+
         {booting ? (
           <Skeleton />
+        ) : filter === 'Advisories' ? (
+          <>
+            {disrupted.map(l => <StatusCard key={l.id} line={l} status={live[l.id]} />)}
+            {bridges.map(b => <TemporaryBridgeCard key={b.id} bridge={b} />)}
+          </>
         ) : (
           <>
-            <Text style={styles.updated}>
-              Updated {updated.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })} · pull to refresh
-            </Text>
+            {/* Disruptions are pinned to the top rather than buried nineteen
+                cards down under a header that only counts them. */}
+            {filter === 'All' && disrupted.length > 0 && (
+              <>
+                <View style={styles.groupHeader}>
+                  <Text style={styles.groupTitle}>Service Advisories</Text>
+                </View>
+                {disrupted.map(l => <StatusCard key={`adv-${l.id}`} line={l} status={live[l.id]} />)}
+              </>
+            )}
 
-            {(['Monorail', 'Skyliner', 'Boats', 'Buses'] as LineGroup[])
-              .filter(g => group === 'All' || group === g)
-              .map(g => (
+            {visibleGroups.map(g => {
+              const lines = TRANSIT_LINES.filter(
+                l => l.group === g && (filter !== 'All' || live[l.id]?.status === 'operating')
+              );
+              const groupBridges = g === 'Buses' ? bridges : [];
+              if (lines.length === 0 && groupBridges.length === 0 && g !== 'Buses') return null;
+              return (
                 <View key={g}>
-                  <Text style={styles.sectionTitle}>{g}</Text>
-                  {g === 'Buses' && bridges.map(b => (
-                    <TemporaryBridgeCard key={b.id} bridge={b} />
-                  ))}
-                  {lines.filter(l => l.group === g).map(l =>
-                    live[l.id] ? <StatusCard key={l.id} line={l} status={live[l.id]} /> : null
-                  )}
+                  <View style={styles.groupHeader}>
+                    <Text style={styles.groupTitle}>{g}</Text>
+                  </View>
+                  {groupBridges.map(b => <TemporaryBridgeCard key={b.id} bridge={b} />)}
+                  {lines.map(l => <StatusCard key={l.id} line={l} status={live[l.id]} />)}
                   {g === 'Buses' && <BusTimesPanel />}
                 </View>
-              ))}
-
-            <Text style={styles.footnote}>
-              Unofficial demo. All status and arrival data is simulated. Not affiliated with
-              or endorsed by The Walt Disney Company.
-            </Text>
+              );
+            })}
           </>
         )}
-        <View style={{ height: 24 }} />
-      </Animated.ScrollView>
+
+        <Section last>
+          <Text style={styles.footnote}>
+            Service levels, departure estimates, and crowd levels in ParkWays are modeled,
+            not live operational data. Not affiliated with The Walt Disney Company.
+          </Text>
+        </Section>
+      </ScrollView>
     </View>
   );
 }
@@ -156,92 +182,76 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.pageBg,
   },
-  header: {
-    paddingHorizontal: 20,
-    paddingBottom: 16,
+  filterBar: {
+    backgroundColor: Colors.sectionBg,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.divider,
   },
-  headerTitle: {
-    color: '#fff',
-    fontSize: 24,
-    fontWeight: '700',
-  },
-  headerSub: {
-    color: 'rgba(255,255,255,0.75)',
-    fontSize: 13,
-    marginTop: 3,
-  },
-  chipsWrap: {},
-  chipsRow: {
-    paddingHorizontal: 16,
-    paddingBottom: 14,
-    gap: 8,
+  filterRow: {
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.md,
+    gap: Spacing.sm,
   },
   chip: {
-    paddingHorizontal: 14,
-    paddingVertical: 6,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.14)',
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.sm,
+    borderRadius: Radius.pill,
+    borderWidth: 1,
+    borderColor: Colors.dividerStrong,
+    backgroundColor: Colors.sectionBg,
   },
   chipActive: {
-    backgroundColor: '#fff',
+    backgroundColor: Colors.primaryBlue,
+    borderColor: Colors.primaryBlue,
   },
   chipText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: 'rgba(255,255,255,0.9)',
+    ...Type.label,
+    color: Colors.textSecondary,
   },
   chipTextActive: {
-    color: Colors.primaryBlue,
+    color: Colors.textOnDark,
   },
   scroll: {
-    paddingBottom: 12,
+    paddingBottom: Spacing.xl,
   },
-  updated: {
-    fontSize: 11.5,
-    color: Colors.textSecondary,
-    textAlign: 'center',
-    marginTop: 10,
-    marginBottom: 2,
+  updatedRow: {
+    paddingVertical: Spacing.md,
+    alignItems: 'center',
   },
-  sectionTitle: {
-    fontSize: 13,
-    fontWeight: '600',
+  updatedText: {
+    ...Type.caption,
     color: Colors.textSecondary,
-    textTransform: 'uppercase',
-    letterSpacing: 0.6,
-    marginHorizontal: 16,
-    marginTop: 14,
-    marginBottom: 6,
+  },
+  updatedLink: {
+    ...Type.label,
+    color: Colors.primaryBlue,
+  },
+  groupHeader: {
+    paddingHorizontal: Spacing.lg,
+    paddingTop: Spacing.md,
+    paddingBottom: Spacing.sm,
+  },
+  groupTitle: {
+    ...Type.eyebrow,
+    color: Colors.textSecondary,
   },
   footnote: {
-    fontSize: 11,
+    ...Type.caption,
     color: Colors.textPlaceholder,
     textAlign: 'center',
-    marginHorizontal: 32,
-    marginTop: 20,
-    lineHeight: 16,
+    lineHeight: 19,
   },
 });
 
 const skStyles = StyleSheet.create({
-  card: {
-    flexDirection: 'row',
-    backgroundColor: Colors.cardBg,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: Colors.cardBorder,
-    marginHorizontal: 16,
-    marginVertical: 4,
-    overflow: 'hidden',
-    height: 86,
-  },
-  stripe: {
-    width: 4,
-    backgroundColor: Colors.divider,
+  section: {
+    backgroundColor: Colors.sectionBg,
+    padding: Spacing.lg,
+    marginBottom: 8,
   },
   bar: {
-    height: 12,
-    borderRadius: 6,
+    height: 14,
+    borderRadius: 7,
     backgroundColor: Colors.divider,
   },
 });

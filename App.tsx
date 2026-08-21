@@ -1,11 +1,18 @@
 import 'react-native-gesture-handler';
 import React from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { Platform, View, StyleSheet, useWindowDimensions } from 'react-native';
+import { Platform, View, StyleSheet, useWindowDimensions, ActivityIndicator } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
+import {
+  useFonts,
+  NunitoSans_400Regular,
+  NunitoSans_600SemiBold,
+  NunitoSans_700Bold,
+} from '@expo-google-fonts/nunito-sans';
 import AppNavigator from './src/navigation/AppNavigator';
-import { Gradients } from './src/utils/theme';
+import ErrorBoundary from './src/components/ErrorBoundary';
+import { Colors, Gradients } from './src/utils/theme';
 import { MODAL_HOST_ID } from './src/components/AppModal';
 
 const FRAME_WIDTH = 460;
@@ -43,7 +50,7 @@ function WebFrame({ children }: { children: React.ReactNode }) {
 
   return (
     <LinearGradient
-      colors={Gradients.sky}
+      colors={Gradients.hero}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
       style={styles.webBackdrop}
@@ -54,11 +61,28 @@ function WebFrame({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
+  const [fontsLoaded] = useFonts({
+    NunitoSans_400Regular,
+    NunitoSans_600SemiBold,
+    NunitoSans_700Bold,
+  });
+
   return (
     <SafeAreaProvider>
       <StatusBar style="light" />
       <WebFrame>
-        <AppNavigator />
+        {fontsLoaded ? (
+          <ErrorBoundary>
+            <AppNavigator />
+          </ErrorBoundary>
+        ) : (
+          // Every text style in the app names a bundled font explicitly, so
+          // rendering before the fonts resolve would flash the system face on
+          // first paint and then reflow. A brief neutral hold is quieter.
+          <View style={styles.booting}>
+            <ActivityIndicator color={Colors.primaryBlue} />
+          </View>
+        )}
       </WebFrame>
     </SafeAreaProvider>
   );
@@ -77,7 +101,7 @@ const styles = StyleSheet.create({
     width: FRAME_WIDTH,
     borderRadius: 28,
     overflow: 'hidden',
-    backgroundColor: '#fff',
+    backgroundColor: Colors.sectionBg,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 24 },
     shadowOpacity: 0.28,
@@ -89,5 +113,11 @@ const styles = StyleSheet.create({
     flex: 1,
     width: '100%',
     height: '100%',
+  },
+  booting: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: Colors.pageBg,
   },
 });

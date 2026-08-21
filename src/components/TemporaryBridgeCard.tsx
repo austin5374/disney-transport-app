@@ -1,93 +1,83 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import { TemporaryBridge } from '../utils/liveStatus';
-import { Colors } from '../utils/theme';
+import { Colors, Type, Spacing, Radius, SECTION_GAP } from '../utils/theme';
+import ModeGlyph from './ModeGlyph';
 
 interface TemporaryBridgeCardProps {
   bridge: TemporaryBridge;
 }
 
-// Visually distinct from a real, permanent bus line — gold accent + a
-// "Temporary" tag — so it reads as a stopgap tied to an active outage, not
-// a new fixed route someone could rely on tomorrow.
+// A stopgap bus brought up to cover an active outage, not a fixed route.
+// Amber is the app's disruption color and this is a disruption, so the tag
+// earns it here — unlike the old palette, which used the same warm accent for
+// ordinary badges and links.
 export default function TemporaryBridgeCard({ bridge }: TemporaryBridgeCardProps) {
   return (
-    <View style={styles.card}>
-      <View style={styles.stripe} />
-      <View style={styles.body}>
-        <View style={styles.topRow}>
-          <Text style={styles.name} numberOfLines={2}>{bridge.name}</Text>
-          <View style={styles.tag}>
-            <Ionicons name="time-outline" size={11} color={Colors.warnText} />
-            <Text style={styles.tagText}>Temporary</Text>
+    <>
+      <View style={styles.section}>
+        <View style={styles.headerRow}>
+          <View style={styles.headerText}>
+            <View style={styles.tag}>
+              <Text style={styles.tagText}>Temporary Service</Text>
+            </View>
+            <Text style={styles.name}>{bridge.name}</Text>
+            <Text style={styles.stations}>{bridge.stations.join(' · ')}</Text>
           </View>
+          <ModeGlyph mode="bus" size={34} tile />
         </View>
-        <Text style={styles.stations} numberOfLines={1}>
-          {bridge.stations.join(' · ')}
-        </Text>
         <Text style={styles.note}>{bridge.note}</Text>
       </View>
-    </View>
+      <View style={styles.gutter} />
+    </>
   );
 }
 
 const styles = StyleSheet.create({
-  card: {
-    flexDirection: 'row',
-    backgroundColor: Colors.warnBg,
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: Colors.warnBorder,
-    marginHorizontal: 16,
-    marginVertical: 4,
-    overflow: 'hidden',
+  section: {
+    backgroundColor: Colors.sectionBg,
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.lg,
   },
-  stripe: {
-    width: 4,
-    backgroundColor: Colors.gold,
+  gutter: {
+    height: SECTION_GAP,
+    backgroundColor: Colors.pageBg,
   },
-  body: {
-    flex: 1,
-    padding: 12,
-  },
-  topRow: {
+  headerRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    justifyContent: 'space-between',
-    marginBottom: 3,
-    gap: 8,
+    gap: Spacing.md,
   },
-  name: {
+  headerText: {
     flex: 1,
-    fontSize: 14,
-    fontWeight: '600',
-    color: Colors.textPrimary,
   },
   tag: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: '#fff',
-    borderRadius: 20,
+    alignSelf: 'flex-start',
+    borderRadius: Radius.sm,
     borderWidth: 1,
-    borderColor: Colors.warnBorder,
-    paddingHorizontal: 8,
+    borderColor: Colors.statusDelayedBorder,
+    backgroundColor: Colors.statusDelayedBg,
+    paddingHorizontal: Spacing.sm,
     paddingVertical: 3,
+    marginBottom: Spacing.sm,
   },
   tagText: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: Colors.warnText,
+    ...Type.caption,
+    fontFamily: Type.label.fontFamily,
+    color: Colors.statusDelayed,
+  },
+  name: {
+    ...Type.subtitle,
+    color: Colors.textPrimary,
   },
   stations: {
-    fontSize: 12,
+    ...Type.bodySmall,
     color: Colors.textSecondary,
-    marginBottom: 4,
+    marginTop: 2,
   },
   note: {
-    fontSize: 12,
-    color: Colors.warnText,
-    lineHeight: 17,
+    ...Type.bodySmall,
+    color: Colors.textSecondary,
+    marginTop: Spacing.md,
   },
 });
