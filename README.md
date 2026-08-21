@@ -8,11 +8,15 @@ Built with Expo and React Native in TypeScript, so the same code runs on iOS, An
 
 ## What it does
 
-You pick two places out of 33 (every park, every resort, both water parks, Disney Springs) and it gives you the ways to get between them. There are about 385 routes written out by hand. If two places have no direct connection, it builds a trip through a transfer point instead, which is what you'd actually end up doing.
+You pick two places out of 33 (every park, every resort, both water parks, Disney Springs) and it gives you the ways to get between them. There are about 350 routes written out by hand. If two places have no direct connection, it builds a trip through a transfer point instead, which is what you'd actually end up doing.
 
 Trips are sorted by how long the whole thing takes, not just the time you're on the vehicle. That means it counts the wait too. A bus that shows up every 20 minutes costs you about 10 minutes of standing there on average, and a trip that ignores that isn't telling you the truth. The detail page splits the total back out into wait, ride, and walking so you can see where the time goes.
 
-Some routes only run at certain times. Park to park buses don't start until 10am, the Blue Flag boat starts at 3pm, and Disney Springs buses from the parks start at 4pm. The planner checks the clock. If you ask for Magic Kingdom to Hollywood Studios at 8am it won't offer you a bus that isn't running yet, it'll route you through a monorail resort instead.
+Some routes only run at certain times. Park to park buses don't start until 10am, the Blue Flag boat starts at 3pm, and Disney Springs buses from the parks start at 4pm. The planner checks the clock. Ask for Magic Kingdom to Disney Springs before 10 and it won't offer you a bus that isn't running yet — it works out which resort you can pick one up at instead, and how to get to that resort.
+
+That second half is a search rather than a lookup, which matters more than it sounds. Anywhere is a candidate hub if something leaves it for where you're going, and the way in is ranked across every mode that can get you there: the monorail to the Contemporary and the footpath to it both cost eight minutes, so you're told about both. A transfer won't ride a flagged-down resort launch if the hop has anything else, because a boat you have to wave down is a bad thing to bet a connection on. And a hub that carries you well past your destination loses to one that doesn't, which the clock alone can't express.
+
+Where the clock is hiding something, the list says so instead of just being short: "1 more route runs after 10:00 AM", with a control to go and look.
 
 Every line has published operating hours, and the app respects them. After park close the board says a line has ended for the night rather than counting down to a train that isn't coming, and a route that rides a closed line drops out of the results instead of being offered.
 
@@ -60,7 +64,7 @@ npm run typecheck
 
 ## Tests
 
-87, in two suites. `npm run test:logic` runs the route graph and the status engine under ts-jest with no native pipeline, so a sweep across all 1,056 destination pairs finishes in under a second. `npm run test:screens` renders the real screens under jest-expo.
+103, in two suites. `npm run test:logic` runs the route graph and the status engine under ts-jest with no native pipeline, so a sweep across all 1,056 destination pairs finishes in under a second. `npm run test:screens` renders the real screens under jest-expo.
 
 Most of the route-data tests exist because the data was typed out by hand and I didn't trust it. Writing them turned up real problems:
 
@@ -74,6 +78,8 @@ The rest cover the routing logic and the status simulation, where the clock gets
 - no pair is offered a journey long enough to be a mistake
 - every two stops on the same boat or Skyliner line are actually connected
 - a paid Minnie Van never outranks Disney transportation
+- a paved path that walks one way walks the other way too
+- a transfer never boards a flagged-down launch when that hop has another option
 
 The last one is why the coverage tests sweep all 1,056 pairs rather than sampling: this class of gap is never the pair you happen to check by hand. Twelve pairs used to have no transit answer at all, and all twelve involved Typhoon Lagoon.
 
