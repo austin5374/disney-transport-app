@@ -57,6 +57,10 @@ export interface Route {
    *  paid product without listing its price. */
   priceUsd?: number;
   notes?: string;
+  /** Set when the line runs today but has not started yet — the Express beam
+   *  opens its return leg at a different time each day. A display string,
+   *  because the hour is computed from the date rather than fixed. */
+  opensAt?: string;
   name: string; // human-readable name for the card
 }
 

@@ -1,7 +1,7 @@
 import {
   getActiveRoutes, applyFilters, journeyMinutes, waitMinutesFor,
   transferCount, driveMinutes, describeExclusions, expectedWait,
-  describeTimeGaps, describeAlternateWindow, restrictionLabel,
+  describeTimeGaps, restrictionLabel,
 } from '../utils/routing';
 import { DESTINATIONS } from '../data/destinations';
 import { RAIL_STATIONS } from '../data/rail';
@@ -18,6 +18,7 @@ const at = (hour: number) => {
   return d;
 };
 const isPaid = (r: Route) => r.legs.some(l => l.mode === 'minnie_van');
+const legSig = (r: Route) => r.legs.map(l => `${l.mode}:${l.from}>${l.to}`).join('|');
 
 describe('journey cost model', () => {
   it('counts wait, ride, and walk, not ride alone', () => {
@@ -103,10 +104,24 @@ describe('filters', () => {
   it('"fastest" orders transit by total journey time', () => {
     for (const [a, b] of PAIRS.slice(0, 300)) {
       const transit = applyFilters(getActiveRoutes(a, b, at(11)), BASE).filter(r => !isPaid(r));
-      for (let i = 1; i < transit.length; i++) {
-        expect(journeyMinutes(transit[i - 1])).toBeLessThanOrEqual(journeyMinutes(transit[i]));
+      // Three things outrank the clock, and all three are deliberate: a paid
+      // car, a last-resort stitch, and a line that has not started running
+      // yet. Time ordering holds within the group that is actually moving.
+      const running = transit.filter(r => !r.opensAt);
+      for (let i = 1; i < running.length; i++) {
+        expect(journeyMinutes(running[i - 1])).toBeLessThanOrEqual(journeyMinutes(running[i]));
       }
     }
+  });
+
+  it('ranks a line that has not opened yet below every line that has', () => {
+    // The Express beam's return leg is quick once it is running, so on time
+    // alone it would sit at the top of a list of trips you cannot take.
+    const transit = applyFilters(getActiveRoutes('MK', 'TTC', at(9)), BASE).filter(r => !isPaid(r));
+    const pending = transit.filter(r => r.opensAt);
+    expect(pending.length).toBeGreaterThan(0);
+    expect(journeyMinutes(pending[0])).toBeLessThan(journeyMinutes(transit[0]));
+    expect(transit.indexOf(pending[0])).toBe(transit.length - pending.length);
   });
 
   it('"transfers" puts the simplest trip first', () => {
@@ -208,10 +223,13 @@ describe('time-of-day rules', () => {
     expect(early.length).toBeGreaterThan(0);
     for (const r of early) expect(r.legs.length).toBeGreaterThan(1);
 
-    // Once park-to-park service starts, the direct bus replaces them.
+    // Once park-to-park service starts the direct bus appears — alongside the
+    // trips that run all day, not instead of them. Showing the restricted bus
+    // on its own is what left a guest reading "Only after 10:00 AM" with no
+    // idea what to do at nine.
     expect(ids(11)).toContain('mk-hs-bus');
-    expect(getActiveRoutes('MK', 'HS', at(11)).filter(r => !isPaid(r) && r.id.startsWith('synth-')))
-      .toEqual([]);
+    expect(getActiveRoutes('MK', 'HS', at(11)).filter(r => !isPaid(r) && r.id.startsWith('synth-')).length)
+      .toBeGreaterThan(0);
   });
 
   it('picks the transfer hub by cost rather than from a hardcoded default', () => {
@@ -508,50 +526,38 @@ describe('stitched transfers', () => {
   });
 });
 
-describe('the other side of a restriction', () => {
-  it('answers the question the "only after 10 AM" badge asks', () => {
-    // The badge is on screen at 11, and the trips covering the hours it
-    // excludes are composed on demand rather than written down — so nothing
-    // could find them and the list said nothing.
-    const bus = getActiveRoutes('MK', 'HS', at(11)).find(r => r.id === 'mk-hs-bus')!;
-    expect(restrictionLabel(bus)).toBe('Only after 10:00 AM');
+describe('a restricted route never stands alone', () => {
+  it('lists the all-day alternatives beside the after-10 bus', () => {
+    // The list used to hold exactly one option at 11 AM — the direct bus,
+    // badged "Only after 10:00 AM" — and nothing that worked at nine. The
+    // badge raised a question the list then refused to answer.
+    const transit = applyFilters(getActiveRoutes('MK', 'HS', at(11)), BASE).filter(r => !isPaid(r));
+    expect(transit.length).toBeGreaterThan(1);
 
-    const [alt] = describeAlternateWindow('MK', 'HS', at(11));
-    expect(alt.window).toBe('before 10:00 AM');
-    expect(alt.at.getHours()).toBeLessThan(10);
-    expect(alt.count).toBeGreaterThan(0);
+    const restricted = transit.filter(r => r.timeRestriction);
+    const anytime = transit.filter(r => !r.timeRestriction);
+    expect(restricted.length).toBeGreaterThan(0);
+    expect(anytime.length).toBeGreaterThan(0);
 
-    // ...and following it really does land on a different set of trips.
-    const now = getActiveRoutes('MK', 'HS', at(11)).filter(r => !isPaid(r));
-    const then = getActiveRoutes('MK', 'HS', alt.at).filter(r => !isPaid(r));
-    expect(then.map(r => r.id)).not.toEqual(now.map(r => r.id));
-    expect(then.length).toBe(alt.count);
+    // Only the restricted one is labelled, so the difference is legible.
+    for (const r of restricted) expect(restrictionLabel(r)).toBeTruthy();
+    for (const r of anytime) expect(restrictionLabel(r)).toBeNull();
+
+    // And the alternatives really do run at the hour the badge excludes.
+    const early = getActiveRoutes('MK', 'HS', at(9)).filter(r => !isPaid(r)).map(legSig);
+    for (const r of anytime) expect(early).toContain(legSig(r));
   });
 
-  it('stays quiet where the other hour changes nothing', () => {
-    // Most pairs run the same way all day. Pointing at nine in the morning
-    // there would be pointing at nothing.
-    let quiet = 0;
+  it('never leaves a pair showing only time-restricted options', () => {
+    const offenders: string[] = [];
     for (const [a, b] of PAIRS) {
-      const alts = describeAlternateWindow(a, b, at(11));
-      if (alts.length === 0) { quiet++; continue; }
-      for (const alt of alts) {
-        const now = getActiveRoutes(a, b, at(11)).filter(r => !isPaid(r)).map(r => r.id).join('|');
-        const then = getActiveRoutes(a, b, alt.at).filter(r => !isPaid(r)).map(r => r.id).join('|');
-        expect(then).not.toBe(now);
+      for (const hour of [11, 17, 21]) {
+        const transit = applyFilters(getActiveRoutes(a, b, at(hour)), BASE).filter(r => !isPaid(r));
+        if (transit.length === 0) continue;
+        if (transit.every(r => r.timeRestriction)) offenders.push(`${a}>${b}@${hour}`);
       }
     }
-    expect(quiet).toBeGreaterThan(PAIRS.length / 2);
-  });
-
-  it('never offers an hour with nothing to show', () => {
-    for (const [a, b] of PAIRS) {
-      for (const hour of [8, 11, 17, 21]) {
-        for (const alt of describeAlternateWindow(a, b, at(hour))) {
-          expect(alt.count).toBeGreaterThan(0);
-          expect(getActiveRoutes(a, b, alt.at).filter(r => !isPaid(r)).length).toBe(alt.count);
-        }
-      }
-    }
+    expect(offenders).toEqual([]);
   });
 });
+

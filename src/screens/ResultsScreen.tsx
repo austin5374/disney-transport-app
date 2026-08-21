@@ -6,8 +6,7 @@ import { RootStackParamList, ActiveFilters } from '../types';
 import { Colors, Type, Spacing } from '../utils/theme';
 import { DESTINATION_MAP } from '../data/destinations';
 import {
-  getActiveRoutes, applyFilters, describeExclusions, describeTimeGaps,
-  describeAlternateWindow, hiddenByFilters,
+  getActiveRoutes, applyFilters, describeExclusions, describeTimeGaps, hiddenByFilters,
 } from '../utils/routing';
 import { useLiveStatusAt } from '../utils/liveStatus';
 import AppHeader from '../components/AppHeader';
@@ -67,13 +66,6 @@ export default function ResultsScreen({ navigation, route: navRoute }: Props) {
     [from, to, timeDate]
   );
 
-  // ...and the other direction. A card badged "Only after 10:00 AM" asks a
-  // question the list was not answering: the trips that cover the hours it
-  // does not are composed on demand, so nothing pointed at them.
-  const alternates = useMemo(
-    () => (from && to ? describeAlternateWindow(from.id, to.id, timeDate ?? undefined) : []),
-    [from, to, timeDate]
-  );
 
   // Transit options come first; a paid car is never the headline answer.
   const transit = routes.filter(r => !r.legs.some(l => l.mode === 'minnie_van'));
@@ -143,20 +135,6 @@ export default function ResultsScreen({ navigation, route: navRoute }: Props) {
             <LinkAction
               label={`Show ${fmtHour(gap.at)}`}
               onPress={() => setTimeDate(gap.at)}
-              noChevron
-            />
-          </View>
-        ))}
-
-        {alternates.map(alt => (
-          <View key={`alt-${alt.window}`} style={styles.planAheadRow}>
-            <Text style={styles.planAheadText}>
-              Travelling {alt.window}? This trip works differently then —{' '}
-              {alt.count} route{alt.count === 1 ? '' : 's'}.
-            </Text>
-            <LinkAction
-              label={`Show ${fmtHour(alt.at)}`}
-              onPress={() => setTimeDate(alt.at)}
               noChevron
             />
           </View>

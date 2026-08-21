@@ -210,21 +210,24 @@ describe('changing a trip you already ran', () => {
   });
 });
 
-describe('the other side of the 10 AM rule', () => {
+describe('the 10 AM rule', () => {
   const midday = new Date(2026, 7, 20, 11, 0, 0).toISOString();
 
-  it('offers the earlier routes the badge implies but never showed', async () => {
+  it('shows the all-day routes beside the restricted one, and labels only the restricted one', async () => {
     await wrap(
       <ResultsScreen
         navigation={nav()}
         route={{ params: { fromId: 'MK', toId: 'HS', timeOverride: midday } } as never}
       />
     );
+    // The restricted bus, carrying its label...
     expect(screen.getByText('Only after 10:00 AM')).toBeTruthy();
-    expect(screen.getByText(/Travelling before 10:00 AM\?/)).toBeTruthy();
-    await fireEvent.press(screen.getByText('Show 9:00 AM'));
-    await waitFor(() =>
-      expect(screen.queryByText('Bus from Magic Kingdom')).toBeNull());
+    expect(screen.getByText('Bus from Magic Kingdom')).toBeTruthy();
+    // ...and more than one option, so the label is a distinction rather than
+    // the whole list.
+    expect(screen.getByText(/[2-9] Transit Options/)).toBeTruthy();
+    // The prompt that used to stand in for this is gone.
+    expect(screen.queryByText(/Travelling before 10:00 AM/)).toBeNull();
   });
 });
 

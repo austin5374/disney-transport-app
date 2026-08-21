@@ -1,5 +1,6 @@
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { Route } from '../types';
 import { Colors, Type, Spacing, Radius, StatusColors, SECTION_GAP } from '../utils/theme';
 import { lineForLeg } from '../data/lines';
@@ -9,6 +10,7 @@ import TransportChip from './TransportChip';
 import LiveArrival from './LiveArrival';
 import ModeGlyph from './ModeGlyph';
 import OutlinedBox from './ui/OutlinedBox';
+import InfoSheet from './InfoSheet';
 import LinkAction from './ui/LinkAction';
 
 interface RouteCardProps {
@@ -56,6 +58,7 @@ export default function RouteCard({ route, live, at, onPress }: RouteCardProps) 
   // trip that only runs after 10 looked, at noon, like it ran all day.
   const restriction = restrictionLabel(route);
   const lastResort = route.tags.includes('last_resort');
+  const [showWhy, setShowWhy] = useState(false);
 
   // The paid-ride note used to be a gray capsule above the title. It is a
   // fact about the trip, not a status, so it belongs on the meta line with the
@@ -99,6 +102,22 @@ export default function RouteCard({ route, live, at, onPress }: RouteCardProps) 
               <View style={[styles.badge, styles.badgeNeutral]}>
                 <Text style={[styles.badgeText, styles.badgeNeutralText]}>Last resort</Text>
               </View>
+            )}
+            {/* A line that runs today but has not started. Tappable, because
+                "expected to start boarding" is a strange sentence unless you
+                already know Disney varies it. */}
+            {route.opensAt && (
+              <TouchableOpacity
+                style={[styles.badge, styles.badgeNeutral, styles.badgeTappable]}
+                onPress={() => setShowWhy(true)}
+                accessibilityRole="button"
+                accessibilityLabel={`Expected to start boarding at ${route.opensAt}. Why?`}
+              >
+                <Text style={[styles.badgeText, styles.badgeNeutralText]}>
+                  Expected to start boarding {route.opensAt}
+                </Text>
+                <Ionicons name="help-circle-outline" size={14} color={Colors.statusClosed} />
+              </TouchableOpacity>
             )}
           </View>
         )}
@@ -145,6 +164,15 @@ export default function RouteCard({ route, live, at, onPress }: RouteCardProps) 
         )}
       </View>
       <View style={styles.gutter} />
+
+      {route.opensAt && (
+        <InfoSheet
+          visible={showWhy}
+          title="Why the time moves"
+          message={`The Express beam runs one way in the morning, carrying guests into Magic Kingdom while that is where everyone is going. The return leg opens once the morning rush is through — around lunchtime, at a slightly different time each day depending on how the morning has gone. Today it is expected at about ${route.opensAt}.\n\nUntil then the Resort Monorail still gets you to the Ticket Center; it just goes the long way round the loop.`}
+          onClose={() => setShowWhy(false)}
+        />
+      )}
     </>
   );
 }
@@ -182,6 +210,11 @@ const styles = StyleSheet.create({
   },
   badgeNeutralText: {
     color: Colors.statusClosed,
+  },
+  badgeTappable: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.xs,
   },
   headerRow: {
     flexDirection: 'row',

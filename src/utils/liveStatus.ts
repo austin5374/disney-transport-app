@@ -1,6 +1,7 @@
 import { useMemo, useSyncExternalStore } from 'react';
 import { Platform, AppState, AppStateStatus } from 'react-native';
 import { TRANSIT_LINES, TransitLine, isInService, serviceStartLabel } from '../data/lines';
+import { unit, pick, between } from './deterministic';
 
 // Deterministic live-status engine
 //
@@ -49,33 +50,6 @@ const TICK_MS = 20_000;
 const MINUTE = 60_000;
 /** Disruptions are decided per half-hour window. */
 const EPISODE_MS = 30 * MINUTE;
-
-// Hashing
-// A stable string hash plus a splitmix-style mixer gives a uniform value in
-// [0, 1) for any key. Same key, same value, on every device and every reload.
-
-function hash(key: string): number {
-  let h = 2166136261 >>> 0;
-  for (let i = 0; i < key.length; i++) {
-    h ^= key.charCodeAt(i);
-    h = Math.imul(h, 16777619) >>> 0;
-  }
-  return h >>> 0;
-}
-
-function unit(...parts: (string | number)[]): number {
-  let x = hash(parts.join('|'));
-  x ^= x >>> 16; x = Math.imul(x, 0x7feb352d) >>> 0;
-  x ^= x >>> 15; x = Math.imul(x, 0x846ca68b) >>> 0;
-  x ^= x >>> 16;
-  return (x >>> 0) / 4294967296;
-}
-
-const pick = <T,>(arr: T[], ...seed: (string | number)[]): T =>
-  arr[Math.floor(unit(...seed) * arr.length) % arr.length];
-
-const between = (lo: number, hi: number, ...seed: (string | number)[]): number =>
-  Math.round(lo + unit(...seed) * (hi - lo));
 
 // Monorail headway model
 // Each beam runs a fixed number of trains, and headway follows from that count
