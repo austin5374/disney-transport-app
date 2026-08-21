@@ -1,6 +1,7 @@
 import { ALL_ROUTES } from '../data/routes';
 import { DESTINATIONS, DESTINATION_MAP } from '../data/destinations';
 import { TRANSIT_LINES, lineForLeg } from '../data/lines';
+import { railRoutes, RAIL_STATIONS } from '../data/rail';
 
 // The route graph is 400+ hand-authored entries. Every defect this file
 // guards against was actually present in the data at some point: totals that
@@ -160,5 +161,70 @@ describe('transit lines', () => {
       }
     }
     expect([...unresolved]).toEqual([]);
+  });
+});
+
+describe('monorail beams', () => {
+  it('connect every ordered pair of stations on the same beam', () => {
+    // The resort beam is a one-way loop of 5 stations, so it owes 20 ordered
+    // pairs. Only 12 were ever hand-authored, which left Magic Kingdom to
+    // Grand Floridian, Grand Floridian to the TTC and six others offering a
+    // walk or a boat and no train at all.
+    const missing: string[] = [];
+    for (const { mode, stops } of RAIL_STATIONS) {
+      for (const from of stops) {
+        for (const to of stops) {
+          if (from === to) continue;
+          const onThisBeam = railRoutes(from, to).filter(r => r.legs[0].mode === mode);
+          if (onThisBeam.length === 0) missing.push(`${mode}: ${from} to ${to}`);
+        }
+      }
+    }
+    expect(missing).toEqual([]);
+  });
+
+  it('give every generated trip a positive ride time and boarding guidance', () => {
+    for (const { stops } of RAIL_STATIONS) {
+      for (const from of stops) {
+        for (const to of stops) {
+          if (from === to) continue;
+          for (const r of railRoutes(from, to)) {
+            expect(r.legs).toHaveLength(1);
+            expect(r.legs[0].rideMinutes).toBeGreaterThan(0);
+            expect(r.legs[0].tip).toBeTruthy();
+            expect(r.totalRideMinutes).toBe(r.legs[0].rideMinutes);
+          }
+        }
+      }
+    }
+  });
+
+  it('ride the resort loop in its actual direction', () => {
+    // Travel is one way round the beam, so the two directions between a pair
+    // of stations are not the same length.
+    const short = railRoutes('GF', 'MK').find(r => r.legs[0].mode === 'monorail_resort')!;
+    const long = railRoutes('MK', 'GF').find(r => r.legs[0].mode === 'monorail_resort')!;
+    expect(short.legs[0].rideMinutes).toBe(3);
+    expect(long.legs[0].rideMinutes).toBeGreaterThan(short.legs[0].rideMinutes);
+
+    // A full lap is the sum of the hops, whichever pair you measure it from.
+    const lap = railRoutes('TTC', 'CON')[0].legs[0].rideMinutes
+      + railRoutes('CON', 'TTC')[0].legs[0].rideMinutes;
+    expect(lap).toBe(17);
+  });
+
+  it('does not duplicate a beam trip that the route file also declares', () => {
+    const railIds = new Set<string>();
+    for (const { stops } of RAIL_STATIONS) {
+      for (const from of stops) for (const to of stops) {
+        if (from === to) continue;
+        for (const r of railRoutes(from, to)) railIds.add(`${r.legs[0].mode}:${from}>${to}`);
+      }
+    }
+    const clashes = ALL_ROUTES
+      .filter(r => r.legs.length === 1 && r.legs[0].mode.startsWith('monorail'))
+      .map(r => `${r.legs[0].mode}:${r.legs[0].from}>${r.legs[0].to}`)
+      .filter(sig => railIds.has(sig));
+    expect(clashes).toEqual([]);
   });
 });

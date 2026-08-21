@@ -4,15 +4,8 @@ export const ALL_ROUTES: Route[] = [
 
   // 
   // FROM: MAGIC KINGDOM (MK)
-  // 
-
-  {
-    id: 'mk-ttc-express',
-    from: 'MK', to: 'TTC', name: 'Express Monorail to TTC',
-    legs: [{ mode: 'monorail_express', from: 'MK', to: 'TTC', rideMinutes: 8, accessible: true, tip: 'Board at the Magic Kingdom monorail station inside the park, upper level.' }],
-    totalRideMinutes: 8, tags: [], notes: 'Fastest option to TTC.',
-  },
-  {
+  //
+{
     id: 'mk-ttc-ferry',
     from: 'MK', to: 'TTC', name: 'Ferry Boat to TTC',
     legs: [{ mode: 'ferry_ttc_mk', from: 'MK', to: 'TTC', rideMinutes: 12, accessible: true, tip: 'Scenic Seven Seas Lagoon crossing. Boards at the main MK boat dock.' }],
@@ -139,12 +132,6 @@ export const ALL_ROUTES: Route[] = [
     from: 'MK', to: 'CON', name: 'Walk to Contemporary Resort (~8 min)',
     legs: [{ mode: 'walk', from: 'MK', to: 'CON', rideMinutes: 8, accessible: true, tip: 'Direct sidewalk from MK exits to Contemporary. Always faster than waiting for the monorail.' }],
     totalRideMinutes: 8, tags: ['walk_only'],
-  },
-  {
-    id: 'mk-con-monorail',
-    from: 'MK', to: 'CON', name: 'Resort Monorail to Contemporary',
-    legs: [{ mode: 'monorail_resort', from: 'MK', to: 'CON', rideMinutes: 3, accessible: true, tip: 'Walking is almost always faster. Skip the wait and just walk the 7-10 min path.' }],
-    totalRideMinutes: 3, tags: [],
   },
 
   {
@@ -310,26 +297,12 @@ export const ALL_ROUTES: Route[] = [
 
   // 
   // FROM: TTC
-  // 
-
-  {
-    id: 'ttc-mk-express',
-    from: 'TTC', to: 'MK', name: 'Express Monorail to Magic Kingdom',
-    legs: [{ mode: 'monorail_express', from: 'TTC', to: 'MK', rideMinutes: 8, accessible: true, tip: 'Fastest option. Express Monorail boards at TTC upper level.' }],
-    totalRideMinutes: 8, tags: [],
-  },
-  {
+  //
+{
     id: 'ttc-mk-ferry',
     from: 'TTC', to: 'MK', name: 'Ferry Boat to Magic Kingdom',
     legs: [{ mode: 'ferry_ttc_mk', from: 'TTC', to: 'MK', rideMinutes: 12, accessible: true, tip: 'Scenic Seven Seas Lagoon ferry. Boards at TTC lower level boat dock.' }],
     totalRideMinutes: 12, tags: ['water', 'scenic'],
-  },
-
-  {
-    id: 'ttc-ep-monorail',
-    from: 'TTC', to: 'EP', name: 'EPCOT Monorail to EPCOT',
-    legs: [{ mode: 'monorail_epcot', from: 'TTC', to: 'EP', rideMinutes: 12, accessible: true, tip: 'Direct non-stop monorail from TTC to EPCOT main entrance.' }],
-    totalRideMinutes: 12, tags: [],
   },
 
   {
@@ -339,20 +312,7 @@ export const ALL_ROUTES: Route[] = [
     totalRideMinutes: 6, tags: ['walk_only'],
   },
 
-  {
-    id: 'ttc-gf-monorail',
-    from: 'TTC', to: 'GF', name: 'Resort Monorail to Grand Floridian',
-    legs: [{ mode: 'monorail_resort', from: 'TTC', to: 'GF', rideMinutes: 6, accessible: true, tip: 'Two stops in the correct loop direction: TTC→POLY→GF.' }],
-    totalRideMinutes: 6, tags: [],
-  },
-
-  {
-    id: 'ttc-con-monorail',
-    from: 'TTC', to: 'CON', name: 'Resort Monorail to Contemporary',
-    legs: [{ mode: 'monorail_resort', from: 'TTC', to: 'CON', rideMinutes: 14, accessible: true, tip: 'Full 4-stop loop: TTC→POLY→GF→MK→CON. Consider Minnie Van if in a hurry.' }],
-    totalRideMinutes: 14, tags: [],
-  },
-  {
+{
     id: 'ttc-con-minnie',
     from: 'TTC', to: 'CON', name: 'Minnie Van (Lyft)',
     legs: [{ mode: 'minnie_van', from: 'TTC', to: 'CON', rideMinutes: 10, accessible: true }],
@@ -447,14 +407,7 @@ export const ALL_ROUTES: Route[] = [
 
   // 
   // FROM: EPCOT (EP)
-  // 
-
-  {
-    id: 'ep-ttc-monorail',
-    from: 'EP', to: 'TTC', name: 'EPCOT Monorail to TTC',
-    legs: [{ mode: 'monorail_epcot', from: 'EP', to: 'TTC', rideMinutes: 12, accessible: true }],
-    totalRideMinutes: 12, tags: [],
-  },
+  //
 
   {
     id: 'ep-mk-monorail',
@@ -2044,19 +1997,8 @@ export const ALL_ROUTES: Route[] = [
     legs: [{ mode: 'water_taxi_gold', from: 'GF', to: 'MK', rideMinutes: 8, accessible: false, tip: 'Direct dock at GF. Fast option when boat is ready.' }],
     totalRideMinutes: 8, tags: ['water', 'scenic'],
   },
-  {
-    id: 'gf-mk-monorail',
-    from: 'GF', to: 'MK', name: 'Resort Monorail to Magic Kingdom',
-    legs: [{ mode: 'monorail_resort', from: 'GF', to: 'MK', rideMinutes: 3, accessible: true, tip: 'Next stop in correct loop direction. Walk is usually as fast when factoring monorail wait.' }],
-    totalRideMinutes: 3, tags: [],
-  },
-  {
-    id: 'gf-con-monorail',
-    from: 'GF', to: 'CON', name: 'Resort Monorail to Contemporary (via MK)',
-    legs: [{ mode: 'monorail_resort', from: 'GF', to: 'CON', rideMinutes: 6, accessible: true, tip: 'GF→MK→CON, two stops in correct loop direction.' }],
-    totalRideMinutes: 6, tags: [],
-  },
-  {
+
+{
     id: 'gf-ttc-walk',
     from: 'GF', to: 'TTC', name: 'Walk to Polynesian, then walk to TTC (~17 min)',
     legs: [
@@ -2109,37 +2051,19 @@ export const ALL_ROUTES: Route[] = [
     legs: [{ mode: 'walk', from: 'POLY', to: 'TTC', rideMinutes: 6, accessible: true, tip: 'Always walk. Poly is right next to TTC. Monorail in this direction takes 17 min (wrong direction). Never take it.' }],
     totalRideMinutes: 6, tags: ['walk_only'],
   },
-  {
-    id: 'poly-gf-monorail',
-    from: 'POLY', to: 'GF', name: 'Resort Monorail to Grand Floridian',
-    legs: [{ mode: 'monorail_resort', from: 'POLY', to: 'GF', rideMinutes: 3, accessible: true, tip: 'Next stop in correct loop direction. Fine to take.' }],
-    totalRideMinutes: 3, tags: [],
-  },
-  {
+{
     id: 'poly-gf-walk',
     from: 'POLY', to: 'GF', name: 'Walk to Grand Floridian (~12 min)',
     legs: [{ mode: 'walk', from: 'POLY', to: 'GF', rideMinutes: 12, accessible: true }],
     totalRideMinutes: 12, tags: ['walk_only'],
   },
-  {
-    id: 'poly-mk-monorail',
-    from: 'POLY', to: 'MK', name: 'Resort Monorail to Magic Kingdom',
-    legs: [{ mode: 'monorail_resort', from: 'POLY', to: 'MK', rideMinutes: 6, accessible: true, tip: 'Two stops in correct direction: POLY→GF→MK.' }],
-    totalRideMinutes: 6, tags: [],
-  },
-  {
+{
     id: 'poly-mk-watertaxi',
     from: 'POLY', to: 'MK', name: 'Gold Flag Water Taxi to Magic Kingdom',
     legs: [{ mode: 'water_taxi_gold', from: 'POLY', to: 'MK', rideMinutes: 8, accessible: false, tip: 'Direct from POLY dock.' }],
     totalRideMinutes: 8, tags: ['water', 'scenic'],
   },
-  {
-    id: 'poly-con-monorail',
-    from: 'POLY', to: 'CON', name: 'Resort Monorail to Contemporary',
-    legs: [{ mode: 'monorail_resort', from: 'POLY', to: 'CON', rideMinutes: 9, accessible: true, tip: 'Three stops in correct direction: POLY→GF→MK→CON.' }],
-    totalRideMinutes: 9, tags: [],
-  },
-  {
+{
     id: 'poly-ep-walk-monorail',
     from: 'POLY', to: 'EP', name: 'Walk to TTC, EPCOT Monorail to EPCOT',
     legs: [
@@ -2177,31 +2101,8 @@ export const ALL_ROUTES: Route[] = [
     legs: [{ mode: 'walk', from: 'CON', to: 'MK', rideMinutes: 8, accessible: true, tip: 'Direct sidewalk path, usually the fastest option. The Resort Monorail runs the loop the other way from here, so it takes longer.' }],
     totalRideMinutes: 8, tags: [],
   },
-  {
-    id: 'con-mk-monorail',
-    from: 'CON', to: 'MK', name: 'Resort Monorail to Magic Kingdom',
-    legs: [{ mode: 'monorail_resort', from: 'CON', to: 'MK', rideMinutes: 14, accessible: true, tip: 'Loop direction from Contemporary runs CON→TTC→POLY→GF→MK, the long way around. Slower than walking, but fully covered.' }],
-    totalRideMinutes: 14, tags: [],
-  },
-  {
-    id: 'con-ttc-monorail',
-    from: 'CON', to: 'TTC', name: 'Resort Monorail to TTC',
-    legs: [{ mode: 'monorail_resort', from: 'CON', to: 'TTC', rideMinutes: 5, accessible: true, tip: 'Next stop in correct loop direction: CON→TTC.' }],
-    totalRideMinutes: 5, tags: [],
-  },
-  {
-    id: 'con-poly-monorail',
-    from: 'CON', to: 'POLY', name: 'Resort Monorail to Polynesian',
-    legs: [{ mode: 'monorail_resort', from: 'CON', to: 'POLY', rideMinutes: 8, accessible: true, tip: 'Two stops in correct direction: CON→TTC→POLY.' }],
-    totalRideMinutes: 8, tags: [],
-  },
-  {
-    id: 'con-gf-monorail',
-    from: 'CON', to: 'GF', name: 'Resort Monorail to Grand Floridian',
-    legs: [{ mode: 'monorail_resort', from: 'CON', to: 'GF', rideMinutes: 11, accessible: true, tip: 'Three stops: CON→TTC→POLY→GF.' }],
-    totalRideMinutes: 11, tags: [],
-  },
-  {
+
+{
     id: 'con-ep-monorail',
     from: 'CON', to: 'EP', name: 'Resort Monorail to TTC, EPCOT Monorail to EPCOT',
     legs: [

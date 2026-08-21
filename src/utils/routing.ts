@@ -2,6 +2,7 @@ import { Route, ActiveFilters, TransportMode, Leg } from '../types';
 import { ALL_ROUTES } from '../data/routes';
 import { DESTINATION_MAP, GEOFENCE_ZONES } from '../data/destinations';
 import { lineForLeg } from '../data/lines';
+import { railRoutes } from '../data/rail';
 
 // Geometry
 
@@ -121,18 +122,39 @@ function mirrorRoute(r: Route): Route {
   };
 }
 
+const isPaidRoute = (r: Route) => r.legs.some(l => l.mode === 'minnie_van');
+const isWalkOnly  = (r: Route) => r.legs.every(l => l.mode === 'walk');
+
+/** Identifies a route by the trip it describes, so a generated option and a
+ *  hand-authored one covering the same legs cannot both be offered. */
+function legSignature(r: Route): string {
+  return r.legs.map(l => `${l.mode}:${l.from}>${l.to}`).join('|');
+}
+
 function directRoutes(from: string, to: string, timeOverride?: Date): Route[] {
   const explicit = ALL_ROUTES.filter(r => r.from === from && r.to === to && timeValid(r, timeOverride));
-  const hasRealExplicit = explicit.some(r => r.legs.every(l => l.mode !== 'minnie_van'));
-  if (hasRealExplicit) return explicit;
 
-  // Explicit data for this pair is missing or paid-ride-only. Check whether
-  // the reverse direction has a real route worth mirroring.
+  // Monorail trips come from the beam definitions rather than the route file,
+  // so every ordered pair of stations on a beam is covered by construction.
+  const seen = new Set(explicit.map(legSignature));
+  const rail = railRoutes(from, to).filter(r => !seen.has(legSignature(r)));
+
+  const combined = [...explicit, ...rail];
+
+  // A walk is a legitimate option but never a complete answer on its own. If
+  // that is all this direction has, the reverse direction's real routes are
+  // worth mirroring. Treating a walk-only entry as full coverage is what hid
+  // the monorail on Grand Floridian to Polynesian and seven other pairs.
+  const hasVehicleRoute = combined.some(r => !isPaidRoute(r) && !isWalkOnly(r));
+  if (hasVehicleRoute) return combined;
+
   const mirrored = ALL_ROUTES
     .filter(r => r.from === to && r.to === from && timeValid(r, timeOverride))
-    .filter(r => r.legs.every(l => l.mode !== 'minnie_van'))
-    .map(mirrorRoute);
-  return mirrored.length > 0 ? [...explicit, ...mirrored] : explicit;
+    .filter(r => !isPaidRoute(r) && !isWalkOnly(r))
+    .map(mirrorRoute)
+    .filter(r => !seen.has(legSignature(r)));
+
+  return [...combined, ...mirrored];
 }
 
 // Compose a two-segment journey through a major transfer hub, mirroring how
@@ -157,6 +179,9 @@ function synthesizeViaHub(from: string, to: string, timeOverride?: Date): Route[
     const b = bestSegment(hub, to, timeOverride);
     if (!a || !b) continue;
     if (a.legs.length + b.legs.length > 3) continue;
+    // Stitching two walks together through a hub is just a longer walk, not a
+    // transfer, and it produced trips like "walk 12 min, then walk 5 min".
+    if (a.legs.every(l => l.mode === 'walk') && b.legs.every(l => l.mode === 'walk')) continue;
     const legs: Leg[] = [
       ...a.legs,
       { ...b.legs[0], walkMinutes: 5 },
@@ -235,7 +260,7 @@ export function getActiveRoutes(from: string, to: string, timeOverride?: Date): 
   // A paid ride is always offered, but as a separate option rather than as a
   // competitor for the top transit slot. Any hand-authored paid entry is
   // replaced so every pair uses the same distance-based estimate.
-  routes = routes.filter(r => !r.legs.some(l => l.mode === 'minnie_van'));
+  routes = routes.filter(r => !isPaidRoute(r));
   routes.push(minnieVanFallback(from, to));
 
   return routes;
@@ -243,7 +268,6 @@ export function getActiveRoutes(from: string, to: string, timeOverride?: Date): 
 
 // Filter + sort
 
-const isPaid  = (r: Route) => r.legs.some(l => l.mode === 'minnie_van');
 const isWater = (r: Route) => r.tags.includes('water');
 const isStepFree = (r: Route) => r.legs.every(l => l.accessible);
 
@@ -274,14 +298,14 @@ export function applyFilters(routes: Route[], filters: ActiveFilters): Route[] {
   }
 
   // A paid car never outranks transit, whatever the sort.
-  return result.sort((a, b) => Number(isPaid(a)) - Number(isPaid(b)));
+  return result.sort((a, b) => Number(isPaidRoute(a)) - Number(isPaidRoute(b)));
 }
 
 /** Human-readable reasons the visible list is shorter than the full one, so an
  *  empty results screen can name the filter responsible instead of blaming the
  *  transportation network for the user's own settings. */
 export function describeExclusions(all: Route[], filters: ActiveFilters): string[] {
-  const transit = all.filter(r => !isPaid(r));
+  const transit = all.filter(r => !isPaidRoute(r));
   const reasons: string[] = [];
   if (filters.noWater) {
     const n = transit.filter(isWater).length;

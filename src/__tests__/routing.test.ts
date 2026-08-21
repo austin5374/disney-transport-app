@@ -3,6 +3,7 @@ import {
   transferCount, driveMinutes, describeExclusions, expectedWait,
 } from '../utils/routing';
 import { DESTINATIONS } from '../data/destinations';
+import { RAIL_STATIONS } from '../data/rail';
 import { ActiveFilters, Route } from '../types';
 
 const IDS = DESTINATIONS.map(d => d.id);
@@ -222,5 +223,51 @@ describe('mirrored routes', () => {
         expect(leg.tip!.length).toBeGreaterThan(0);
       }
     }
+  });
+});
+
+describe('monorail stations', () => {
+  it('always offer the train between two stops on the same beam', () => {
+    // This is the integration check behind the generator: whatever else the
+    // planner turns up for these pairs, the monorail has to be in the list.
+    // Before, eight resort-loop pairs came back with a walk or a boat and no
+    // train, so walking was not just an option, it was the only one.
+    const missing: string[] = [];
+    for (const { stops } of RAIL_STATIONS) {
+      for (const from of stops) {
+        for (const to of stops) {
+          if (from === to) continue;
+          const routes = applyFilters(getActiveRoutes(from, to, at(13)), BASE);
+          if (!routes.some(r => r.legs.some(l => l.mode.startsWith('monorail')))) {
+            missing.push(`${from} to ${to}`);
+          }
+        }
+      }
+    }
+    expect(missing).toEqual([]);
+  });
+
+  it('still offer the walk where walking is reasonable', () => {
+    // Removing the walk would be the opposite mistake. Between the TTC and
+    // the Polynesian it is genuinely the quicker way.
+    const routes = applyFilters(getActiveRoutes('TTC', 'POLY', at(13)), BASE);
+    expect(routes.some(r => r.legs.every(l => l.mode === 'walk'))).toBe(true);
+    expect(routes.some(r => r.legs.some(l => l.mode === 'monorail_resort'))).toBe(true);
+  });
+
+  it('never synthesizes a transfer that is two walks glued together', () => {
+    // A hand-authored multi-leg walk is fine, and sometimes the honest
+    // description of one continuous path: Grand Floridian to the TTC really
+    // does go past the Polynesian. What is nonsense is the hub composer
+    // stitching two unrelated walks into a "transfer".
+    const silly: string[] = [];
+    for (const [a, b] of PAIRS) {
+      for (const r of getActiveRoutes(a, b, at(13))) {
+        if (r.id.startsWith('synth-') && r.legs.every(l => l.mode === 'walk')) {
+          silly.push(`${a} to ${b}: ${r.id}`);
+        }
+      }
+    }
+    expect(silly).toEqual([]);
   });
 });
