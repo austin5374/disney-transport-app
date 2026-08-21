@@ -561,3 +561,71 @@ describe('a restricted route never stands alone', () => {
   });
 });
 
+describe('replacement buses', () => {
+  // The status board has advertised these all along; the planner ignored
+  // them. With the Resort Monorail down, one screen named a bus calling at
+  // the Polynesian and the Grand Floridian while the other said there was no
+  // way between them.
+  const down = (id: string, etaMinutes = 9) => ({
+    [id]: {
+      lineId: id, status: 'down', crowd: 'moderate',
+      headwayMinutes: [5, 9] as [number, number], etaMinutes, updatedAt: 0,
+    },
+  }) as never;
+
+  it('routes onto the bus that replaces a downed beam', () => {
+    const board = down('mono-resort');
+    const routes = getActiveRoutes('POLY', 'GF', at(13), board);
+    const bridge = routes.find(r => r.id.startsWith('temp-bus-resort-loop'));
+    expect(bridge).toBeTruthy();
+    expect(bridge!.legs).toHaveLength(1);
+    expect(bridge!.legs[0].mode).toBe('bus');
+    expect(bridge!.notes).toMatch(/Resort Monorail is down/);
+
+    // ...and it survives filtering, so it is a trip you can actually pick.
+    const kept = applyFilters(routes, BASE, board).filter(r => !isPaid(r));
+    expect(kept.some(r => r.id.startsWith('temp-bus-resort-loop'))).toBe(true);
+  });
+
+  it('overtakes the beam it replaces once the outage is long enough', () => {
+    // A down line is not removed — the cost model charges it the outage and
+    // lets it compete, which is right: a nine-minute stoppage is still worth
+    // waiting out. A thirty-minute one is not, and that is when the bus wins.
+    const brief = applyFilters(getActiveRoutes('POLY', 'GF', at(13), down('mono-resort', 9)),
+      BASE, down('mono-resort', 9)).filter(r => !isPaid(r));
+    const long = applyFilters(getActiveRoutes('POLY', 'GF', at(13), down('mono-resort', 45)),
+      BASE, down('mono-resort', 45)).filter(r => !isPaid(r));
+
+    const rank = (list: Route[], pred: (r: Route) => boolean) => list.findIndex(pred);
+    const isBridge = (r: Route) => r.id.startsWith('temp-bus-resort-loop');
+    const isBeam = (r: Route) => r.legs.some(l => l.mode === 'monorail_resort');
+
+    expect(rank(brief, isBeam)).toBeLessThan(rank(brief, isBridge));
+    expect(rank(long, isBridge)).toBeLessThan(rank(long, isBeam));
+  });
+
+  it('covers Magic Kingdom, which the hand-written stop list had missed', () => {
+    const board = down('mono-resort');
+    for (const [a, b] of [['MK', 'GF'], ['CON', 'MK'], ['MK', 'POLY']] as [string, string][]) {
+      expect(getActiveRoutes(a, b, at(13), board).some(r => r.id.startsWith('temp-bus-resort-loop')))
+        .toBe(true);
+    }
+  });
+
+  it('offers nothing extra while the beam is running', () => {
+    for (const [a, b] of PAIRS) {
+      for (const r of getActiveRoutes(a, b, at(13))) {
+        expect(r.id.startsWith('temp-bus-')).toBe(false);
+      }
+    }
+  });
+
+  it('only bridges pairs the downed beam actually served', () => {
+    const board = down('mono-epcot');
+    // The EPCOT beam runs TTC to EPCOT and nowhere else.
+    expect(getActiveRoutes('TTC', 'EP', at(13), board).some(r => r.id.startsWith('temp-bus-epcot')))
+      .toBe(true);
+    expect(getActiveRoutes('POLY', 'GF', at(13), board).some(r => r.id.startsWith('temp-bus-')))
+      .toBe(false);
+  });
+});

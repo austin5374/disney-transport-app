@@ -170,8 +170,30 @@ describe('coordinated outages', () => {
       freeze(new Date(2026, 7, 20, 0, 0, 0, 0).getTime() + m * 60_000);
       const board = loadEngine().getLiveStatus();
       const bridges = getTemporaryBridges(board);
-      const hasEpcotBridge = bridges.some(b => b.id === 'temp-bus-epcot');
-      expect(hasEpcotBridge).toBe(board['mono-epcot'].status === 'down');
+      expect(bridges.some(b => b.id === 'temp-bus-epcot'))
+        .toBe(board['mono-epcot'].status === 'down');
+      // The resort loop used to wait for a long forecast outage before a bus
+      // appeared. The buses come out when the beam stops.
+      expect(bridges.some(b => b.id === 'temp-bus-resort-loop'))
+        .toBe(board['mono-resort'].status === 'down');
     }
+  });
+
+  it('runs the replacement bus along the beam\'s own stops', () => {
+    // Hand-listed, this drifted: the resort-loop bridge named four of the
+    // loop's five stations and left out Magic Kingdom, which is both a stop
+    // on the loop and where most of the people on it are going.
+    const down = (id: string): LineStatus => ({
+      lineId: id, status: 'down', crowd: 'moderate', headwayMinutes: [5, 9],
+      etaMinutes: 8, updatedAt: 0,
+    } as LineStatus);
+
+    const [epcot] = getTemporaryBridges({ 'mono-epcot': down('mono-epcot') } as never);
+    expect(epcot.stopIds).toEqual(['TTC', 'EP']);
+
+    const [resort] = getTemporaryBridges({ 'mono-resort': down('mono-resort') } as never);
+    expect(resort.stopIds).toEqual(['TTC', 'POLY', 'GF', 'MK', 'CON']);
+    expect(resort.stopIds).toContain('MK');
+    expect(resort.stations.length).toBe(resort.stopIds.length);
   });
 });

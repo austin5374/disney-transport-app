@@ -53,8 +53,8 @@ export default function ResultsScreen({ navigation, route: navRoute }: Props) {
   const live = useLiveStatusAt(at);
 
   const all = useMemo(
-    () => (from && to ? getActiveRoutes(from.id, to.id, timeDate ?? undefined) : []),
-    [from, to, timeDate]
+    () => (from && to ? getActiveRoutes(from.id, to.id, timeDate ?? undefined, live) : []),
+    [from, to, timeDate, live]
   );
   const routes = useMemo(() => applyFilters(all, filters, live), [all, filters, live]);
 

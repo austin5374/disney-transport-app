@@ -1,6 +1,8 @@
 import { useMemo, useSyncExternalStore } from 'react';
 import { Platform, AppState, AppStateStatus } from 'react-native';
 import { TRANSIT_LINES, TransitLine, isInService, serviceStartLabel } from '../data/lines';
+import { RAIL_STATIONS } from '../data/rail';
+import { shortLabel } from '../data/destinations';
 import { unit, pick, between } from './deterministic';
 
 // Deterministic live-status engine
@@ -541,8 +543,26 @@ export interface TemporaryBridge {
   id: string;
   name: string;
   stations: string[];
+  /** The same stops as destination ids, so the planner can route onto the
+   *  bridge rather than merely announce it. */
+  stopIds: string[];
   note: string;
 }
+
+/** The stops a downed beam's replacement bus has to cover: the beam's own.
+ *
+ *  Written out by hand, this list drifted — the resort-loop bridge named the
+ *  Ticket Center, the Polynesian, the Grand Floridian and the Contemporary,
+ *  and quietly left out Magic Kingdom, which is a stop on the loop and the
+ *  one most people on it are going to. */
+function beamStops(mode: string): string[] {
+  return RAIL_STATIONS.find(l => l.mode === mode)?.stops ?? [];
+}
+
+// Short names: this is a list of stops read as a route, not a list of places
+// being chosen from, and five official resort names joined by dots overflows
+// the card twice over.
+const stationNames = (ids: string[]): string[] => ids.map(shortLabel);
 
 export function getTemporaryBridges(status: Record<string, LineStatus>): TemporaryBridge[] {
   const epcotMono = status['mono-epcot'];
@@ -551,21 +571,29 @@ export function getTemporaryBridges(status: Record<string, LineStatus>): Tempora
   const ferry = status['boat-ferry'];
   const bridges: TemporaryBridge[] = [];
 
+  // A downed beam gets a bus along its own stops, for as long as it is down.
+  // The resort loop used to wait for the outage to be forecast at twenty
+  // minutes or more before one appeared, which is not how it works: the
+  // buses come out when the beam stops.
   if (epcotMono?.status === 'down') {
+    const stops = beamStops('monorail_epcot');
     bridges.push({
       id: 'temp-bus-epcot',
       name: 'Temporary Bus: TTC to EPCOT',
-      stations: ['Transportation & Ticket Center', 'EPCOT'],
-      note: 'Running while the EPCOT Monorail is down. Ends as soon as monorail service resumes.',
+      stations: stationNames(stops),
+      stopIds: stops,
+      note: 'Running while the EPCOT Monorail is down, calling at the same stops. Ends as soon as monorail service resumes.',
     });
   }
 
-  if (resortMono?.status === 'down' && (resortMono.etaMinutes ?? 0) >= 20) {
+  if (resortMono?.status === 'down') {
+    const stops = beamStops('monorail_resort');
     bridges.push({
       id: 'temp-bus-resort-loop',
-      name: 'Temporary Bus: TTC, Polynesian, Grand Floridian, Contemporary',
-      stations: ['Transportation & Ticket Center', 'Polynesian Village', 'Grand Floridian', 'Contemporary'],
-      note: 'Added because the Resort Monorail outage is expected to run long. Ends as soon as monorail service resumes.',
+      name: 'Temporary Bus: Resort Monorail stops',
+      stations: stationNames(stops),
+      stopIds: stops,
+      note: 'Running while the Resort Monorail is down, calling at the same stops. Ends as soon as monorail service resumes.',
     });
   }
 
@@ -573,7 +601,8 @@ export function getTemporaryBridges(status: Record<string, LineStatus>): Tempora
     bridges.push({
       id: 'temp-bus-mk',
       name: 'Temporary Bus: TTC to Magic Kingdom',
-      stations: ['Transportation & Ticket Center', 'Magic Kingdom'],
+      stations: stationNames(['TTC', 'MK']),
+      stopIds: ['TTC', 'MK'],
       note: 'Running while both the Express Monorail and the ferry are down. Ends as soon as monorail service resumes.',
     });
   }

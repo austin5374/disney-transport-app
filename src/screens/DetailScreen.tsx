@@ -36,9 +36,9 @@ export default function DetailScreen({ navigation, route: navRoute }: Props) {
   // could be stale by the time it is read, and could not survive a link.
   const routeData = useMemo(
     () => (from && to
-      ? getActiveRoutes(fromId, toId, at ? new Date(at) : undefined).find(r => r.id === routeId)
+      ? getActiveRoutes(fromId, toId, at ? new Date(at) : undefined, live).find(r => r.id === routeId)
       : undefined),
-    [from, to, fromId, toId, routeId, at]
+    [from, to, fromId, toId, routeId, at, live]
   );
 
   if (!from || !to || !routeData) {

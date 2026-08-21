@@ -3,9 +3,9 @@ import { ALL_ROUTES } from '../data/routes';
 import { DESTINATIONS, DESTINATION_MAP, GEOFENCE_ZONES } from '../data/destinations';
 import { lineForLeg } from '../data/lines';
 import { shortLabel } from './destinationMeta';
-import { LineStatus, DELAY_HEADWAY_FACTOR, CROWD_WAIT_FACTOR } from './liveStatus';
+import { LineStatus, DELAY_HEADWAY_FACTOR, CROWD_WAIT_FACTOR, getTemporaryBridges } from './liveStatus';
 import { railRoutes } from '../data/rail';
-import { resortBusRoutes } from '../data/resortBus';
+import { resortBusRoutes, busRideMinutes } from '../data/resortBus';
 import { lineRoutes } from '../data/lineRoutes';
 
 // Geometry
@@ -502,6 +502,45 @@ function minnieVanFallback(from: string, to: string): Route {
   };
 }
 
+// Replacement buses
+//
+// When a beam goes down Disney runs a bus along its stops, and the app knew
+// it: getTemporaryBridges has announced them on the status board all along.
+// The planner never used them. So with the Resort Monorail down, one screen
+// advertised a bus calling at the Polynesian and the Grand Floridian while
+// the other said there was no way to get between them — the app disagreeing
+// with itself about the network it was simulating.
+//
+// The bridge is only offered while the beam it replaces is actually down,
+// which is why this needs the live board and the rest of the router does not.
+function bridgeRoutes(from: string, to: string, live?: LiveBoard): Route[] {
+  if (!live) return [];
+  const out: Route[] = [];
+
+  for (const bridge of getTemporaryBridges(live)) {
+    if (!bridge.stopIds.includes(from) || !bridge.stopIds.includes(to)) continue;
+    const ride = busRideMinutes(from, to);
+    out.push({
+      id: `${bridge.id}-${from}-${to}`,
+      from,
+      to,
+      legs: [{
+        mode: 'bus',
+        from,
+        to,
+        rideMinutes: ride,
+        accessible: true,
+        tip: `Look for the replacement bus, not the usual stop. ${bridge.name}.`,
+      }],
+      totalRideMinutes: ride,
+      tags: [],
+      name: `Temporary Bus to ${destLabel(to)}`,
+      notes: bridge.note,
+    });
+  }
+  return out;
+}
+
 // Last resort
 //
 // Some stitched trips are real but absurd next to what else is on offer. Two
@@ -533,7 +572,9 @@ function markLastResort(routes: Route[]): Route[] {
   });
 }
 
-export function getActiveRoutes(from: string, to: string, timeOverride?: Date): Route[] {
+export function getActiveRoutes(
+  from: string, to: string, timeOverride?: Date, live?: LiveBoard,
+): Route[] {
   const origFrom = from, origTo = to;
   from = DEST_ALIAS[from] ?? from;
   to = DEST_ALIAS[to] ?? to;
@@ -594,6 +635,15 @@ export function getActiveRoutes(from: string, to: string, timeOverride?: Date): 
         .filter(r => !already.has(legSignature(r))),
     ];
   }
+
+  // A replacement bus is offered alongside whatever else survives the
+  // outage, and deduped against it so a pair the route file already covers
+  // by bus does not get the same trip twice.
+  const already = new Set(routes.map(legSignature));
+  routes = [
+    ...routes,
+    ...bridgeRoutes(from, to, live).filter(r => !already.has(legSignature(r))),
+  ];
 
   routes = markLastResort(routes.filter(r => !isPaidRoute(r)));
 
