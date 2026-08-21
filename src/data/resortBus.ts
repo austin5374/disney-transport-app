@@ -24,7 +24,7 @@ const WATER_PARKS = ['TL', 'BB'];
 // Where Disney runs something better than a bus, and so runs no bus at all.
 // Guests at the EPCOT-area resorts walk or take a Friendship Boat to EPCOT and
 // Hollywood Studios; the Skyliner resorts ride the gondola to both; the
-// monorail and Seven Seas Lagoon resorts reach Magic Kingdom on rail or water;
+// the monorail resorts reach Magic Kingdom and EPCOT on the beam;
 // and the Sassagoula resorts reach Disney Springs by boat.
 const NO_BUS: Record<string, string[]> = {
   BC:   ['EP', 'HS'],
@@ -37,9 +37,13 @@ const NO_BUS: Record<string, string[]> = {
   RIV:  ['EP', 'HS'],
   POP:  ['EP', 'HS'],
   AOA:  ['EP', 'HS'],
-  CON:  ['MK'],
-  GF:   ['MK'],
-  POLY: ['MK'],
+  // The monorail resorts reach both Magic Kingdom and EPCOT on the beam —
+  // the resort loop to the Ticket Center, then the EPCOT line — so Disney
+  // runs them no bus to either. Without this the planner invented one, and
+  // ranked it above the monorail out of the Grand Floridian.
+  CON:  ['MK', 'EP'],
+  GF:   ['MK', 'EP'],
+  POLY: ['MK', 'EP'],
   WL:   ['MK'],
   FW:   ['MK'],
   POFQ: ['DS'],

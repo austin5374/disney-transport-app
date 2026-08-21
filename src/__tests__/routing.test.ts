@@ -5,6 +5,7 @@ import {
 } from '../utils/routing';
 import { DESTINATIONS } from '../data/destinations';
 import { RAIL_STATIONS } from '../data/rail';
+import { lineForLeg } from '../data/lines';
 import { ActiveFilters, Route } from '../types';
 
 const IDS = DESTINATIONS.map(d => d.id);
@@ -449,5 +450,60 @@ describe('ride times', () => {
       expect(bus.legs[0].rideMinutes).toBeLessThanOrEqual(10);
       expect(journeyMinutes(bus)).toBeLessThan(20);
     }
+  });
+});
+
+describe('the monorail resorts', () => {
+  const MONORAIL_RESORTS = ['CON', 'GF', 'POLY'];
+
+  it('are never offered a bus to Magic Kingdom or EPCOT', () => {
+    // They reach both on the beam — the resort loop to the Ticket Center,
+    // then the EPCOT line — so Disney runs them no bus to either. The
+    // generator invented one anyway, and out of the Grand Floridian it
+    // outranked the monorail.
+    const offenders: string[] = [];
+    for (const [a, b] of PAIRS) {
+      for (const hour of [8, 11, 17]) {
+        for (const r of getActiveRoutes(a, b, at(hour))) {
+          for (const l of r.legs) {
+            if (l.mode !== 'bus') continue;
+            const touchesResort = MONORAIL_RESORTS.includes(l.from) || MONORAIL_RESORTS.includes(l.to);
+            const touchesBeam = ['MK', 'EP'].includes(l.from) || ['MK', 'EP'].includes(l.to);
+            if (touchesResort && touchesBeam) offenders.push(`${a}>${b}: ${r.id} rides bus ${l.from}>${l.to}`);
+          }
+        }
+      }
+    }
+    expect(offenders).toEqual([]);
+  });
+
+  it('still reach EPCOT, by rail', () => {
+    for (const from of MONORAIL_RESORTS) {
+      const transit = applyFilters(getActiveRoutes(from, 'EP', at(11)), BASE).filter(r => !isPaid(r));
+      expect(transit.length).toBeGreaterThan(0);
+      expect(transit.some(r => r.legs.some(l => l.mode === 'monorail_epcot'))).toBe(true);
+    }
+  });
+});
+
+describe('stitched transfers', () => {
+  it('never get off a line and back onto the same line', () => {
+    // "Resort Monorail to the Contemporary, Resort Monorail to the Ticket
+    // Center" is one ride the composer had chopped in half. Buses are exempt:
+    // their line is a service group, so two different buses at Disney Springs
+    // share an id and are still a real transfer.
+    const offenders: string[] = [];
+    for (const [a, b] of PAIRS) {
+      for (const r of getActiveRoutes(a, b, at(11))) {
+        for (let i = 1; i < r.legs.length; i++) {
+          const prev = r.legs[i - 1], next = r.legs[i];
+          if (prev.mode === 'bus' || next.mode === 'bus') continue;
+          const lp = lineForLeg(prev.mode, prev.from, prev.to);
+          const ln = lineForLeg(next.mode, next.from, next.to);
+          if (lp && ln && lp.id === ln.id) offenders.push(`${a}>${b}: ${r.id}`);
+        }
+      }
+    }
+    expect(offenders).toEqual([]);
   });
 });

@@ -405,6 +405,21 @@ function synthesizeViaHub(from: string, to: string, timeOverride?: Date): Route[
     for (const a of accessSegments(from, hub, timeOverride)) {
       if (a.legs.length + b.legs.length > 3) continue;
 
+      // You do not get off a train and wait for the same train. A transfer
+      // whose two halves ride the same line is one continuous journey that
+      // the composer has chopped in half, and it read exactly that way:
+      // "Resort Monorail to the Contemporary, Resort Monorail to the Ticket
+      // Center". Buses are exempt because their "line" is a service group
+      // rather than a vehicle — two different buses at Disney Springs are a
+      // real transfer even though the board files them under the same name.
+      const inbound = a.legs[a.legs.length - 1];
+      const outbound = b.legs[0];
+      if (inbound.mode !== 'bus' && outbound.mode !== 'bus') {
+        const lineIn = lineForLeg(inbound.mode, inbound.from, inbound.to);
+        const lineOut = lineForLeg(outbound.mode, outbound.from, outbound.to);
+        if (lineIn && lineOut && lineIn.id === lineOut.id) continue;
+      }
+
       // Stitching two walks together through a hub is just a longer walk, not
       // a transfer, and it produced trips like "walk 12 min, then walk 5 min".
       if (a.legs.every(l => l.mode === 'walk') && b.legs.every(l => l.mode === 'walk')) continue;

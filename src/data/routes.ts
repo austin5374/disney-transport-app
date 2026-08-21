@@ -1768,6 +1768,19 @@ export const ALL_ROUTES: Route[] = [
     legs: [{ mode: 'walk', from: 'GF', to: 'POLY', rideMinutes: 12, accessible: true, tip: 'Resort Monorail goes wrong direction from here. Always walk.' }],
     totalRideMinutes: 12, tags: ['walk_only'],
   },
+  // Both ways of reaching the Ticket Center, because they cost the same
+  // seventeen minutes and only the walk was ever written down — so the Grand
+  // Floridian was told to walk a mile past the Polynesian while its own
+  // monorail did the identical hop.
+  {
+    id: 'gf-ep-monorail',
+    from: 'GF', to: 'EP', name: 'Resort Monorail to TTC, EPCOT Monorail to EPCOT',
+    legs: [
+      { mode: 'monorail_resort', from: 'GF', to: 'TTC', rideMinutes: 13, accessible: true, tip: 'The beam runs one way, so this calls at Magic Kingdom and the Contemporary before the Ticket Center.' },
+      { mode: 'monorail_epcot', from: 'TTC', to: 'EP', rideMinutes: 12, accessible: true, walkMinutes: 3, tip: 'Change platforms at the Ticket Center. EPCOT Monorail drops you at the main entrance.' },
+    ],
+    totalRideMinutes: 25, tags: ['transfer'],
+  },
   {
     id: 'gf-ep-walk-monorail',
     from: 'GF', to: 'EP', name: 'Walk to TTC, EPCOT Monorail to EPCOT',
