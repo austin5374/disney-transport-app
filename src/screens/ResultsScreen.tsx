@@ -4,14 +4,26 @@ import { StackNavigationProp } from '@react-navigation/stack';
 import { RouteProp } from '@react-navigation/native';
 import { RootStackParamList, ActiveFilters } from '../types';
 import { Colors, Type, Spacing } from '../utils/theme';
+import { DESTINATION_MAP } from '../data/destinations';
 import { getActiveRoutes, applyFilters, describeExclusions } from '../utils/routing';
+import { useLiveStatusAt } from '../utils/liveStatus';
 import AppHeader from '../components/AppHeader';
 import TimeBanner from '../components/TimeBanner';
-import FilterPills from '../components/FilterPills';
+import RouteFilters from '../components/RouteFilters';
 import RouteCard from '../components/RouteCard';
 import Section from '../components/ui/Section';
 import PillButton from '../components/ui/PillButton';
 import LinkAction from '../components/ui/LinkAction';
+
+// With the badges gone, the order has to explain itself somewhere. This is
+// the line that does it.
+const DEFAULT_FILTERS: ActiveFilters = { sort: 'fastest', noWater: false, accessible: false };
+
+const SORT_NOTE: Record<ActiveFilters['sort'], string> = {
+  fastest:   'Fastest First',
+  transfers: 'Fewest Transfers First',
+  scenic:    'Most Scenic First',
+};
 
 type Props = {
   navigation: StackNavigationProp<RootStackParamList, 'Results'>;
@@ -19,17 +31,27 @@ type Props = {
 };
 
 export default function ResultsScreen({ navigation, route: navRoute }: Props) {
-  const { from, to, filters: initialFilters, timeOverride: initialTimeOverride } = navRoute.params;
-  const [filters, setFilters] = useState<ActiveFilters>(initialFilters);
+  const { fromId, toId, filters: initialFilters, timeOverride: initialTimeOverride } = navRoute.params;
+  const from = DESTINATION_MAP[fromId];
+  const to = DESTINATION_MAP[toId];
+  const [filters, setFilters] = useState<ActiveFilters>(initialFilters ?? DEFAULT_FILTERS);
   const [timeDate, setTimeDate] = useState<Date | null>(
     initialTimeOverride ? new Date(initialTimeOverride) : null
   );
 
+  // One board, computed for whichever moment the planner is showing, used by
+  // the ranking, by every card's total and by every countdown. They used to
+  // disagree: the order ignored live service entirely, so the top card could
+  // be the quickest option in theory while the row beneath it said its line
+  // was down.
+  const at = timeDate ? timeDate.getTime() : null;
+  const live = useLiveStatusAt(at);
+
   const all = useMemo(
-    () => getActiveRoutes(from.id, to.id, timeDate ?? undefined),
-    [from.id, to.id, timeDate]
+    () => (from && to ? getActiveRoutes(from.id, to.id, timeDate ?? undefined) : []),
+    [from, to, timeDate]
   );
-  const routes = useMemo(() => applyFilters(all, filters), [all, filters]);
+  const routes = useMemo(() => applyFilters(all, filters, live), [all, filters, live]);
 
   // Transit options come first; a paid car is never the headline answer.
   const transit = routes.filter(r => !r.legs.some(l => l.mode === 'minnie_van'));
@@ -37,12 +59,28 @@ export default function ResultsScreen({ navigation, route: navRoute }: Props) {
 
   // Naming the filters that are actually removing routes, rather than
   // blaming the network for an empty list the user's own settings produced.
-  const excluded = describeExclusions(all, filters);
+  const excluded = describeExclusions(all, filters, live);
 
   const clearFilters = () =>
     setFilters({ sort: filters.sort, noWater: false, accessible: false });
 
-  const reverseTrip = () => navigation.setParams({ from: to, to: from });
+  const reverseTrip = () => navigation.setParams({ fromId: toId, toId: fromId });
+
+  // A hand-typed or stale URL can name a place that isn't on the list.
+  if (!from || !to) {
+    return (
+      <View style={styles.screen}>
+        <AppHeader showBack onBack={() => navigation.goBack()} title="Trip Not Found" />
+        <Section flush={false}>
+          <Text style={styles.emptyTitle}>We don't know that place</Text>
+          <Text style={styles.emptyBody}>
+            This link points at a location that isn't on Walt Disney World property.
+            Start a new trip and we'll find you a route.
+          </Text>
+        </Section>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.screen}>
@@ -53,15 +91,19 @@ export default function ResultsScreen({ navigation, route: navRoute }: Props) {
         subtitle={`From ${from.label}`}
       />
 
-      <FilterPills filters={filters} onChange={setFilters} />
+      {/* A sort control that cannot change the order is worse than no control:
+          42% of all pairs on this network return a single transit option. */}
+      <RouteFilters filters={filters} onChange={setFilters} showSort={all.length > 2} />
       <TimeBanner timeOverride={timeDate} onTimeChange={setTimeDate} />
 
       <ScrollView contentContainerStyle={styles.scroll}>
         <View style={styles.summaryBar}>
           <Text style={styles.summaryText}>
-            {transit.length > 0
-              ? `${transit.length} transit option${transit.length === 1 ? '' : 's'}`
-              : 'No transit options'}
+            {transit.length === 0
+              ? 'No Transit Options'
+              : transit.length === 1
+                ? '1 Transit Option'
+                : `${transit.length} Transit Options · ${SORT_NOTE[filters.sort]}`}
           </Text>
           <LinkAction label="Reverse Trip" onPress={reverseTrip} noChevron />
         </View>
@@ -88,14 +130,14 @@ export default function ResultsScreen({ navigation, route: navRoute }: Props) {
           </Section>
         )}
 
-        {transit.map((r, i) => (
+        {transit.map(r => (
           <RouteCard
             key={r.id}
             route={r}
-            isBest={i === 0 && filters.sort === 'fastest'}
-            isScenic={i === 0 && filters.sort === 'scenic'}
+            live={live}
+            at={at ?? undefined}
             onPress={() => navigation.navigate('Detail', {
-              routeData: r, from, to, timeOverride: timeDate?.toISOString(),
+              fromId, toId, routeId: r.id, timeOverride: timeDate?.toISOString(),
             })}
           />
         ))}
@@ -103,15 +145,17 @@ export default function ResultsScreen({ navigation, route: navRoute }: Props) {
         {paid.length > 0 && (
           <>
             <View style={styles.groupHeader}>
-              <Text style={styles.groupTitle}>Other Ways To Get There</Text>
+              <Text style={styles.groupTitle}>Other Ways to Get There</Text>
               <Text style={styles.groupSub}>Paid rides, not included with your stay</Text>
             </View>
             {paid.map(r => (
               <RouteCard
                 key={r.id}
                 route={r}
+                live={live}
+                at={at ?? undefined}
                 onPress={() => navigation.navigate('Detail', {
-                  routeData: r, from, to, timeOverride: timeDate?.toISOString(),
+                  fromId, toId, routeId: r.id, timeOverride: timeDate?.toISOString(),
                 })}
               />
             ))}
@@ -138,7 +182,7 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.md,
   },
   summaryText: {
-    ...Type.eyebrow,
+    ...Type.label,
     color: Colors.textSecondary,
   },
   emptyTitle: {
@@ -159,8 +203,8 @@ const styles = StyleSheet.create({
     paddingBottom: Spacing.sm,
   },
   groupTitle: {
-    ...Type.eyebrow,
-    color: Colors.textSecondary,
+    ...Type.title,
+    color: Colors.textPrimary,
   },
   groupSub: {
     ...Type.caption,

@@ -4,10 +4,8 @@ import { Colors, Type, Spacing, SECTION_GAP } from '../../utils/theme';
 
 interface SectionProps {
   children: React.ReactNode;
-  /** Small all-caps eyebrow above the section's content. */
-  eyebrow?: string;
-  /** Large heading inside the section. */
-  title?: string;
+  /** Title Case navy heading above the section's content. */
+  header?: string;
   /** Drop the horizontal padding. For full-bleed rows and lists. */
   flush?: boolean;
   /** Suppress the gray gutter under this section (for stacked siblings). */
@@ -19,13 +17,12 @@ interface SectionProps {
 // white blocks separated by a short gray gutter. No rounded cards, no 1px
 // borders floating on a tint. Everything in this app renders inside one.
 export default function Section({
-  children, eyebrow, title, flush, last, style,
+  children, header, flush, last, style,
 }: SectionProps) {
   return (
     <>
       <View style={[styles.section, flush && styles.flush, style]}>
-        {eyebrow ? <Text style={[styles.eyebrow, flush && styles.inset]}>{eyebrow}</Text> : null}
-        {title ? <Text style={[styles.title, flush && styles.inset]}>{title}</Text> : null}
+        {header ? <Text style={[styles.header, flush && styles.inset]}>{header}</Text> : null}
         {children}
       </View>
       {!last && <View style={styles.gutter} />}
@@ -45,12 +42,7 @@ const styles = StyleSheet.create({
   inset: {
     paddingHorizontal: Spacing.lg,
   },
-  eyebrow: {
-    ...Type.eyebrow,
-    color: Colors.textSecondary,
-    marginBottom: Spacing.xs,
-  },
-  title: {
+  header: {
     ...Type.title,
     color: Colors.textPrimary,
     marginBottom: Spacing.md,

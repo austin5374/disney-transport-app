@@ -3,12 +3,17 @@ import { View, Text, TouchableOpacity, StyleSheet, FlatList } from 'react-native
 import Ionicons from '@expo/vector-icons/Ionicons';
 import AppModal from './AppModal';
 import { DESTINATIONS } from '../data/destinations';
-import { useLiveStatus } from '../utils/liveStatus';
+import { useLiveStatus, arrivalsForLeg } from '../utils/liveStatus';
 import { Colors, StatusColors, Type, Spacing, SECTION_GAP } from '../utils/theme';
 
-// MDE-style "next bus times from your resort" board: pick a resort, see the
-// estimated next departure to each park destination. Estimates are derived
-// from the shared live-status board so a Down/Delayed bus group is reflected.
+// "Next bus times from your resort": pick a resort, see the next departure to
+// each park destination.
+//
+// The times here used to come from a second hash function written into this
+// file, which meant the panel and the trip screens could disagree about the
+// same bus. They now both ask the live engine, which seeds a bus line's
+// schedule from the stop you are standing at — the whole reason this panel is
+// per-resort in the first place.
 
 const BUS_DESTS = [
   { lineId: 'bus-mk', label: 'Magic Kingdom' },
@@ -23,27 +28,18 @@ const RESORTS = DESTINATIONS.filter(d =>
   !['Parks', 'Water Parks', 'Transportation', 'Entertainment'].includes(d.group)
 );
 
-// Deterministic per resort+destination+time-bucket offset so times differ by
-// resort but stay stable between renders and drift as time passes.
-function stopOffset(resortId: string, lineId: string, bucket: number): number {
-  let h = 0;
-  const key = `${resortId}|${lineId}|${bucket}`;
-  for (let i = 0; i < key.length; i++) h = (h * 31 + key.charCodeAt(i)) >>> 0;
-  return h % 14; // 0-13 min offset within the ~15-20 min headway
-}
-
 export default function BusTimesPanel() {
   const [resort, setResort] = useState(RESORTS.find(r => r.id === 'POP') ?? RESORTS[0]);
   const [pickerOpen, setPickerOpen] = useState(false);
   const live = useLiveStatus();
-  const bucket = Math.floor(Date.now() / 60_000); // advances every minute
+  // The board's own clock, so this panel and the cards above it agree.
+  const now = Object.values(live)[0]?.updatedAt ?? Date.now();
 
-  const rows = useMemo(() => BUS_DESTS.map(d => {
-    const status = live[d.lineId];
-    const base = stopOffset(resort.id, d.lineId, Math.floor(bucket / 18));
-    const minutesAway = ((base + bucket) % 18) === 0 ? 0 : 18 - ((base + bucket) % 18);
-    return { ...d, status, minutesAway };
-  }), [resort.id, live, bucket]);
+  const rows = useMemo(() => BUS_DESTS.map(d => ({
+    ...d,
+    status: live[d.lineId],
+    minutesAway: arrivalsForLeg(d.lineId, resort.id, now)[0] ?? null,
+  })), [resort.id, live, now]);
 
   return (
     <View style={styles.card}>
@@ -63,13 +59,17 @@ export default function BusTimesPanel() {
         return (
           <View key={row.lineId} style={[styles.destRow, i < rows.length - 1 && styles.destRowBorder]}>
             <Text style={styles.destName}>{row.label}</Text>
-            {st === 'down' ? (
+            {st === 'closed' ? (
+              <Text style={[styles.destTime, { color: sc.text }]}>Not running</Text>
+            ) : st === 'down' ? (
               <Text style={[styles.destTime, { color: sc.text }]}>Service interrupted</Text>
+            ) : row.minutesAway == null ? (
+              <Text style={styles.destTime}>—</Text>
             ) : row.minutesAway === 0 ? (
               <Text style={[styles.destTime, { color: Colors.statusOperating }]}>Arriving now</Text>
             ) : (
               <Text style={[styles.destTime, st === 'delayed' && { color: sc.text }]}>
-                {st === 'delayed' ? `~${row.minutesAway + 6} min (delays)` : `${row.minutesAway} min`}
+                {row.minutesAway} min{st === 'delayed' ? ' (delays)' : ''}
               </Text>
             )}
           </View>

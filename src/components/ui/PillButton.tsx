@@ -5,17 +5,23 @@ import { Colors, Type, Spacing, Radius } from '../../utils/theme';
 interface PillButtonProps {
   label: string;
   onPress: () => void;
-  /** Filled blue instead of outlined. For the single strongest action on a screen. */
-  solid?: boolean;
   disabled?: boolean;
   style?: ViewStyle;
 }
 
 // The reference app's primary action shape: a white pill with a 2px blue
-// border and a blue label. There is exactly one other action shape in that
-// app (LinkAction) and nothing else. Resist adding a third.
+// border and a blue label, sized to its own text and sitting at the left of
+// its row, usually paired with a right-aligned LinkAction. "Purchase / Learn
+// More", "Buy Tickets / View Guide", "Today's Showtimes / All Hours" are all
+// the same component in the same arrangement.
+//
+// There was a `solid` variant here, used for the planner's submit. A
+// full-width filled blue bar is the house style of every SaaS signup form and
+// appears nowhere in the reference; it is gone, and this shape is the only
+// button in the app. There is exactly one other action shape (LinkAction).
+// Resist adding a third.
 export default function PillButton({
-  label, onPress, solid, disabled, style,
+  label, onPress, disabled, style,
 }: PillButtonProps) {
   return (
     <TouchableOpacity
@@ -24,14 +30,9 @@ export default function PillButton({
       activeOpacity={0.75}
       accessibilityRole="button"
       accessibilityState={{ disabled: !!disabled }}
-      style={[
-        styles.pill,
-        solid && styles.solid,
-        disabled && styles.disabled,
-        style,
-      ]}
+      style={[styles.pill, disabled && styles.disabled, style]}
     >
-      <Text style={[styles.label, solid && styles.labelSolid, disabled && styles.labelDisabled]}>
+      <Text style={[styles.label, disabled && styles.labelDisabled]}>
         {label}
       </Text>
     </TouchableOpacity>
@@ -50,9 +51,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  solid: {
-    backgroundColor: Colors.primaryBlue,
-  },
   disabled: {
     borderColor: Colors.dividerStrong,
     backgroundColor: Colors.sectionBg,
@@ -60,9 +58,6 @@ const styles = StyleSheet.create({
   label: {
     ...Type.action,
     color: Colors.primaryBlue,
-  },
-  labelSolid: {
-    color: Colors.textOnDark,
   },
   labelDisabled: {
     color: Colors.textPlaceholder,

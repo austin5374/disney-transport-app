@@ -301,12 +301,14 @@ describe('hub transfers', () => {
   });
 
   it('waits for Disney Springs park buses to start before offering them', () => {
+    // Resorts have a Disney Springs bus all day; the parks only get one in the
+    // late afternoon. Asked from the park itself, the difference is the whole
+    // answer rather than one option among several.
     const legsAt = (hour: number) =>
-      applyFilters(getActiveRoutes('SW', 'DS', at(hour)), BASE)
+      applyFilters(getActiveRoutes('HS', 'DS', at(hour)), BASE)
         .filter(r => !isPaid(r))
         .flatMap(r => r.legs.map(l => `${l.mode}:${l.from}>${l.to}`));
 
-    // Park to Disney Springs service starts in the late afternoon.
     expect(legsAt(13)).not.toContain('bus:HS>DS');
     expect(legsAt(17)).toContain('bus:HS>DS');
   });

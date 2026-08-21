@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
-  View, Text, ScrollView, StyleSheet, RefreshControl, TouchableOpacity, Platform,
+  View, Text, ScrollView, StyleSheet, RefreshControl, Platform,
 } from 'react-native';
 import { TRANSIT_LINES, LineGroup } from '../data/lines';
 import { useLiveStatus, refreshLiveStatus, getTemporaryBridges } from '../utils/liveStatus';
@@ -10,16 +10,22 @@ import StatusCard from '../components/StatusCard';
 import BusTimesPanel from '../components/BusTimesPanel';
 import TemporaryBridgeCard from '../components/TemporaryBridgeCard';
 import Section from '../components/ui/Section';
+import ModeGlyph from '../components/ModeGlyph';
+import IconTabs, { IconTab } from '../components/ui/IconTabs';
 
 type Filter = LineGroup | 'All' | 'Advisories';
 
-const FILTERS: { key: Filter; label: string }[] = [
-  { key: 'All',        label: 'All' },
-  { key: 'Advisories', label: 'Advisories' },
-  { key: 'Monorail',   label: 'Monorail' },
-  { key: 'Skyliner',   label: 'Skyliner' },
-  { key: 'Boats',      label: 'Boats' },
-  { key: 'Buses',      label: 'Buses' },
+// The reference app's category rail: illustrated glyph over a Title Case
+// label, with the active one in blue over a blue underline, scrolling when it
+// runs past the edge. It replaces a row of rounded pills, which is a shape
+// that app uses nowhere.
+const FILTERS: IconTab<Filter>[] = [
+  { key: 'All',        label: 'All',        icon: 'apps-outline' },
+  { key: 'Advisories', label: 'Advisories', icon: 'alert-circle-outline' },
+  { key: 'Monorail',   label: 'Monorail',   renderIcon: () => <ModeGlyph mode="monorail_express" size={26} /> },
+  { key: 'Skyliner',   label: 'Skyliner',   renderIcon: () => <ModeGlyph mode="skyliner" size={26} /> },
+  { key: 'Boats',      label: 'Boats',      renderIcon: () => <ModeGlyph mode="ferry_ttc_mk" size={26} /> },
+  { key: 'Buses',      label: 'Buses',      renderIcon: () => <ModeGlyph mode="bus" size={26} /> },
 ];
 
 const ORDER: LineGroup[] = ['Monorail', 'Skyliner', 'Boats', 'Buses'];
@@ -39,7 +45,7 @@ function Skeleton() {
   );
 }
 
-export default function StatusScreen() {
+export default function StatusScreen({ navigation }: { navigation: { goBack: () => void } }) {
   const live = useLiveStatus();
   const [filter, setFilter] = useState<Filter>('All');
   const [refreshing, setRefreshing] = useState(false);
@@ -56,8 +62,14 @@ export default function StatusScreen() {
     setTimeout(() => setRefreshing(false), 500);
   };
 
+  // A line that has simply shut for the night is not an advisory. It used to
+  // be counted as one, so the header read "5 lines with advisories" at 11pm
+  // when nothing at all was wrong.
   const disrupted = useMemo(
-    () => TRANSIT_LINES.filter(l => live[l.id] && live[l.id].status !== 'operating'),
+    () => TRANSIT_LINES.filter(l => {
+      const st = live[l.id]?.status;
+      return st === 'down' || st === 'delayed';
+    }),
     [live]
   );
   const bridges = useMemo(() => getTemporaryBridges(live), [live]);
@@ -70,6 +82,8 @@ export default function StatusScreen() {
   return (
     <View style={styles.screen}>
       <AppHeader
+        showBack
+        onBack={() => navigation.goBack()}
         title="Transportation Status"
         subtitle={
           disrupted.length === 0
@@ -78,29 +92,14 @@ export default function StatusScreen() {
         }
       />
 
-      <View style={styles.filterBar}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterRow}>
-          {FILTERS.map(f => {
-            const active = filter === f.key;
-            const count = f.key === 'Advisories' ? disrupted.length : 0;
-            if (f.key === 'Advisories' && count === 0) return null;
-            return (
-              <TouchableOpacity
-                key={f.key}
-                style={[styles.chip, active && styles.chipActive]}
-                onPress={() => setFilter(f.key)}
-                activeOpacity={0.75}
-                accessibilityRole="radio"
-                accessibilityState={{ selected: active }}
-              >
-                <Text style={[styles.chipText, active && styles.chipTextActive]}>
-                  {f.label}{count > 0 ? ` (${count})` : ''}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-        </ScrollView>
-      </View>
+      <IconTabs
+        items={FILTERS
+          .filter(f => f.key !== 'Advisories' || disrupted.length > 0)
+          .map(f => f.key === 'Advisories' ? { ...f, badge: disrupted.length } : f)}
+        value={filter}
+        onChange={setFilter}
+        accessibilityLabel="Filter transportation status"
+      />
 
       <ScrollView
         contentContainerStyle={styles.scroll}
@@ -110,21 +109,16 @@ export default function StatusScreen() {
             : <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.primaryBlue} />
         }
       >
-        <TouchableOpacity
-          style={styles.updatedRow}
-          onPress={onRefresh}
-          activeOpacity={0.6}
-          accessibilityRole="button"
-          accessibilityLabel="Refresh transportation status"
-        >
+        {/* The board recomputes on its own every 20 seconds, and status is a
+            pure function of the wall clock, so a refresh control could only
+            ever advance the countdown by a second. Stating the time it was
+            last computed is the honest signal; a button is a promise of
+            control the engine does not have. */}
+        <View style={styles.updatedRow}>
           <Text style={styles.updatedText}>
             Updated {updated.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}
-            {' · '}
-            <Text style={styles.updatedLink}>
-              {Platform.OS === 'web' ? 'Tap to refresh' : 'Pull to refresh'}
-            </Text>
           </Text>
-        </TouchableOpacity>
+        </View>
 
         {booting ? (
           <Skeleton />
@@ -147,9 +141,15 @@ export default function StatusScreen() {
             )}
 
             {visibleGroups.map(g => {
-              const lines = TRANSIT_LINES.filter(
-                l => l.group === g && (filter !== 'All' || live[l.id]?.status === 'operating')
-              );
+              const lines = TRANSIT_LINES.filter(l => {
+                if (l.group !== g) return false;
+                if (filter !== 'All') return true;
+                // Disrupted lines are pinned to the top of the "All" view, so
+                // they are not repeated inside their group. Closed ones are
+                // not pinned, so they stay here.
+                const st = live[l.id]?.status;
+                return st !== 'down' && st !== 'delayed';
+              });
               const groupBridges = g === 'Buses' ? bridges : [];
               if (lines.length === 0 && groupBridges.length === 0 && g !== 'Buses') return null;
               return (
@@ -182,35 +182,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.pageBg,
   },
-  filterBar: {
-    backgroundColor: Colors.sectionBg,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.divider,
-  },
-  filterRow: {
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.md,
-    gap: Spacing.sm,
-  },
-  chip: {
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.sm,
-    borderRadius: Radius.pill,
-    borderWidth: 1,
-    borderColor: Colors.dividerStrong,
-    backgroundColor: Colors.sectionBg,
-  },
-  chipActive: {
-    backgroundColor: Colors.primaryBlue,
-    borderColor: Colors.primaryBlue,
-  },
-  chipText: {
-    ...Type.label,
-    color: Colors.textSecondary,
-  },
-  chipTextActive: {
-    color: Colors.textOnDark,
-  },
   scroll: {
     paddingBottom: Spacing.xl,
   },
@@ -222,18 +193,14 @@ const styles = StyleSheet.create({
     ...Type.caption,
     color: Colors.textSecondary,
   },
-  updatedLink: {
-    ...Type.label,
-    color: Colors.primaryBlue,
-  },
   groupHeader: {
     paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.md,
+    paddingTop: Spacing.lg,
     paddingBottom: Spacing.sm,
   },
   groupTitle: {
-    ...Type.eyebrow,
-    color: Colors.textSecondary,
+    ...Type.title,
+    color: Colors.textPrimary,
   },
   footnote: {
     ...Type.caption,

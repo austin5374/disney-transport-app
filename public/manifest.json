@@ -1,0 +1,15 @@
+{
+  "name": "Walt Disney World Transportation",
+  "short_name": "WDW Transport",
+  "description": "Plan a trip across Walt Disney World transportation: monorails, the Skyliner, boats, and buses. Routes ranked by total journey time, including the wait. Works offline.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0E5490",
+  "theme_color": "#0B79D0",
+  "icons": [
+    { "src": "/icon.png", "sizes": "1024x1024", "type": "image/png", "purpose": "any" },
+    { "src": "/adaptive-icon.png", "sizes": "1024x1024", "type": "image/png", "purpose": "maskable" }
+  ]
+}

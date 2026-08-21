@@ -1,0 +1,40 @@
+# Tests that nothing runs are tests nobody trusts.
+#
+# The suite and the typecheck both existed before this file did, and neither
+# ran on a push, so a break could reach the live deployment untouched by any
+# of it. A green check on every commit is the cheapest credibility signal a
+# public repository has.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    name: Typecheck, test and build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      # Some peer ranges still lag React 19; this is the same flag Vercel uses
+      # to install the project, so CI and production agree.
+      - name: Install
+        run: npm ci --legacy-peer-deps
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Test
+        run: npm test -- --ci
+
+      # The web export is what actually ships, so a build that only breaks in
+      # export should break here rather than on Vercel.
+      - name: Build for web
+        run: npx expo export --platform web

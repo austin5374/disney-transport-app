@@ -8,34 +8,44 @@ import { Colors, Type, Spacing, Gradients } from '../utils/theme';
 interface AppHeaderProps {
   title?: string;
   subtitle?: string;
+  /** Blue chevron at the left of a flat bar. Implies the flat treatment. */
   showBack?: boolean;
   onBack?: () => void;
+  /** Flat white bar with no back control, for a tab root that needs a title. */
+  plain?: boolean;
 }
 
-// Two header treatments, matching the reference app exactly:
+// Two header treatments, matching the reference app:
 //
-//   Tab-root screens  → full-bleed gradient hero, white wordmark, no back.
-//   Drilled-in screens → white bar, centered navy title that may wrap to two
-//                        lines, blue chevron-back at the left, hairline rule.
+//   Flat bar   → white, centered navy title that may wrap to two lines, a
+//                hairline rule, and a blue chevron only when there is
+//                somewhere to go back to. This is what the reference uses on
+//                every screen that carries a title at all.
+//   Blue field → reserved for the planner's banner, which is the app's front
+//                door. Nothing else gets one.
 //
-// The old header put a gold title on a dusty blue strip on every screen and
-// carried a tappable time-override pill that, on the detail screen, was wired
-// to a no-op. Both are gone.
-export default function AppHeader({ title, subtitle, showBack, onBack }: AppHeaderProps) {
+// The old build put the blue gradient on all four tab roots, which is the
+// default header of every navigator tutorial and appears on exactly zero
+// screens of the reference app.
+export default function AppHeader({ title, subtitle, showBack, onBack, plain }: AppHeaderProps) {
   const insets = useSafeAreaInsets();
 
-  if (showBack) {
+  if (showBack || plain) {
     return (
       <View style={[styles.flatBar, { paddingTop: insets.top + Spacing.sm }]}>
-        <TouchableOpacity
-          onPress={onBack}
-          style={styles.backBtn}
-          accessibilityRole="button"
-          accessibilityLabel="Go back"
-          hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-        >
-          <Ionicons name="chevron-back" size={26} color={Colors.primaryBlue} />
-        </TouchableOpacity>
+        {showBack ? (
+          <TouchableOpacity
+            onPress={onBack}
+            style={styles.backBtn}
+            accessibilityRole="button"
+            accessibilityLabel="Go back"
+            hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+          >
+            <Ionicons name="chevron-back" size={26} color={Colors.primaryBlue} />
+          </TouchableOpacity>
+        ) : (
+          <View style={styles.backBtn} />
+        )}
 
         <View style={styles.flatTitleArea}>
           <Text style={styles.pageTitle} numberOfLines={2}>{title}</Text>

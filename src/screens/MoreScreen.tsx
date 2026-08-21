@@ -1,75 +1,103 @@
 import React from 'react';
-import { View, Text, ScrollView, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
+import { StackNavigationProp } from '@react-navigation/stack';
+import { MoreStackParamList } from '../types';
 import { Colors, Type, Spacing, Radius, Brand } from '../utils/theme';
+import { goToTab, goToMap } from '../utils/navigateTab';
 import AppHeader from '../components/AppHeader';
-import Section from '../components/ui/Section';
 import Divider from '../components/ui/Divider';
 
-const FEATURES: { icon: keyof typeof Ionicons.glyphMap; title: string; body: string }[] = [
-  {
-    icon: 'navigate-outline',
-    title: 'Trip Planner',
-    body: 'Point to point routing between every park, resort, and Disney Springs. Trips are ranked by the whole journey: typical wait, time aboard, and walking, not just time on the vehicle.',
-  },
-  {
-    icon: 'alert-circle-outline',
-    title: 'Transportation Status',
-    body: 'Every monorail beam, Skyliner line, boat route, and bus group with its current service level, next departures, and crowding.',
-  },
-  {
-    icon: 'location-outline',
-    title: 'Transit Map',
-    body: 'A schematic of the monorail, Skyliner, and watercraft network. Select any line to highlight it and read its current status.',
-  },
-];
+interface Tile {
+  icon: keyof typeof Ionicons.glyphMap;
+  label: string;
+  go: () => void;
+}
 
-export default function MoreScreen() {
+// The ☰ hub
+//
+// The reference app opens this tab on a two-column grid of white cards with
+// blue icons, followed by a Title Case "My Visit" header over divider-
+// separated list rows. The old build opened it on a README explaining the
+// app's features to the person already using them, which is the single most
+// reliable portfolio-project marker there is.
+//
+// Every tile here goes somewhere real. Saved and recent trips arrive with
+// persistence; until they store something, they would be another control
+// whose only behaviour is to apologise.
+type Props = { navigation: StackNavigationProp<MoreStackParamList, 'MoreHome'> };
+
+export default function MoreScreen({ navigation }: Props) {
+  const tiles: Tile[] = [
+    {
+      icon: 'alert-circle-outline',
+      label: 'Transportation Status',
+      go: () => navigation.navigate('Status'),
+    },
+    {
+      icon: 'map-outline',
+      label: 'Transit Map',
+      go: () => goToMap(navigation.getParent()),
+    },
+    {
+      icon: 'navigate-outline',
+      label: 'Plan a Trip',
+      go: () => goToTab(navigation.getParent(), 'Planner', { screen: 'Plan' }),
+    },
+    {
+      icon: 'search-outline',
+      label: 'Search',
+      go: () => goToTab(navigation.getParent(), 'Search'),
+    },
+    {
+      icon: 'bookmark-outline',
+      label: 'Saved Trips',
+      go: () => navigation.navigate('SavedTrips'),
+    },
+  ];
+
   return (
     <View style={styles.screen}>
-      <AppHeader title="About" subtitle={Brand.title} />
+      <AppHeader plain title="More" />
 
       <ScrollView contentContainerStyle={styles.scroll}>
-        <Section eyebrow="What's Inside" flush>
-          {FEATURES.map((f, i) => (
-            <View key={f.title}>
-              {i > 0 && <Divider />}
-              <View style={styles.row}>
-                <View style={styles.rowIcon}>
-                  <Ionicons name={f.icon} size={22} color={Colors.primaryBlue} />
-                </View>
-                <View style={styles.rowText}>
-                  <Text style={styles.rowTitle}>{f.title}</Text>
-                  <Text style={styles.rowBody}>{f.body}</Text>
-                </View>
-              </View>
-            </View>
+        <View style={styles.grid}>
+          {tiles.map(tile => (
+            <TouchableOpacity
+              key={tile.label}
+              style={styles.tile}
+              onPress={tile.go}
+              activeOpacity={0.7}
+              accessibilityRole="button"
+              accessibilityLabel={tile.label}
+            >
+              <Ionicons name={tile.icon} size={30} color={Colors.primaryBlue} />
+              <Text style={styles.tileLabel}>{tile.label}</Text>
+            </TouchableOpacity>
           ))}
-        </Section>
+        </View>
 
-        {/* One disclaimer, in one place. The previous build repeated some form
-            of "this is not real" in five separate spots across the UI. */}
-        <Section eyebrow="About This App">
-          <Text style={styles.body}>
-            This app models the Walt Disney World transportation network: which lines
-            exist, where they stop, how long a ride takes, and which routes run at which
-            times of day. That structure follows the real network.
-          </Text>
-          <Text style={styles.body}>
-            Service levels, departure countdowns, and crowd levels are generated by a
-            simulation in this app. Disney publishes no public transportation API, so no
-            figure here reflects live operations.
-          </Text>
-          <Text style={styles.body}>
-            This is an independent fan project. It is not affiliated with, endorsed by,
-            or sponsored by The Walt Disney Company. Park, resort, and attraction names are
-            trademarks of their respective owners and appear here for identification only.
-          </Text>
-        </Section>
+        <View style={styles.listHeader}>
+          <Text style={styles.listTitle}>This App</Text>
+        </View>
 
-        <Section last>
-          <Text style={styles.version}>Version 2.1.0</Text>
-        </Section>
+        <View style={styles.list}>
+          <TouchableOpacity
+            style={styles.row}
+            onPress={() => navigation.navigate('About')}
+            activeOpacity={0.6}
+            accessibilityRole="button"
+          >
+            <Ionicons name="information-circle-outline" size={22} color={Colors.primaryBlue} />
+            <Text style={styles.rowLabel}>About {Brand.title}</Text>
+            <Ionicons name="chevron-forward" size={18} color={Colors.primaryBlue} />
+          </TouchableOpacity>
+          <Divider />
+          <View style={styles.row}>
+            <Ionicons name="pricetag-outline" size={22} color={Colors.textPlaceholder} />
+            <Text style={[styles.rowLabel, styles.rowLabelQuiet]}>Version {Brand.version}</Text>
+          </View>
+        </View>
       </ScrollView>
     </View>
   );
@@ -83,40 +111,54 @@ const styles = StyleSheet.create({
   scroll: {
     paddingBottom: Spacing.xl,
   },
-  row: {
+  grid: {
     flexDirection: 'row',
-    paddingHorizontal: Spacing.lg,
-    paddingVertical: Spacing.lg,
+    flexWrap: 'wrap',
     gap: Spacing.md,
+    padding: Spacing.lg,
+    backgroundColor: Colors.pageBg,
   },
-  rowIcon: {
-    width: 40,
-    height: 40,
+  tile: {
+    // Two per row, with one gap between them.
+    width: '48%',
+    flexGrow: 1,
+    minHeight: 128,
+    backgroundColor: Colors.sectionBg,
     borderRadius: Radius.md,
-    backgroundColor: Colors.primaryTint,
-    alignItems: 'center',
-    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: Colors.divider,
+    padding: Spacing.lg,
+    justifyContent: 'space-between',
   },
-  rowText: {
-    flex: 1,
-  },
-  rowTitle: {
+  tileLabel: {
     ...Type.subtitle,
     color: Colors.textPrimary,
-    marginBottom: 2,
   },
-  rowBody: {
-    ...Type.bodySmall,
+  listHeader: {
+    paddingHorizontal: Spacing.lg,
+    paddingTop: Spacing.md,
+    paddingBottom: Spacing.sm,
+  },
+  listTitle: {
+    ...Type.title,
+    color: Colors.textPrimary,
+  },
+  list: {
+    backgroundColor: Colors.sectionBg,
+  },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.md,
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.lg,
+  },
+  rowLabel: {
+    ...Type.body,
+    flex: 1,
+    color: Colors.textPrimary,
+  },
+  rowLabelQuiet: {
     color: Colors.textSecondary,
-  },
-  body: {
-    ...Type.bodySmall,
-    color: Colors.textSecondary,
-    marginBottom: Spacing.md,
-  },
-  version: {
-    ...Type.caption,
-    color: Colors.textPlaceholder,
-    textAlign: 'center',
   },
 });

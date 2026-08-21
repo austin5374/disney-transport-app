@@ -38,19 +38,23 @@ const LINES: RailLine[] = [
     // and back to the TTC. One direction only.
     mode: 'monorail_resort',
     stops: ['TTC', 'POLY', 'GF', 'MK', 'CON'],
-    hops:  [3, 3, 3, 3, 5],
+    hops:  [3, 3, 4, 4, 5],
     loop: true,
   },
   {
+    // The Express beam existed at 8 minutes while the Resort loop covered the
+    // same TTC-to-Magic-Kingdom run in 9, which makes the express service
+    // pointless — and is checkable by anyone who has ridden it. The express
+    // run is about four minutes; the resort loop is about ten.
     mode: 'monorail_express',
     stops: ['TTC', 'MK'],
-    hops:  [8],
+    hops:  [4],
     loop: false,
   },
   {
     mode: 'monorail_epcot',
     stops: ['TTC', 'EP'],
-    hops:  [12],
+    hops:  [13],
     loop: false,
   },
 ];

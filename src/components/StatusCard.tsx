@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Animated } from 'react-native';
-import { TransitLine } from '../data/lines';
+import { TransitLine, serviceStartLabel } from '../data/lines';
 import { LineStatus, STATUS_LABEL, CROWD_LABEL } from '../utils/liveStatus';
 import { Colors, Type, Spacing, Radius, StatusColors, SECTION_GAP } from '../utils/theme';
 import ModeGlyph from './ModeGlyph';
@@ -12,6 +12,11 @@ interface StatusCardProps {
 }
 
 function departureText(status: LineStatus, line: TransitLine): string {
+  if (status.status === 'closed') {
+    return status.detail?.startsWith('Service starts')
+      ? serviceStartLabel(line)
+      : 'Tomorrow';
+  }
   if (status.status === 'down') {
     return status.etaMinutes ? `About ${status.etaMinutes} min` : 'Unknown';
   }
@@ -19,7 +24,8 @@ function departureText(status: LineStatus, line: TransitLine): string {
     return status.status === 'delayed' ? 'Brief pauses' : 'Continuous';
   }
   if (status.nextArrivals.length === 0) {
-    return `Every ${status.headwayMinutes[0]}-${status.headwayMinutes[1]} min`;
+    const [lo, hi] = status.headwayMinutes;
+    return lo === hi ? `Every ${lo} min` : `Every ${lo}-${hi} min`;
   }
   const [a, b] = status.nextArrivals;
   const first = a === 0 ? 'Now' : `${a} min`;
@@ -27,12 +33,17 @@ function departureText(status: LineStatus, line: TransitLine): string {
 }
 
 function departureLabel(status: LineStatus): string {
-  return status.status === 'down' ? 'Return To Service' : 'Next Departure';
+  if (status.status === 'closed') return 'Next Service';
+  return status.status === 'down' ? 'Return to Service' : 'Next Departure';
 }
 
 export default function StatusCard({ line, status }: StatusCardProps) {
   const sc = StatusColors[status.status];
-  const disrupted = status.status !== 'operating';
+  // "Disrupted" means something is wrong. A line that is simply shut for the
+  // night is not wrong, so it neither pulses nor turns the card red — but it
+  // does stop claiming a crowd level and a countdown.
+  const disrupted = status.status === 'down' || status.status === 'delayed';
+  const running = status.status === 'operating';
   const pulse = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
@@ -57,8 +68,14 @@ export default function StatusCard({ line, status }: StatusCardProps) {
       <View style={styles.section}>
         <View style={styles.headerRow}>
           <View style={styles.headerText}>
+            {/* The dot carries service state, which is what a dot in this
+                position means everywhere else in transit UI. Line identity is
+                already on the drawn glyph to the right, which is tinted with
+                the line's own colour. Painting the dot in the line colour put
+                a calm blue circle directly above a red "Temporarily Down"
+                pill, and the eye reads the dot first. */}
             <View style={styles.nameRow}>
-              <View style={[styles.lineDot, { backgroundColor: line.color }]} />
+              {disrupted && <View style={[styles.lineDot, { backgroundColor: sc.text }]} />}
               <Text style={styles.name} numberOfLines={2}>{line.name}</Text>
             </View>
             <Text style={styles.stations}>{line.stations.join(' · ')}</Text>
@@ -72,7 +89,7 @@ export default function StatusCard({ line, status }: StatusCardProps) {
           <Text style={[styles.pillText, { color: sc.text }]}>{STATUS_LABEL[status.status]}</Text>
         </View>
 
-        {status.trainsInService != null && !disrupted ? (
+        {status.trainsInService != null && running ? (
           <Text style={styles.note}>
             {status.trainsInService} monorail{status.trainsInService === 1 ? '' : 's'} running this beam
           </Text>
@@ -82,14 +99,14 @@ export default function StatusCard({ line, status }: StatusCardProps) {
           <Text style={[styles.detail, { color: sc.text }]}>{status.detail}</Text>
         ) : null}
 
-        <OutlinedBox style={styles.box} color={disrupted ? sc.border : Colors.primaryBlue}>
+        <OutlinedBox style={styles.box} color={running ? Colors.primaryBlue : sc.border}>
           <View style={styles.boxLeft}>
             <Text style={styles.boxLabel}>{departureLabel(status)}</Text>
-            <Text style={[styles.boxValue, disrupted && { color: sc.text }]}>
+            <Text style={[styles.boxValue, !running && { color: sc.text }]}>
               {departureText(status, line)}
             </Text>
           </View>
-          {!disrupted && (
+          {running && (
             <View style={styles.crowdWrap}>
               {[0, 1, 2].map(i => {
                 const on =

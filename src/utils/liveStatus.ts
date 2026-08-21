@@ -1,6 +1,6 @@
-import { useSyncExternalStore } from 'react';
+import { useMemo, useSyncExternalStore } from 'react';
 import { Platform, AppState, AppStateStatus } from 'react-native';
-import { TRANSIT_LINES, TransitLine } from '../data/lines';
+import { TRANSIT_LINES, TransitLine, isInService, serviceStartLabel } from '../data/lines';
 
 // Deterministic live-status engine
 //
@@ -17,7 +17,7 @@ import { TRANSIT_LINES, TransitLine } from '../data/lines';
 //
 // The ticker that remains exists only to re-render countdowns.
 
-export type ServiceStatus = 'operating' | 'delayed' | 'down';
+export type ServiceStatus = 'operating' | 'delayed' | 'down' | 'closed';
 export type CrowdLevel = 'light' | 'moderate' | 'heavy';
 
 export interface LineStatus {
@@ -33,6 +33,16 @@ export interface LineStatus {
   headwayMinutes: [number, number];
   /** Monorail only: how many trains are running this beam. */
   trainsInService: number | null;
+}
+
+/** Lines whose departures depend on which stop you are standing at, not on
+ *  the line as a whole. Every resort shares one "All resorts to Magic
+ *  Kingdom" line, so a single countdown for it would show the same number at
+ *  Pop Century and at Animal Kingdom Lodge — the one thing a bus-time feature
+ *  must never do. The board shows these as a headway range; a trip screen,
+ *  which knows the origin, gets a real countdown from nextArrivalsFrom(). */
+function isStopScheduled(line: TransitLine): boolean {
+  return line.stations[0] === 'All resorts';
 }
 
 const TICK_MS = 20_000;
@@ -271,11 +281,19 @@ function activeDisruption(line: TransitLine, now: number): { detail: string; sta
 // per-line phase offset, so countdowns tick down smoothly and never jump
 // backwards on a re-render.
 
-function nextArrivals(line: TransitLine, headway: [number, number], now: number, delayed: boolean): number[] {
+/** Extra wait a delayed line adds, as a multiplier on its headway. Used both
+ *  by the countdown here and by the journey cost model in routing.ts, which
+ *  previously used the undelayed headway and so disagreed with the number
+ *  printed directly beneath it. */
+export const DELAY_HEADWAY_FACTOR = 1.6;
+
+function nextArrivals(
+  line: TransitLine, headway: [number, number], now: number, delayed: boolean, stopId?: string,
+): number[] {
   const [lo, hi] = headway;
   if (hi <= 1) return []; // continuous loading
-  const meanMs = ((lo + hi) / 2) * MINUTE * (delayed ? 1.6 : 1);
-  const phase = unit('phase', line.id) * meanMs;
+  const meanMs = ((lo + hi) / 2) * MINUTE * (delayed ? DELAY_HEADWAY_FACTOR : 1);
+  const phase = unit('phase', line.id, stopId ?? '') * meanMs;
   const sincePhase = now - phase;
   const nextIndex = Math.ceil(sincePhase / meanMs);
   return [0, 1].map(k => {
@@ -310,6 +328,28 @@ function computeLine(line: TransitLine, now: number): LineStatus {
   const episode = Math.floor(now / EPISODE_MS);
   const trainsInService = rollTrainsInService(line.id, episode);
   const headway = effectiveHeadway(line, trainsInService);
+  const date = new Date(now);
+
+  // Hours come first. A line that is shut cannot be delayed, cannot be held
+  // for lightning, and certainly cannot have a train two minutes out.
+  if (!isInService(line, date)) {
+    const minutes = date.getHours() * 60 + date.getMinutes();
+    const ended = minutes >= 12 * 60;
+    return {
+      lineId: line.id,
+      status: 'closed',
+      detail: ended
+        ? 'Service has ended for the night'
+        : `Service starts at ${serviceStartLabel(line)}`,
+      etaMinutes: null,
+      nextArrivals: [],
+      crowd: 'light',
+      updatedAt: now,
+      headwayMinutes: headway,
+      trainsInService: null,
+    };
+  }
+
   const disruption = activeDisruption(line, now);
   const status: ServiceStatus = disruption?.status ?? 'operating';
 
@@ -320,12 +360,45 @@ function computeLine(line: TransitLine, now: number): LineStatus {
     etaMinutes: status === 'down' && disruption
       ? Math.max(1, Math.ceil((disruption.endsAt - now) / MINUTE))
       : null,
-    nextArrivals: status === 'down' ? [] : nextArrivals(line, headway, now, status === 'delayed'),
+    nextArrivals: status === 'down' || isStopScheduled(line)
+      ? []
+      : nextArrivals(line, headway, now, status === 'delayed'),
     crowd: crowdFor(line.id, now),
     updatedAt: now,
     headwayMinutes: headway,
     trainsInService,
   };
+}
+
+/** The whole board at an arbitrary moment, computed rather than cached.
+ *  Every value in this engine is a pure function of (line, wall clock), so
+ *  the planner's "show me a different time of day" control can finally reach
+ *  the live layer instead of only reordering the route list. */
+export function computeStatusAt(at: number): Record<string, LineStatus> {
+  const out: Record<string, LineStatus> = {};
+  for (const line of TRANSIT_LINES) out[line.id] = computeLine(line, at);
+  return out;
+}
+
+/** The countdown a trip screen should show for one leg: seeded per stop for
+ *  the shared bus lines, and per line for everything else. */
+export function arrivalsForLeg(
+  lineId: string, fromStopId: string, at: number = Date.now(),
+): number[] {
+  const line = TRANSIT_LINES.find(l => l.id === lineId);
+  if (!line) return [];
+  return nextArrivalsFrom(lineId, isStopScheduled(line) ? fromStopId : undefined, at);
+}
+
+/** A countdown for one line at one stop. */
+export function nextArrivalsFrom(
+  lineId: string, stopId: string | undefined, at: number = Date.now(),
+): number[] {
+  const line = TRANSIT_LINES.find(l => l.id === lineId);
+  if (!line) return [];
+  const status = computeLine(line, at);
+  if (status.status === 'closed' || status.status === 'down') return [];
+  return nextArrivals(line, status.headwayMinutes, at, status.status === 'delayed', stopId);
 }
 
 function sameStatus(a: LineStatus | undefined, b: LineStatus): boolean {
@@ -475,6 +548,15 @@ export function getLastUpdated(): number {
   return lastUpdated;
 }
 
+/** The board as it stands, or as it would stand at another moment. The
+ *  planner's time control now reaches the live layer: set it to 8am and the
+ *  arrivals, the crowding and the closures all move with it, instead of the
+ *  route list alone changing while the countdowns stayed on the real clock. */
+export function useLiveStatusAt(at: number | null): Record<string, LineStatus> {
+  const live = useLiveStatus();
+  return useMemo(() => (at == null ? live : computeStatusAt(at)), [at, live]);
+}
+
 // Temporary bus bridges
 // Derived entirely from monorail/ferry status, not simulated lines of their
 // own. Disney brings up shuttle buses to cover a beam outage and pulls them
@@ -529,6 +611,17 @@ export const STATUS_LABEL: Record<ServiceStatus, string> = {
   operating: 'Operating',
   delayed: 'Delayed',
   down: 'Temporarily Down',
+  closed: 'Not Running',
+};
+
+/** How much longer a crowd makes you wait. Heavy crowding at park close is
+ *  the single biggest driver of real waiting time on this network — you watch
+ *  a full monorail leave without you — and until now the app computed a crowd
+ *  level and then ignored it everywhere. */
+export const CROWD_WAIT_FACTOR: Record<CrowdLevel, number> = {
+  light: 1,
+  moderate: 1.25,
+  heavy: 1.6,
 };
 
 export const CROWD_LABEL: Record<CrowdLevel, string> = {

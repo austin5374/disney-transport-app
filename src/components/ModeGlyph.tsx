@@ -20,7 +20,7 @@ interface ModeGlyphProps {
 // `body` is the line's own color; `tint` is a washed version used for glass,
 // wheels, and secondary structure.
 
-function Glyph({ mode, body, tint }: { mode: TransportMode; body: string; tint: string }) {
+export function Glyph({ mode, body, tint }: { mode: TransportMode; body: string; tint: string }) {
   switch (mode) {
     case 'monorail_express':
     case 'monorail_resort':
@@ -121,7 +121,7 @@ function Glyph({ mode, body, tint }: { mode: TransportMode; body: string; tint: 
 }
 
 /** Lighten a hex color toward white by `amount` (0-1). */
-function tintOf(hex: string, amount = 0.55): string {
+export function tintOf(hex: string, amount = 0.55): string {
   const h = hex.replace('#', '');
   const full = h.length === 3 ? h.split('').map(c => c + c).join('') : h;
   const r = parseInt(full.slice(0, 2), 16);
@@ -142,18 +142,43 @@ export default function ModeGlyph({ mode, size = 32, tile }: ModeGlyphProps) {
 
   if (!tile) return svg;
 
+  // The tile used to be a flat gray square, which read as a placeholder where
+  // the reference app carries a photograph. Tinting it by the mode's own
+  // family — sky for the things that fly and ride, water for the boats,
+  // greenery for the road — gives the row an image-shaped anchor without
+  // pretending to be a photo.
   return (
-    <View style={[styles.tile, { width: size + 20, height: size + 20 }]}>
+    <View
+      style={[
+        styles.tile,
+        { width: size + 34, height: size + 34, backgroundColor: tileBackground(mode) },
+      ]}
+    >
       {svg}
     </View>
   );
+}
+
+function tileBackground(mode: TransportMode): string {
+  switch (mode) {
+    case 'ferry_ttc_mk':
+    case 'friendship_boat':
+    case 'sassagoula_boat':
+    case 'water_taxi_gold':
+    case 'water_taxi_red':
+    case 'water_taxi_green':
+    case 'water_taxi_blue': return '#DCEBF7';
+    case 'bus':
+    case 'minnie_van':      return '#E6EFE3';
+    case 'walk':            return '#EFEAE0';
+    default:                return '#E4F0F9';
+  }
 }
 
 const styles = StyleSheet.create({
   tile: {
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: Radius.md,
-    backgroundColor: Colors.pageBg,
+    borderRadius: Radius.sm,
   },
 });

@@ -1,4 +1,4 @@
-# Walt Disney World transportation planner
+# Walt Disney World Transportation
 
 Pick where you are and where you're going, and it tells you how to get there on Disney transportation: monorails, the Skyliner, boats, and buses.
 
@@ -14,7 +14,15 @@ Trips are sorted by how long the whole thing takes, not just the time you're on 
 
 Some routes only run at certain times. Park to park buses don't start until 10am, the Blue Flag boat starts at 3pm, and Disney Springs buses from the parks start at 4pm. The planner checks the clock. If you ask for Magic Kingdom to Hollywood Studios at 8am it won't offer you a bus that isn't running yet, it'll route you through a monorail resort instead.
 
-There's also a status board for every line and a schematic map you can tap.
+Every line has published operating hours, and the app respects them. After park close the board says a line has ended for the night rather than counting down to a train that isn't coming, and a route that rides a closed line drops out of the results instead of being offered.
+
+Live service feeds the ranking, not just the decoration. A line that's down costs a trip the length of its own outage, a delayed line costs it the stretched headway, and a heavy crowd costs it more still — so a downed monorail falls below the ferry on its own rather than sitting at the top of the list with a red warning underneath it.
+
+There's also a status board for every line and a pannable map with live departures on it.
+
+## Offline
+
+Every byte of data in this app is static: the route graph, the line definitions, and a status engine that computes from a hash of the wall clock. Nothing needs a network, which means the whole thing works with the antenna off — which is exactly the condition it's for. Park wifi at 2pm is not a network. Add it to your home screen and it runs as an app.
 
 ## About the "live" data
 
@@ -52,13 +60,22 @@ npm run typecheck
 
 ## Tests
 
-47 of them. Most are checks on the route data, because it's 385 entries typed out by hand and I didn't trust it. Writing the tests turned up real problems:
+87, in two suites. `npm run test:logic` runs the route graph and the status engine under ts-jest with no native pipeline, so a sweep across all 1,056 destination pairs finishes in under a second. `npm run test:screens` renders the real screens under jest-expo.
+
+Most of the route-data tests exist because the data was typed out by hand and I didn't trust it. Writing them turned up real problems:
 
 - 5 routes where the total time didn't match the sum of their own legs
 - 22 bus legs that didn't match up to any transit line
 - A field sitting on every leg of every route that nothing ever read (485 of them)
 
-The rest cover the routing logic (including a check that a paid Minnie Van never gets ranked above actual Disney transportation on any of the 1,056 possible trips) and the status simulation, where the clock gets frozen and the board has to come out identical every time.
+The rest cover the routing logic and the status simulation, where the clock gets frozen and the board has to come out identical every time. Some of them are guarantees about the network as a whole, checked across every ordered pair:
+
+- every pair has an answer that isn't a paid car
+- no pair is offered a journey long enough to be a mistake
+- every two stops on the same boat or Skyliner line are actually connected
+- a paid Minnie Van never outranks Disney transportation
+
+The last one is why the coverage tests sweep all 1,056 pairs rather than sampling: this class of gap is never the pair you happen to check by hand. Twelve pairs used to have no transit answer at all, and all twelve involved Typhoon Lagoon.
 
 ## Files
 
@@ -66,14 +83,26 @@ The rest cover the routing logic (including a check that a paid Minnie Van never
 src/
   screens/       the pages
   components/
-    ui/          buttons, sections, dividers, that kind of thing
-  data/          transit lines, places, route data
+    ui/          buttons, sections, tabs, dividers, that kind of thing
+  data/
+    routes.ts       hand-authored trips
+    lines.ts        transit lines, with their operating hours
+    rail.ts         monorail pairs, derived from the beams
+    lineRoutes.ts   boat and Skyliner pairs, derived from the stops
+    resortBus.ts    resort buses, derived from Disney's own rule
   utils/
     theme.ts        colors, type sizes, spacing
-    routing.ts      works out trips and sorts them
-    liveStatus.ts   the fake status data
+    routing.ts      works out trips, ranks them against live service
+    liveStatus.ts   the simulated status engine
+    savedTrips.ts   trips you kept
   __tests__/
 ```
+
+Three of those data files generate trips instead of listing them. That's deliberate: the monorail resort loop had only 12 of its 20 ordered pairs written out, so Magic Kingdom to Grand Floridian offered a walk and no train. The boats had the same latent bug, and so did the resort buses. Deriving the trips from the stops makes that whole class of gap impossible rather than fixing its instances one at a time.
+
+## Sharing a trip
+
+Every screen has a URL. `/trip/POLY/MK` is Polynesian to Magic Kingdom, `/trip/POLY/MK/:routeId` is one specific way of doing it, and `/more/status` is the board. A saved trip stores the question rather than the answer, so opening it re-checks against the day's service instead of handing back a route from last week.
 
 ## Disclaimer
 

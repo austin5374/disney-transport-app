@@ -49,6 +49,9 @@ export interface Route {
   totalRideRange?: [number, number];
   tags: RouteTag[];
   timeRestriction?: 'before_10am' | 'after_3pm_only' | 'after_10am' | 'after_4pm_only';
+  /** Approximate fare, for the paid options. The reference app never lists a
+   *  paid product without listing its price. */
+  priceUsd?: number;
   notes?: string;
   name: string; // human-readable name for the card
 }
@@ -103,18 +106,32 @@ export type DestinationGroup =
 // Navigation param types
 export type RootStackParamList = {
   /** `reset` is a timestamp bumped by the tab bar's center action to clear
-   *  the planner back to a blank form. */
-  Search: { reset?: number } | undefined;
+   *  the planner back to a blank form. `presetTo` is a destination id handed
+   *  over by the search tab, so tapping a place there lands on a part-filled
+   *  trip rather than on a blank one. */
+  Plan: { reset?: number; presetTo?: string } | undefined;
+  // Params are destination ids rather than whole objects so that every screen
+  // has a URL. The app used to be a single-route SPA: you could not share a
+  // trip, and the browser's back button left the app instead of going back a
+  // screen. Carrying ids also means the detail screen recomputes its route
+  // against current service instead of rendering a snapshot taken minutes ago.
   Results: {
-    from: Destination;
-    to: Destination;
-    filters: ActiveFilters;
+    fromId: string;
+    toId: string;
+    filters?: ActiveFilters;
     timeOverride?: string; // ISO string
   };
   Detail: {
-    routeData: Route;
-    from: Destination;
-    to: Destination;
+    fromId: string;
+    toId: string;
+    routeId: string;
     timeOverride?: string;
   };
+};
+
+export type MoreStackParamList = {
+  MoreHome: undefined;
+  Status: undefined;
+  SavedTrips: undefined;
+  About: undefined;
 };

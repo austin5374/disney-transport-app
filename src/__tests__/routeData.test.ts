@@ -221,13 +221,13 @@ describe('monorail beams', () => {
     // of stations are not the same length.
     const short = railRoutes('GF', 'MK').find(r => r.legs[0].mode === 'monorail_resort')!;
     const long = railRoutes('MK', 'GF').find(r => r.legs[0].mode === 'monorail_resort')!;
-    expect(short.legs[0].rideMinutes).toBe(3);
+    expect(short.legs[0].rideMinutes).toBe(4);
     expect(long.legs[0].rideMinutes).toBeGreaterThan(short.legs[0].rideMinutes);
 
     // A full lap is the sum of the hops, whichever pair you measure it from.
     const lap = railRoutes('TTC', 'CON')[0].legs[0].rideMinutes
       + railRoutes('CON', 'TTC')[0].legs[0].rideMinutes;
-    expect(lap).toBe(17);
+    expect(lap).toBe(19);
   });
 
   it('does not duplicate a beam trip that the route file also declares', () => {

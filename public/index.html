@@ -11,6 +11,11 @@
     <!-- description and theme-color are injected from app.json's `web` block
          at export time; declaring them here as well produces duplicates. -->
     <meta name="author" content="Austin Vodrazka" />
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="WDW Transport" />
+    <link rel="apple-touch-icon" href="/icon.png" />
 
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Walt Disney World Transportation" />
@@ -48,8 +53,11 @@
 
     <style id="boot-paint">
       /* The bundle is large enough that there is a visible gap before the
-         first React paint. Painting the app's own background here means that
-         gap reads as the app loading rather than as a blank white page. */
+         first React paint. The old build filled it with a flat blue, then a
+         gray screen holding a spinner, then the app: three unrelated states
+         in a row. The reference app shows one continuous branded splash, so
+         this does too — the same mark the banner carries, painted from the
+         HTML so it appears before a single byte of JavaScript has run. */
       html, body {
         margin: 0;
         background: #0E5490;
@@ -57,6 +65,47 @@
         -moz-osx-font-smoothing: grayscale;
       }
       #root { background: #0E5490; }
+
+      #boot {
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 18px;
+        background: linear-gradient(160deg, #1B7FC4 0%, #136BAE 55%, #0E5490 100%);
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        color: #fff;
+        opacity: 1;
+        transition: opacity 260ms ease-out;
+      }
+      #boot.boot-out { opacity: 0; pointer-events: none; }
+      #boot .lockup { display: flex; align-items: center; gap: 12px; }
+      #boot .over {
+        font-size: 13px;
+        font-weight: 600;
+        letter-spacing: 1.4px;
+        opacity: 0.78;
+      }
+      #boot .word {
+        font-size: 25px;
+        font-weight: 800;
+        letter-spacing: -0.4px;
+        line-height: 1.15;
+      }
+      #boot .note {
+        position: absolute;
+        bottom: 40px;
+        font-size: 12px;
+        opacity: 0.65;
+        padding: 0 24px;
+        text-align: center;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        #boot { transition: none; }
+      }
     </style>
   </head>
 
@@ -65,5 +114,33 @@
       This app needs JavaScript enabled to plan a route.
     </noscript>
     <div id="root"></div>
+    <script>
+      // Offline support. Registered after load so it never competes with the
+      // first paint for bandwidth.
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', function () {
+          navigator.serviceWorker.register('/sw.js').catch(function () {
+            // No offline support is a worse app, not a broken one.
+          });
+        });
+      }
+    </script>
+    <div id="boot" aria-hidden="true">
+      <div class="lockup">
+        <svg width="52" height="52" viewBox="0 0 48 48" role="presentation">
+          <rect x="0" y="0" width="48" height="48" rx="13" fill="#ffffff" />
+          <rect x="7" y="33" width="34" height="4" rx="2" fill="#0E5490" opacity="0.45" />
+          <path d="M13 13h14c6.1 0 11 4.6 11 10.4V28a2.6 2.6 0 0 1-2.6 2.6H13A2.6 2.6 0 0 1 10.4 28V15.6A2.6 2.6 0 0 1 13 13Z" fill="#0E5490" />
+          <rect x="14" y="17" width="7.4" height="5.6" rx="1.8" fill="#ffffff" />
+          <rect x="24" y="17" width="7.4" height="5.6" rx="1.8" fill="#ffffff" />
+          <circle cx="35" cy="20" r="2.6" fill="#ffffff" />
+        </svg>
+        <div>
+          <div class="over">Walt Disney World</div>
+          <div class="word">Transportation</div>
+        </div>
+      </div>
+      <div class="note">An independent fan project. Not affiliated with The Walt Disney Company.</div>
+    </div>
   </body>
 </html>

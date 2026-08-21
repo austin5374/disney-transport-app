@@ -1,8 +1,11 @@
 import { Route, ActiveFilters, TransportMode, Leg } from '../types';
 import { ALL_ROUTES } from '../data/routes';
-import { DESTINATION_MAP, GEOFENCE_ZONES } from '../data/destinations';
+import { DESTINATIONS, DESTINATION_MAP, GEOFENCE_ZONES } from '../data/destinations';
 import { lineForLeg } from '../data/lines';
+import { LineStatus, DELAY_HEADWAY_FACTOR, CROWD_WAIT_FACTOR } from './liveStatus';
 import { railRoutes } from '../data/rail';
+import { resortBusRoutes } from '../data/resortBus';
+import { lineRoutes } from '../data/lineRoutes';
 
 // Geometry
 
@@ -21,27 +24,60 @@ export function haversineDistance(lat1: number, lng1: number, lat2: number, lng2
 // A trip costs wait + ride + walk. Ranking on ride time alone made every paid
 // car ride look faster than transit, because a car has no headway and the old
 // model charged transit nothing for standing at the stop.
+//
+// The optional `live` board is what stops the two halves of the app
+// contradicting each other. Without it, the top-ranked card could be badged
+// as the quickest option directly above red text saying its only line was
+// down for twelve minutes. A disruption is a cost, so it belongs in the cost
+// model, not just in the decoration.
+
+/** A live snapshot, keyed by line id. See liveStatus.ts. */
+export type LiveBoard = Record<string, LineStatus>;
 
 /** Expected wait for a rider who shows up at a random moment: half the mean
- *  headway. Continuous-loading systems (the Skyliner) cost nothing. */
-export function expectedWait(mode: TransportMode, from: string, to: string): number {
+ *  headway, then whatever the live board says is happening to that line.
+ *  Continuous-loading systems (the Skyliner) have no headway to halve. */
+export function expectedWait(
+  mode: TransportMode, from: string, to: string, live?: LiveBoard,
+): number {
   if (mode === 'walk' || mode === 'minnie_van') return 0;
   const line = lineForLeg(mode, from, to);
   if (!line) return 5;
-  const [lo, hi] = line.headwayMinutes;
+
+  const status = live?.[line.id];
+  const [lo, hi] = status?.headwayMinutes ?? line.headwayMinutes;
   if (hi <= 1) return 0;
-  return Math.round((lo + hi) / 4);
+
+  let wait = (lo + hi) / 4;
+  if (status) {
+    if (status.status === 'delayed') wait *= DELAY_HEADWAY_FACTOR;
+    wait *= CROWD_WAIT_FACTOR[status.crowd];
+    // A line that is down costs you the whole outage before it costs you a
+    // headway.
+    if (status.status === 'down') wait += status.etaMinutes ?? 15;
+  }
+  return Math.round(wait);
 }
 
-export function waitMinutesFor(route: Route): number {
-  return route.legs.reduce((sum, l) => sum + expectedWait(l.mode, l.from, l.to), 0);
+export function waitMinutesFor(route: Route, live?: LiveBoard): number {
+  return route.legs.reduce((sum, l) => sum + expectedWait(l.mode, l.from, l.to, live), 0);
 }
 
 /** Total door-to-door minutes: waiting, riding, and walking. */
-export function journeyMinutes(route: Route): number {
+export function journeyMinutes(route: Route, live?: LiveBoard): number {
   const ride = route.legs.reduce((s, l) => s + l.rideMinutes, 0);
   const walk = route.legs.reduce((s, l) => s + (l.walkMinutes ?? 0), 0);
-  return ride + walk + waitMinutesFor(route);
+  return ride + walk + waitMinutesFor(route, live);
+}
+
+/** A route nobody can take right now, because a line it rides is shut. */
+export function isRouteClosed(route: Route, live?: LiveBoard): boolean {
+  if (!live) return false;
+  return route.legs.some(leg => {
+    if (leg.mode === 'walk' || leg.mode === 'minnie_van') return false;
+    const line = lineForLeg(leg.mode, leg.from, leg.to);
+    return !!line && live[line.id]?.status === 'closed';
+  });
 }
 
 export function transferCount(route: Route): number {
@@ -138,8 +174,16 @@ function directRoutes(from: string, to: string, timeOverride?: Date): Route[] {
   // so every ordered pair of stations on a beam is covered by construction.
   const seen = new Set(explicit.map(legSignature));
   const rail = railRoutes(from, to).filter(r => !seen.has(legSignature(r)));
+  // Resort buses are generated the same way. Disney's rule — a bus from every
+  // resort to every park and Disney Springs, except where a boat, a monorail
+  // or the Skyliner already serves the pair — closes a whole class of gap that
+  // hand-written entries kept leaving open.
+  const resortBus = resortBusRoutes(from, to).filter(r => !seen.has(legSignature(r)));
+  // Boat and Skyliner pairs come from the lines' own stop lists, for the same
+  // reason the monorail pairs do. See lineRoutes.ts.
+  const byLine = lineRoutes(from, to).filter(r => !seen.has(legSignature(r)));
 
-  const combined = [...explicit, ...rail];
+  const combined = [...explicit, ...rail, ...resortBus, ...byLine];
 
   // A walk is a legitimate option but never a complete answer on its own. If
   // that is all this direction has, the reverse direction's real routes are
@@ -161,6 +205,30 @@ function directRoutes(from: string, to: string, timeOverride?: Date): Route[] {
 // guests actually connect between two resorts (bus to a park or Disney
 // Springs, then transfer).
 const TRANSFER_HUBS = ['DS', 'MK', 'EP', 'HS', 'AK', 'CBR', 'TTC'];
+
+// How far you actually walk between vehicles at each hub. This was a flat 5
+// minutes everywhere, which is wrong in both directions: the Skyliner and the
+// bus loop at Caribbean Beach are a minute apart, and Disney Springs puts the
+// bus bays a genuine walk from the boat dock.
+const HUB_TRANSFER_WALK: Record<string, number> = {
+  DS:  6,   // bus bays are a walk from the Sassagoula dock
+  MK:  7,   // bus stops sit below the park, the monorail above it
+  EP:  5,
+  HS:  4,
+  AK:  4,
+  CBR: 2,   // the Skyliner station and the bus loop share a plaza
+  TTC: 4,   // ferry dock to monorail ramp
+};
+
+const HUB_TRANSFER_NOTE: Record<string, string> = {
+  DS:  'Transfer at Disney Springs. The bus bays are about a 6 minute walk from the boat dock.',
+  MK:  'Transfer at Magic Kingdom. The bus stops are below the park; the monorail and ferry are above it.',
+  EP:  'Transfer at EPCOT, between the main entrance and the bus stops.',
+  HS:  'Transfer at Hollywood Studios, between the bus stops and the Skyliner station.',
+  AK:  'Transfer at Animal Kingdom, in the bus loop outside the entrance.',
+  CBR: 'Transfer at Caribbean Beach. The Skyliner station and the bus loop share a plaza.',
+  TTC: 'Transfer at the Transportation & Ticket Center, between the ferry dock and the monorail ramp.',
+};
 
 function bestSegment(from: string, to: string, timeOverride?: Date): Route | null {
   const candidates = directRoutes(from, to, timeOverride)
@@ -198,7 +266,7 @@ function synthesizeViaHub(from: string, to: string, timeOverride?: Date): Route[
     if (walksIntoHub || walksOutOfHub) continue;
     const legs: Leg[] = [
       ...a.legs,
-      { ...b.legs[0], walkMinutes: 5 },
+      { ...b.legs[0], walkMinutes: HUB_TRANSFER_WALK[hub] ?? 5 },
       ...b.legs.slice(1),
     ];
     options.push({
@@ -207,7 +275,7 @@ function synthesizeViaHub(from: string, to: string, timeOverride?: Date): Route[
       totalRideMinutes: legs.reduce((sum, l) => sum + l.rideMinutes, 0),
       tags: ['transfer'],
       name: nameForLegs(legs),
-      notes: `Transfer at ${destLabel(hub)}. The wait for the second vehicle is included in the journey total.`,
+      notes: `${HUB_TRANSFER_NOTE[hub] ?? `Transfer at ${destLabel(hub)}.`} The wait for the second vehicle is included in the journey total.`,
     });
   }
   options.sort((x, y) => journeyMinutes(x) - journeyMinutes(y));
@@ -233,8 +301,21 @@ export function driveMinutes(fromId: string, toId: string): number {
   return Math.max(6, Math.round(PICKUP_MINUTES + (km * ROAD_DETOUR) / PROPERTY_KMH * 60));
 }
 
+/** Roughly what Lyft charges for a Minnie Van on property: a base fare plus a
+ *  per-mile rate. Shown because the reference app never lists a paid option
+ *  without listing what it costs, and "not included with your stay" is not a
+ *  price. */
+function minnieVanPrice(fromId: string, toId: string): number {
+  const a = DESTINATION_MAP[fromId];
+  const b = DESTINATION_MAP[toId];
+  if (!a || !b) return 20;
+  const miles = (haversineDistance(a.lat, a.lng, b.lat, b.lng) / 1609) * ROAD_DETOUR;
+  return Math.max(15, Math.round(15 + miles * 3));
+}
+
 function minnieVanFallback(from: string, to: string): Route {
   const minutes = driveMinutes(from, to);
+  const price = minnieVanPrice(from, to);
   return {
     id: `minnie-${from}-${to}`,
     from, to,
@@ -242,7 +323,8 @@ function minnieVanFallback(from: string, to: string): Route {
     totalRideMinutes: minutes,
     tags: [],
     name: 'Minnie Van',
-    notes: 'A paid car service booked through the Lyft app. Not included with your stay.',
+    priceUsd: price,
+    notes: `A paid car service booked through the Lyft app, from about $${price}. Not included with your stay.`,
   };
 }
 
@@ -268,14 +350,34 @@ export function getActiveRoutes(from: string, to: string, timeOverride?: Date): 
   const hasRealRoute = routes.some(r => r.legs.every(l => l.mode !== 'minnie_van'));
 
   if (!hasRealRoute) {
-    routes = [...routes, ...synthesizeViaHub(from, to, timeOverride)];
+    // A stitched trip has to stay in the realm of something a person would
+    // actually do. Unbounded, the synthesizer confidently proposed a
+    // 107-minute bus odyssey from Blizzard Beach to Art of Animation, two
+    // places fifteen minutes apart by road. Saying "there is no practical
+    // Disney transport here" is a better answer than that.
+    //
+    // The allowance is generous on purpose. Connecting through a hub costs two
+    // waits and a walk before it costs a single minute of travel, so an hour
+    // to cross between two neighbouring value resorts really is the answer on
+    // a network with twenty-minute headways. This is a backstop against the
+    // absurd, not a performance target: tightened to anything like the drive
+    // time it starts deleting trips people genuinely make.
+    const ceiling = Math.max(100, Math.round(driveMinutes(from, to) * 2 + 50));
+    routes = [
+      ...routes,
+      ...synthesizeViaHub(from, to, timeOverride).filter(r => journeyMinutes(r) <= ceiling),
+    ];
   }
 
-  // A paid ride is always offered, but as a separate option rather than as a
-  // competitor for the top transit slot. Any hand-authored paid entry is
-  // replaced so every pair uses the same distance-based estimate.
   routes = routes.filter(r => !isPaidRoute(r));
-  routes.push(minnieVanFallback(from, to));
+
+  // A paid ride is always offered as a separate option rather than as a
+  // competitor for the top transit slot — except where it would be absurd.
+  // Every pair used to get one, so BoardWalk to BoardWalk Inn, which the
+  // router correctly answers as a three-minute walk, also offered a car.
+  const bestTransit = routes.filter(r => !isWalkOnly(r) || journeyMinutes(r) > 10);
+  const shortWalkOnly = routes.length > 0 && bestTransit.length === 0;
+  if (!shortWalkOnly) routes.push(minnieVanFallback(from, to));
 
   return routes;
 }
@@ -291,14 +393,17 @@ function scenicScore(r: Route): number {
     ? 0 : 1;
 }
 
-export function applyFilters(routes: Route[], filters: ActiveFilters): Route[] {
+export function applyFilters(routes: Route[], filters: ActiveFilters, live?: LiveBoard): Route[] {
   let result = routes.filter(r => {
     if (filters.noWater && isWater(r)) return false;
     if (filters.accessible && !isStepFree(r)) return false;
+    // Offering a trip on a line that has shut for the night is worse than
+    // offering nothing: the empty state can at least explain itself.
+    if (isRouteClosed(r, live)) return false;
     return true;
   });
 
-  const byJourney = (a: Route, b: Route) => journeyMinutes(a) - journeyMinutes(b);
+  const byJourney = (a: Route, b: Route) => journeyMinutes(a, live) - journeyMinutes(b, live);
 
   switch (filters.sort) {
     case 'transfers':
@@ -318,16 +423,24 @@ export function applyFilters(routes: Route[], filters: ActiveFilters): Route[] {
 /** Human-readable reasons the visible list is shorter than the full one, so an
  *  empty results screen can name the filter responsible instead of blaming the
  *  transportation network for the user's own settings. */
-export function describeExclusions(all: Route[], filters: ActiveFilters): string[] {
+export function describeExclusions(
+  all: Route[], filters: ActiveFilters, live?: LiveBoard,
+): string[] {
   const transit = all.filter(r => !isPaidRoute(r));
   const reasons: string[] = [];
+  const closed = transit.filter(r => isRouteClosed(r, live)).length;
+  if (closed > 0) {
+    reasons.push(
+      `${closed} route${closed === 1 ? '' : 's'} ${closed === 1 ? 'uses a line' : 'use lines'} that are not running at this hour.`
+    );
+  }
   if (filters.noWater) {
     const n = transit.filter(isWater).length;
-    if (n > 0) reasons.push(`"No boats" is hiding ${n} route${n === 1 ? '' : 's'}.`);
+    if (n > 0) reasons.push(`"No Boats" is hiding ${n} route${n === 1 ? '' : 's'}.`);
   }
   if (filters.accessible) {
     const n = transit.filter(r => !isStepFree(r)).length;
-    if (n > 0) reasons.push(`"Step-free" is hiding ${n} route${n === 1 ? '' : 's'}.`);
+    if (n > 0) reasons.push(`"Step-Free" is hiding ${n} route${n === 1 ? '' : 's'}.`);
   }
   return reasons;
 }
@@ -368,7 +481,28 @@ export function getTimeBannerMessage(timeOverride?: Date): string | null {
 }
 
 // Geofence detection
+//
+// This was fifteen hand-tuned circles with a lookup table beside them, and
+// that table mapped the whole Magic Kingdom resort area to the Contemporary:
+// stand at the Polynesian and the app told you where you were not. Every
+// destination already carries its own coordinates, so the nearest one within
+// a reasonable radius is both more accurate and less to keep in step.
 
+const DETECT_RADIUS_METERS = 1200;
+
+/** The destination you are standing at, or null if you are not on property. */
+export function detectDestination(lat: number, lng: number): string | null {
+  let closest: { id: string; dist: number } | null = null;
+  for (const dest of DESTINATIONS) {
+    const dist = haversineDistance(lat, lng, dest.lat, dest.lng);
+    if (dist <= DETECT_RADIUS_METERS && (!closest || dist < closest.dist)) {
+      closest = { id: dest.id, dist };
+    }
+  }
+  return closest ? closest.id : null;
+}
+
+/** @deprecated Kept for the zone list's own tests. Use detectDestination. */
 export function detectZone(lat: number, lng: number): string | null {
   let closest: { id: string; dist: number } | null = null;
   for (const zone of GEOFENCE_ZONES) {

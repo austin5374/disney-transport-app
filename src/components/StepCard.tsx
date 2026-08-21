@@ -1,18 +1,18 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Leg } from '../types';
+import { LineStatus } from '../utils/liveStatus';
 import { Colors, Type, Spacing, Radius, SECTION_GAP } from '../utils/theme';
 import { DESTINATION_MAP } from '../data/destinations';
 import LiveArrival from './LiveArrival';
-import InfoSheet from './InfoSheet';
 import ModeGlyph from './ModeGlyph';
 
 const placeLabel = (id: string) => DESTINATION_MAP[id]?.label ?? id;
 
-// What to call the physical spot you'd walk to for each mode. Used by the
-// "walking directions" prompt below. Walking/rideshare legs get none: you're
-// either already walking, or waiting for a car, not heading to a station.
+// What to call the physical spot you'd walk to for each mode, used by the
+// transfer-walk line. Walking and rideshare legs get none: you're either
+// already walking, or waiting for a car, not heading to a station.
 function boardingPointNoun(mode: string): string | null {
   switch (mode) {
     case 'bus':              return 'bus stop';
@@ -35,6 +35,8 @@ interface StepCardProps {
   leg: Leg;
   stepNum: number;
   totalSteps: number;
+  live: Record<string, LineStatus>;
+  at?: number;
 }
 
 function instructionTitle(leg: Leg): string {
@@ -57,11 +59,10 @@ function instructionTitle(leg: Leg): string {
   }
 }
 
-export default function StepCard({ leg, stepNum, totalSteps }: StepCardProps) {
+export default function StepCard({ leg, stepNum, totalSteps, live, at }: StepCardProps) {
   const isMinnie = leg.mode === 'minnie_van';
   const isWalk = leg.mode === 'walk';
   const boardingPoint = boardingPointNoun(leg.mode);
-  const [showWalkInfo, setShowWalkInfo] = React.useState(false);
 
   return (
     <>
@@ -102,29 +103,8 @@ export default function StepCard({ leg, stepNum, totalSteps }: StepCardProps) {
 
         {!isMinnie && !isWalk && (
           <View style={styles.arrivalRow}>
-            <LiveArrival mode={leg.mode} from={leg.from} to={leg.to} />
+            <LiveArrival mode={leg.mode} from={leg.from} to={leg.to} live={live} at={at} />
           </View>
-        )}
-
-        {boardingPoint && (
-          <TouchableOpacity
-            style={styles.walkRow}
-            onPress={() => setShowWalkInfo(true)}
-            activeOpacity={0.6}
-            accessibilityRole="button"
-          >
-            <Text style={styles.walkText}>Walking directions to the {boardingPoint}</Text>
-            <Ionicons name="chevron-forward" size={16} color={Colors.primaryBlue} />
-          </TouchableOpacity>
-        )}
-
-        {boardingPoint && (
-          <InfoSheet
-            visible={showWalkInfo}
-            title="Walking directions"
-            message={`Turn-by-turn walking guidance to the ${boardingPoint} at ${placeLabel(leg.from)} is not available in this build.`}
-            onClose={() => setShowWalkInfo(false)}
-          />
         )}
       </View>
       <View style={styles.gutter} />
@@ -143,7 +123,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.pageBg,
   },
   stepLabel: {
-    ...Type.eyebrow,
+    ...Type.label,
     color: Colors.textSecondary,
     marginBottom: Spacing.md,
   },
@@ -189,18 +169,5 @@ const styles = StyleSheet.create({
   },
   arrivalRow: {
     marginTop: Spacing.md,
-  },
-  walkRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginTop: Spacing.lg,
-    paddingTop: Spacing.md,
-    borderTopWidth: 1,
-    borderTopColor: Colors.divider,
-  },
-  walkText: {
-    ...Type.action,
-    color: Colors.primaryBlue,
   },
 });

@@ -7,6 +7,58 @@ import { TransportMode } from '../types';
 
 export type LineGroup = 'Monorail' | 'Skyliner' | 'Boats' | 'Buses';
 
+// When a line actually runs
+//
+// `serviceHours` used to be a display string and nothing else: no code read
+// it. So at 11pm the board offered a Skyliner countdown for a line that shuts
+// at park close, and buses quoted departures at 3am. Anyone who knows the
+// network checks that against the clock on their own phone, which makes it
+// the most visible realism bug in the app.
+//
+// The window below is structured, so the live engine can close a line down.
+// Times are minutes from midnight; a close past midnight is expressed as a
+// value above 1440.
+export interface ServiceWindow {
+  /** Minutes relative to park open. Negative starts service early. */
+  fromParkOpen?: number;
+  /** Minutes relative to park close. Positive runs service late. */
+  toParkClose?: number;
+  /** A fixed clock window, for lines that ignore park hours. */
+  absolute?: [number, number];
+}
+
+/** A typical operating day on property, in minutes from midnight. Park hours
+ *  move with the calendar; a simulation only needs them to be plausible and
+ *  identical for everyone looking at it. */
+export const PARK_DAY = { open: 9 * 60, close: 22 * 60 } as const;
+
+export function serviceWindowMinutes(window: ServiceWindow): [number, number] {
+  if (window.absolute) return window.absolute;
+  return [
+    PARK_DAY.open + (window.fromParkOpen ?? 0),
+    PARK_DAY.close + (window.toParkClose ?? 0),
+  ];
+}
+
+/** Is this line running at `date`? */
+export function isInService(line: TransitLine, date: Date): boolean {
+  const [open, close] = serviceWindowMinutes(line.window);
+  const minutes = date.getHours() * 60 + date.getMinutes();
+  // A close past midnight wraps: 23:30 to 01:00 also covers 00:30.
+  if (close > 24 * 60) return minutes >= open || minutes < close - 24 * 60;
+  return minutes >= open && minutes < close;
+}
+
+/** When service next starts, as a display string. */
+export function serviceStartLabel(line: TransitLine): string {
+  const [open] = serviceWindowMinutes(line.window);
+  const h = Math.floor(open / 60) % 24;
+  const m = open % 60;
+  const suffix = h >= 12 ? 'PM' : 'AM';
+  const hour12 = h % 12 === 0 ? 12 : h % 12;
+  return `${hour12}:${String(m).padStart(2, '0')} ${suffix}`;
+}
+
 export interface TransitLine {
   id: string;
   group: LineGroup;
@@ -16,7 +68,22 @@ export interface TransitLine {
   stations: string[];    // display names in order
   headwayMinutes: [number, number]; // typical min-max between departures
   serviceHours: string;  // display only
+  window: ServiceWindow; // the same hours, in a form the engine can read
   color: string;         // line color for map + cards
+
+  // The stops as destination ids, in the order the vehicle calls at them, so
+  // every ordered pair on the line can be derived instead of hand-written.
+  // `stations` above is display copy; this is the machine-readable twin.
+  //
+  // One stop can serve more than one destination — the Friendship Boat's
+  // "Yacht & Beach Club" dock is both — hence the nested array.
+  //
+  // Declaring the stops and then writing the pairs out separately is how Port
+  // Orleans Riverside to Old Key West ended up with no boat, even though both
+  // sit on the same Sassagoula line. See lineRoutes.ts.
+  stops?: string[][];
+  /** Minutes between consecutive stops. Length is stops.length - 1. */
+  hopMinutes?: number[];
 }
 
 export const TRANSIT_LINES: TransitLine[] = [
@@ -29,6 +96,7 @@ export const TRANSIT_LINES: TransitLine[] = [
     stations: ['Transportation & Ticket Center', 'Magic Kingdom'],
     headwayMinutes: [4, 7],
     serviceHours: '30 min before park open to 1 hr after close',
+    window: { fromParkOpen: -30, toParkClose: 60 },
     color: '#E8554D',
   },
   {
@@ -39,6 +107,7 @@ export const TRANSIT_LINES: TransitLine[] = [
     stations: ['Transportation & Ticket Center', 'Polynesian Village', 'Grand Floridian', 'Magic Kingdom', 'Contemporary'],
     headwayMinutes: [5, 9],
     serviceHours: '30 min before park open to 1 hr after close',
+    window: { fromParkOpen: -30, toParkClose: 60 },
     color: '#F2A93B',
   },
   {
@@ -49,6 +118,7 @@ export const TRANSIT_LINES: TransitLine[] = [
     stations: ['Transportation & Ticket Center', 'EPCOT'],
     headwayMinutes: [6, 10],
     serviceHours: '30 min before park open to 1 hr after close',
+    window: { fromParkOpen: -30, toParkClose: 60 },
     color: '#4C9F70',
   },
 
@@ -61,7 +131,10 @@ export const TRANSIT_LINES: TransitLine[] = [
     stations: ['Caribbean Beach', 'Riviera Resort', 'EPCOT (International Gateway)'],
     headwayMinutes: [0, 1], // continuous loading
     serviceHours: '30 min before earliest park open to park close',
+    window: { fromParkOpen: -30, toParkClose: 0 },
     color: '#1E96A8',
+    stops: [['CBR'], ['RIV'], ['EP']],
+    hopMinutes: [4, 5],
   },
   {
     id: 'sky-hs',
@@ -71,7 +144,10 @@ export const TRANSIT_LINES: TransitLine[] = [
     stations: ['Caribbean Beach', 'Hollywood Studios'],
     headwayMinutes: [0, 1],
     serviceHours: '1 hr before park open to park close',
+    window: { fromParkOpen: -60, toParkClose: 0 },
     color: '#D97B29',
+    stops: [['CBR'], ['HS']],
+    hopMinutes: [6],
   },
   {
     id: 'sky-pop',
@@ -81,7 +157,10 @@ export const TRANSIT_LINES: TransitLine[] = [
     stations: ['Caribbean Beach', 'Pop Century & Art of Animation'],
     headwayMinutes: [0, 1],
     serviceHours: '1 hr before earliest park open to park close',
+    window: { fromParkOpen: -60, toParkClose: 0 },
     color: '#5A9AE6',
+    stops: [['CBR'], ['POP', 'AOA']],
+    hopMinutes: [5],
   },
 
   // Boats
@@ -93,7 +172,10 @@ export const TRANSIT_LINES: TransitLine[] = [
     stations: ['Transportation & Ticket Center', 'Magic Kingdom'],
     headwayMinutes: [8, 12],
     serviceHours: 'Park open to 1 hr after close',
+    window: { fromParkOpen: 0, toParkClose: 60 },
     color: '#378ADD',
+    stops: [['TTC'], ['MK']],
+    hopMinutes: [8],
   },
   {
     id: 'boat-gold',
@@ -103,7 +185,10 @@ export const TRANSIT_LINES: TransitLine[] = [
     stations: ['Magic Kingdom', 'Grand Floridian', 'Polynesian Village'],
     headwayMinutes: [15, 25],
     serviceHours: '30 min before park open to 90 min after close',
+    window: { fromParkOpen: -30, toParkClose: 90 },
     color: '#D4A017',
+    stops: [['MK'], ['GF'], ['POLY']],
+    hopMinutes: [8, 6],
   },
   {
     id: 'boat-red',
@@ -113,7 +198,10 @@ export const TRANSIT_LINES: TransitLine[] = [
     stations: ['Magic Kingdom', 'Wilderness Lodge'],
     headwayMinutes: [15, 25],
     serviceHours: '30 min before park open to 90 min after close',
+    window: { fromParkOpen: -30, toParkClose: 90 },
     color: '#C94F42',
+    stops: [['MK'], ['WL']],
+    hopMinutes: [12],
   },
   {
     id: 'boat-green',
@@ -123,7 +211,10 @@ export const TRANSIT_LINES: TransitLine[] = [
     stations: ['Magic Kingdom', 'Fort Wilderness'],
     headwayMinutes: [15, 25],
     serviceHours: '30 min before park open to 90 min after close',
+    window: { fromParkOpen: -30, toParkClose: 90 },
     color: '#4C9F70',
+    stops: [['MK'], ['FW']],
+    hopMinutes: [15],
   },
   {
     id: 'boat-blue',
@@ -133,7 +224,10 @@ export const TRANSIT_LINES: TransitLine[] = [
     stations: ['Wilderness Lodge', 'Fort Wilderness', 'Contemporary'],
     headwayMinutes: [20, 30],
     serviceHours: '3:00 PM to 10:45 PM',
+    window: { absolute: [15 * 60, 22 * 60 + 45] },
     color: '#4A7FD4',
+    stops: [['WL'], ['FW'], ['CON']],
+    hopMinutes: [10, 12],
   },
   {
     id: 'boat-friendship',
@@ -143,7 +237,10 @@ export const TRANSIT_LINES: TransitLine[] = [
     stations: ['EPCOT (International Gateway)', 'BoardWalk', 'Yacht & Beach Club', 'Swan & Dolphin', 'Hollywood Studios'],
     headwayMinutes: [15, 20],
     serviceHours: 'Park open to 1 hr after close',
+    window: { fromParkOpen: 0, toParkClose: 60 },
     color: '#2E9E8F',
+    stops: [['EP'], ['BWI', 'BW'], ['YC', 'BC'], ['SW', 'DO', 'SR'], ['HS']],
+    hopMinutes: [5, 4, 4, 7],
   },
   {
     id: 'boat-sassagoula',
@@ -153,7 +250,10 @@ export const TRANSIT_LINES: TransitLine[] = [
     stations: ['Port Orleans French Quarter', 'Port Orleans Riverside', 'Old Key West', 'Saratoga Springs', 'Disney Springs'],
     headwayMinutes: [15, 20],
     serviceHours: '10:30 AM to 11:30 PM',
+    window: { absolute: [10 * 60 + 30, 23 * 60 + 30] },
     color: '#8C5A3C',
+    stops: [['POFQ'], ['POR'], ['OKW'], ['SS'], ['DS']],
+    hopMinutes: [6, 8, 6, 5],
   },
 
   // Bus service groups
@@ -165,6 +265,7 @@ export const TRANSIT_LINES: TransitLine[] = [
     stations: ['All resorts', 'Magic Kingdom'],
     headwayMinutes: [15, 20],
     serviceHours: '45 min before park open to 1 hr after close',
+    window: { fromParkOpen: -45, toParkClose: 60 },
     color: '#639922',
   },
   {
@@ -175,6 +276,7 @@ export const TRANSIT_LINES: TransitLine[] = [
     stations: ['All resorts', 'EPCOT'],
     headwayMinutes: [15, 20],
     serviceHours: '45 min before park open to 1 hr after close',
+    window: { fromParkOpen: -45, toParkClose: 60 },
     color: '#639922',
   },
   {
@@ -185,6 +287,7 @@ export const TRANSIT_LINES: TransitLine[] = [
     stations: ['All resorts', 'Hollywood Studios'],
     headwayMinutes: [15, 20],
     serviceHours: '45 min before park open to 1 hr after close',
+    window: { fromParkOpen: -45, toParkClose: 60 },
     color: '#639922',
   },
   {
@@ -195,6 +298,7 @@ export const TRANSIT_LINES: TransitLine[] = [
     stations: ['All resorts', 'Animal Kingdom'],
     headwayMinutes: [15, 20],
     serviceHours: '45 min before park open to 1 hr after close',
+    window: { fromParkOpen: -45, toParkClose: 60 },
     color: '#639922',
   },
   {
@@ -205,6 +309,7 @@ export const TRANSIT_LINES: TransitLine[] = [
     stations: ['All resorts', 'Disney Springs'],
     headwayMinutes: [20, 20],
     serviceHours: 'Resorts: all day · From parks: after 4 PM',
+    window: { fromParkOpen: -45, toParkClose: 90 },
     color: '#639922',
   },
   {
@@ -215,6 +320,7 @@ export const TRANSIT_LINES: TransitLine[] = [
     stations: ['All resorts', 'Typhoon Lagoon & Blizzard Beach'],
     headwayMinutes: [20, 30],
     serviceHours: 'Water park open to close',
+    window: { absolute: [10 * 60, 18 * 60] },
     color: '#639922',
   },
   {
@@ -225,6 +331,7 @@ export const TRANSIT_LINES: TransitLine[] = [
     stations: ['Fort Wilderness', 'Wilderness Lodge', 'BoardWalk Inn', 'Caribbean Beach'],
     headwayMinutes: [20, 30],
     serviceHours: 'Limited service, longest waits on property',
+    window: { fromParkOpen: -30, toParkClose: 60 },
     color: '#639922',
   },
 ];

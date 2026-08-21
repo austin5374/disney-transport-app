@@ -80,12 +80,16 @@ describe('board shape', () => {
     }
   });
 
-  it('reports departures for every line except the continuously loading ones', () => {
+  it('reports departures for every line except the ones that cannot have one', () => {
     for (const line of TRANSIT_LINES) {
       const s = board[line.id];
-      if (s.status === 'down') continue;
+      if (s.status === 'down' || s.status === 'closed') continue;
       const continuous = s.headwayMinutes[1] <= 1;
-      expect(s.nextArrivals.length).toBe(continuous ? 0 : 2);
+      // A shared "All resorts to a park" bus line has no single schedule: its
+      // countdown depends on the stop, so the board carries a headway range
+      // instead and the trip screen asks for the stop's own arrivals.
+      const perStop = line.stations[0] === 'All resorts';
+      expect(s.nextArrivals.length).toBe(continuous || perStop ? 0 : 2);
     }
   });
 
@@ -152,9 +156,12 @@ describe('coordinated outages', () => {
     for (let m = 0; m < 24 * 60; m += 10) {
       freeze(new Date(2026, 7, 20, 0, 0, 0, 0).getTime() + m * 60_000);
       const board = loadEngine().getLiveStatus();
-      const weathered = lagoon.filter(id => /lightning|weather|winds/i.test(board[id].detail ?? ''));
+      // A line that is shut for the night cannot also be weather-held, so the
+      // group is only the boats actually running at this hour.
+      const running = lagoon.filter(id => board[id].status !== 'closed');
+      const weathered = running.filter(id => /lightning|weather|winds/i.test(board[id].detail ?? ''));
       if (weathered.length === 0) continue;
-      expect(weathered.length).toBe(lagoon.length);
+      expect(weathered.length).toBe(running.length);
     }
   });
 

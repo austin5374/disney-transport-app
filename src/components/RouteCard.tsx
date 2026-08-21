@@ -3,7 +3,7 @@ import { View, Text, StyleSheet } from 'react-native';
 import { Route } from '../types';
 import { Colors, Type, Spacing, Radius, StatusColors, SECTION_GAP } from '../utils/theme';
 import { lineForLeg } from '../data/lines';
-import { useLiveStatus, ServiceStatus } from '../utils/liveStatus';
+import { LineStatus, ServiceStatus } from '../utils/liveStatus';
 import { journeyMinutes } from '../utils/routing';
 import TransportChip from './TransportChip';
 import LiveArrival from './LiveArrival';
@@ -13,16 +13,24 @@ import LinkAction from './ui/LinkAction';
 
 interface RouteCardProps {
   route: Route;
-  isBest?: boolean;
-  isScenic?: boolean;
+  /** The same board the list was ranked with, so a card's total cannot
+   *  disagree with its position. */
+  live: Record<string, LineStatus>;
+  at?: number;
   onPress: () => void;
 }
 
 // One full-bleed white section per route, shaped like the reference app's
 // list rows: bold navy name, gray meta line, illustration on the right, and
 // the key number inside a blue-bordered box with the action beside it.
-export default function RouteCard({ route, isBest, isScenic, onPress }: RouteCardProps) {
-  const live = useLiveStatus();
+//
+// There were solid blue "Fastest" and "Scenic" badges above the title. The
+// reference app carries no status capsule anywhere: rank is expressed by
+// order, and the summary row above the list says what the order means. A
+// "Fastest" badge was also being printed on lists of one, which is 42% of all
+// trips. The only badge left is a live disruption, which is information
+// nothing else on the card carries.
+export default function RouteCard({ route, live, at, onPress }: RouteCardProps) {
 
   const isWater  = route.tags.includes('water');
   const isPaid   = route.legs.some(l => l.mode === 'minnie_van');
@@ -40,10 +48,14 @@ export default function RouteCard({ route, isBest, isScenic, onPress }: RouteCar
     }
   }
 
-  const total = journeyMinutes(route);
+  const total = journeyMinutes(route, live);
   const transfers = route.legs.filter(l => l.mode !== 'walk').length - 1;
 
+  // The paid-ride note used to be a gray capsule above the title. It is a
+  // fact about the trip, not a status, so it belongs on the meta line with the
+  // other facts about the trip.
   const meta = [
+    isPaid ? (route.priceUsd ? `Paid ride · from $${route.priceUsd}` : 'Paid ride') : null,
     transfers > 0 ? `${transfers} transfer${transfers > 1 ? 's' : ''}` : 'No transfers',
     isWater ? 'Water route' : null,
   ].filter(Boolean).join(' · ');
@@ -51,39 +63,22 @@ export default function RouteCard({ route, isBest, isScenic, onPress }: RouteCar
   return (
     <>
       <View style={styles.section}>
-        {/* Badges */}
-        {(isBest || isScenic || isPaid || disruption) && (
+        {/* A live disruption is the one thing worth flagging above the name. */}
+        {disruption && (
           <View style={styles.badgeRow}>
-            {isBest && !isPaid && (
-              <View style={[styles.badge, styles.badgePrimary]}>
-                <Text style={styles.badgePrimaryText}>Fastest</Text>
-              </View>
-            )}
-            {isScenic && !isBest && (
-              <View style={[styles.badge, styles.badgePrimary]}>
-                <Text style={styles.badgePrimaryText}>Scenic</Text>
-              </View>
-            )}
-            {isPaid && (
-              <View style={[styles.badge, styles.badgeNeutral]}>
-                <Text style={styles.badgeNeutralText}>Paid ride</Text>
-              </View>
-            )}
-            {disruption && (
-              <View style={[
-                styles.badge,
-                {
-                  backgroundColor: StatusColors[disruption.status].bg,
-                  borderColor: StatusColors[disruption.status].border,
-                },
-              ]}>
-                <Text style={[styles.badgeNeutralText, { color: StatusColors[disruption.status].text }]}>
-                  {disruption.status === 'down'
-                    ? `${disruption.name} temporarily down`
-                    : `${disruption.name} delays`}
-                </Text>
-              </View>
-            )}
+            <View style={[
+              styles.badge,
+              {
+                backgroundColor: StatusColors[disruption.status].bg,
+                borderColor: StatusColors[disruption.status].border,
+              },
+            ]}>
+              <Text style={[styles.badgeText, { color: StatusColors[disruption.status].text }]}>
+                {disruption.status === 'down'
+                  ? `${disruption.name} temporarily down`
+                  : `${disruption.name} delays`}
+              </Text>
+            </View>
           </View>
         )}
 
@@ -117,7 +112,14 @@ export default function RouteCard({ route, isBest, isScenic, onPress }: RouteCar
         {/* Live departure for the first leg */}
         {firstLeg.mode !== 'walk' && firstLeg.mode !== 'minnie_van' && (
           <View style={styles.liveRow}>
-            <LiveArrival mode={firstLeg.mode} from={firstLeg.from} to={firstLeg.to} compact />
+            <LiveArrival
+              mode={firstLeg.mode}
+              from={firstLeg.from}
+              to={firstLeg.to}
+              live={live}
+              at={at}
+              compact
+            />
           </View>
         )}
       </View>
@@ -148,20 +150,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.sm,
     paddingVertical: 3,
   },
-  badgePrimary: {
-    backgroundColor: Colors.primaryBlue,
-    borderColor: Colors.primaryBlue,
-  },
-  badgePrimaryText: {
-    ...Type.caption,
-    fontFamily: Type.label.fontFamily,
-    color: Colors.textOnDark,
-  },
-  badgeNeutral: {
-    backgroundColor: Colors.pageBg,
-    borderColor: Colors.dividerStrong,
-  },
-  badgeNeutralText: {
+  badgeText: {
     ...Type.caption,
     fontFamily: Type.label.fontFamily,
     color: Colors.textSecondary,

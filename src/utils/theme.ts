@@ -1,3 +1,6 @@
+import type { TextStyle } from 'react-native';
+import appConfig from '../../app.json';
+
 // Design tokens
 // Modeled on the My Disney Experience app: near-neutral gray page ground,
 // full-bleed white sections, near-black navy text, and exactly one bright
@@ -17,6 +20,12 @@ export const Colors = {
   textPlaceholder: '#8C97A3',
   textOnDark:    '#FFFFFF',
   textOnDarkSub: 'rgba(255,255,255,0.78)',
+
+  // Bottom tab bar. The reference fills the selected glyph in near-black
+  // navy and leaves the rest a mid gray; the interactive blue never appears
+  // down there.
+  tabActive:     '#0E2C4B',
+  tabInactive:   '#9AA5B1',
 
   // Surfaces
   sectionBg:     '#FFFFFF',   // full-bleed section fill
@@ -40,6 +49,11 @@ export const Colors = {
   statusDown:           '#B3261E',
   statusDownBg:         '#FBEBEA',
   statusDownBorder:     '#EDB9B6',
+  // Outside operating hours. Deliberately neutral: a line that is simply shut
+  // for the night is not a fault, and painting it amber would cry wolf.
+  statusClosed:         '#5A6B7B',
+  statusClosedBg:       '#EDF1F5',
+  statusClosedBorder:   '#D5DDE5',
 
   // Transport line colors. These identify real WDW lines on the map and on
   // status cards. They are data, not UI accent.
@@ -64,14 +78,20 @@ export const StatusColors = {
   operating: { text: Colors.statusOperating, bg: Colors.statusOperatingBg, border: Colors.statusOperatingBorder },
   delayed:   { text: Colors.statusDelayed,   bg: Colors.statusDelayedBg,   border: Colors.statusDelayedBorder },
   down:      { text: Colors.statusDown,      bg: Colors.statusDownBg,      border: Colors.statusDownBorder },
+  closed:    { text: Colors.statusClosed,    bg: Colors.statusClosedBg,    border: Colors.statusClosedBorder },
 };
 
 // Typography
-// Nine roles on a 12/13/14/15/16/17/20/24/28 ramp, three weights. The old
+// Eight roles on a 13/14/15/16/17/20/24/28 ramp, three weights. The old
 // palette had 17 distinct sizes. Including 10.5, 11.5, 12.5 and 13.5. And
 // used weight 500 for both headings and body, which left the UI with no
 // hierarchy at all. Anything that needs a size off this ramp is a design
 // mistake, not a missing token: spread a role, never override its fontSize.
+//
+// There is deliberately no all-caps role. The reference app does not use one
+// anywhere: section headers are Title Case navy `title`, and small field
+// labels are Title Case gray `caption` or `label`. An uppercase eyebrow was
+// the loudest typographic tell in the old build.
 
 export const FontFamily = {
   regular:  'NunitoSans_400Regular',
@@ -81,25 +101,26 @@ export const FontFamily = {
 
 export const Type = {
   /** Screen hero title */
-  display:    { fontFamily: FontFamily.bold,     fontSize: 28, lineHeight: 34 },
+  display:    { fontFamily: FontFamily.bold,     fontSize: 30, lineHeight: 36, letterSpacing: -0.4 },
   /** Section headers and route names */
-  title:      { fontFamily: FontFamily.bold,     fontSize: 20, lineHeight: 26 },
+  title:      { fontFamily: FontFamily.bold,     fontSize: 22, lineHeight: 28, letterSpacing: -0.3 },
   /** The one big number in a stat block or an outlined key-value box */
-  stat:       { fontFamily: FontFamily.bold,     fontSize: 24, lineHeight: 30 },
+  // Tabular figures so a countdown ticking from 10 to 9 doesn't reflow the
+  // row it sits in.
+  stat:       { fontFamily: FontFamily.bold,     fontSize: 26, lineHeight: 32, letterSpacing: -0.3,
+                fontVariant: ['tabular-nums'] as TextStyle['fontVariant'] },
   /** Sub-headings inside a section, list-row titles */
-  subtitle:   { fontFamily: FontFamily.semibold, fontSize: 17, lineHeight: 23 },
+  subtitle:   { fontFamily: FontFamily.semibold, fontSize: 18, lineHeight: 24 },
   /** Default readable text */
-  body:       { fontFamily: FontFamily.regular,  fontSize: 16, lineHeight: 23 },
+  body:       { fontFamily: FontFamily.regular,  fontSize: 17, lineHeight: 25 },
   /** Supporting text under a title. The second line of a list row */
-  bodySmall:  { fontFamily: FontFamily.regular,  fontSize: 15, lineHeight: 21 },
+  bodySmall:  { fontFamily: FontFamily.regular,  fontSize: 16, lineHeight: 23 },
   /** Buttons, links, pill labels. Anything tappable */
-  action:     { fontFamily: FontFamily.semibold, fontSize: 16, lineHeight: 22 },
+  action:     { fontFamily: FontFamily.semibold, fontSize: 17, lineHeight: 23 },
   /** Emphasized inline text that is not itself an action */
-  label:      { fontFamily: FontFamily.semibold, fontSize: 14, lineHeight: 19 },
+  label:      { fontFamily: FontFamily.semibold, fontSize: 15, lineHeight: 20 },
   /** Metadata, timestamps, field labels */
-  caption:    { fontFamily: FontFamily.regular,  fontSize: 13, lineHeight: 18 },
-  /** Small all-caps section eyebrow */
-  eyebrow:    { fontFamily: FontFamily.bold,     fontSize: 12, lineHeight: 16, letterSpacing: 0.7, textTransform: 'uppercase' as const },
+  caption:    { fontFamily: FontFamily.regular,  fontSize: 14, lineHeight: 19 },
 } as const;
 
 // Spacing + radius
@@ -170,7 +191,10 @@ export const Brand = {
   /** The banner on every screen. This is a fan project and carries no product
    *  name of its own; the disclaimer on the About screen says whose network
    *  it describes and that it is unofficial. */
-  title: 'Walt Disney World transportation',
+  title: 'Walt Disney World Transportation',
+  /** The one place a version number is written down. `package.json` is held
+   *  in step by a test rather than by anyone remembering to edit both. */
+  version: appConfig.expo.version,
 };
 
 export const Gradients = {

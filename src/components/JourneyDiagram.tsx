@@ -4,6 +4,7 @@ import { Route } from '../types';
 import { Colors, Type, Spacing, transportColor, groupBadgeColors } from '../utils/theme';
 import { modeLabel } from '../utils/routing';
 import { DESTINATION_MAP } from '../data/destinations';
+import { shortLabel } from '../utils/destinationMeta';
 
 interface JourneyDiagramProps {
   route: Route;
@@ -26,7 +27,7 @@ export default function JourneyDiagram({ route }: JourneyDiagramProps) {
       {stops.map((stopId, i) => {
         const dest = DESTINATION_MAP[stopId];
         const abbrev = dest?.abbrev ?? stopId.slice(0, 3);
-        const label = dest?.label ?? stopId;
+        const label = shortLabel(stopId);
         const badge = groupBadgeColors(dest?.group ?? '');
         const leg = route.legs[i];
         const isTransfer = i > 0 && i < stops.length - 1;
@@ -37,7 +38,9 @@ export default function JourneyDiagram({ route }: JourneyDiagramProps) {
               <View style={[styles.node, { backgroundColor: badge.bg }]}>
                 <Text style={[styles.nodeText, { color: badge.text }]}>{abbrev}</Text>
               </View>
-              <Text style={styles.stopLabel} numberOfLines={2}>{label}</Text>
+              <Text style={styles.stopLabel} numberOfLines={2} ellipsizeMode="tail">
+                {label}
+              </Text>
               {isTransfer ? <Text style={styles.transferTag}>Transfer</Text> : null}
             </View>
 
@@ -69,7 +72,9 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.lg,
   },
   stop: {
-    width: 76,
+    // Wide enough for the longest short name at caption size on two lines.
+    // At 76 the labels broke mid-word.
+    width: 96,
     alignItems: 'center',
   },
   node: {
