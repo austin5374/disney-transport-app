@@ -293,17 +293,27 @@ describe('time-of-day rules', () => {
 });
 
 describe('walking', () => {
-  it('offers the footpath between the All-Star resorts, and demotes the bus', () => {
+  it('offers the footpath between the All-Star resorts, and keeps the bus off the top', () => {
     // The only options here were two eighty-minute bus rides through a theme
     // park, the first of them presented as the quickest way — between two
     // resorts that share a sidewalk.
+    //
+    // Those rides are no longer eighty minutes. Once the flat-30 bus legs
+    // were replaced with real distances the stitch through Animal Kingdom
+    // came down to 45, which is exactly last_resort's margin over the
+    // fifteen-minute walk and so falls a minute short of being demoted. The
+    // tag was the mechanism, not the point: what this pair must never do is
+    // put a bus round a theme park above the sidewalk, or offer one at a time
+    // that reads as competitive with walking.
     for (const [a, b] of [['ASMo', 'ASS'], ['ASS', 'ASMo']] as [string, string][]) {
       const transit = applyFilters(getActiveRoutes(a, b, at(11)), BASE).filter(r => !isPaid(r));
       expect(transit[0].legs.every(l => l.mode === 'walk')).toBe(true);
       expect(transit[0].tags).toContain('walk_only');
+      const walk = journeyMinutes(transit[0]);
       const buses = transit.filter(r => r.legs.some(l => l.mode === 'bus'));
       expect(buses.length).toBeGreaterThan(0);
-      for (const r of buses) expect(r.tags).toContain('last_resort');
+      for (const r of buses) expect(journeyMinutes(r)).toBeGreaterThan(walk * 2.5);
+      expect(buses.some(r => r.tags.includes('last_resort'))).toBe(true);
       // ...and a demoted route sorts below everything that is not demoted.
       const lastReal = transit.findIndex(r => r.tags.includes('last_resort'));
       expect(transit.slice(lastReal).every(r => r.tags.includes('last_resort'))).toBe(true);

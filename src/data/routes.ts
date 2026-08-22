@@ -1,5 +1,26 @@
 import { Route } from '../types';
 
+// Bus ride times come from busRideMinutes() in resortBus.ts
+//
+// 117 of the 196 bus legs here were exactly 30 minutes: a clamp left behind
+// by an earlier cleanup rather than anything measured. It read as harmless
+// data noise and was not. The router picks a transfer hub by cost, so when
+// every resort bus costs the same 30 minutes it cannot tell a hub next door
+// from one across property — Magic Kingdom to Hollywood Studios ranked a bus
+// out to Caribbean Beach above a four-minute monorail to the Contemporary,
+// because both onward buses were recorded as the same number.
+//
+// 110 of those legs were also duplicates: a single-leg route whose exact trip
+// resortBus.ts already generates from the distance model, and which won
+// anyway because directRoutes prefers a hand-authored entry. The flat 30 was
+// overriding a real duration the app had already worked out.
+//
+// So they are all busRideMinutes() now, and a leg edited here has to keep
+// totalRideMinutes and totalRideRange in step with it — routeData.test.ts
+// checks both. The legs that are *not* the model's number are deliberate:
+// the short hops around Bay Lake sit below its ten-minute floor, and were
+// measured.
+
 export const ALL_ROUTES: Route[] = [
 
   // FROM: MAGIC KINGDOM (MK)
@@ -147,51 +168,51 @@ export const ALL_ROUTES: Route[] = [
   {
     id: 'mk-yc-bus',
     from: 'MK', to: 'YC', name: 'Bus from Magic Kingdom',
-    legs: [{ mode: 'bus', from: 'MK', to: 'YC', rideMinutes: 30, accessible: true }],
-    totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
+    legs: [{ mode: 'bus', from: 'MK', to: 'YC', rideMinutes: 21, accessible: true }],
+    totalRideMinutes: 21, totalRideRange: [21,41], tags: [],
   },
   {
     id: 'mk-bc-bus',
     from: 'MK', to: 'BC', name: 'Bus from Magic Kingdom',
-    legs: [{ mode: 'bus', from: 'MK', to: 'BC', rideMinutes: 30, accessible: true }],
-    totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
+    legs: [{ mode: 'bus', from: 'MK', to: 'BC', rideMinutes: 20, accessible: true }],
+    totalRideMinutes: 20, totalRideRange: [20,40], tags: [],
   },
   {
     id: 'mk-bwi-bus',
     from: 'MK', to: 'BWI', name: 'Bus from Magic Kingdom',
-    legs: [{ mode: 'bus', from: 'MK', to: 'BWI', rideMinutes: 30, accessible: true }],
-    totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
+    legs: [{ mode: 'bus', from: 'MK', to: 'BWI', rideMinutes: 21, accessible: true }],
+    totalRideMinutes: 21, totalRideRange: [21,41], tags: [],
   },
 
   {
     id: 'mk-cbr-bus',
     from: 'MK', to: 'CBR', name: 'Bus from Magic Kingdom',
-    legs: [{ mode: 'bus', from: 'MK', to: 'CBR', rideMinutes: 30, accessible: true }],
-    totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
+    legs: [{ mode: 'bus', from: 'MK', to: 'CBR', rideMinutes: 26, accessible: true }],
+    totalRideMinutes: 26, totalRideRange: [26,46], tags: [],
   },
   {
     id: 'mk-akl-bus',
     from: 'MK', to: 'AKL', name: 'Bus from Magic Kingdom',
-    legs: [{ mode: 'bus', from: 'MK', to: 'AKL', rideMinutes: 30, accessible: true }],
-    totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
+    legs: [{ mode: 'bus', from: 'MK', to: 'AKL', rideMinutes: 26, accessible: true }],
+    totalRideMinutes: 26, totalRideRange: [26,46], tags: [],
   },
   {
     id: 'mk-cor-bus',
     from: 'MK', to: 'COR', name: 'Bus from Magic Kingdom',
-    legs: [{ mode: 'bus', from: 'MK', to: 'COR', rideMinutes: 30, accessible: true }],
-    totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
+    legs: [{ mode: 'bus', from: 'MK', to: 'COR', rideMinutes: 24, accessible: true }],
+    totalRideMinutes: 24, totalRideRange: [24,44], tags: [],
   },
   {
     id: 'mk-pofq-bus',
     from: 'MK', to: 'POFQ', name: 'Bus from Magic Kingdom',
-    legs: [{ mode: 'bus', from: 'MK', to: 'POFQ', rideMinutes: 30, accessible: true }],
-    totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
+    legs: [{ mode: 'bus', from: 'MK', to: 'POFQ', rideMinutes: 24, accessible: true }],
+    totalRideMinutes: 24, totalRideRange: [24,44], tags: [],
   },
   {
     id: 'mk-por-bus',
     from: 'MK', to: 'POR', name: 'Bus from Magic Kingdom',
-    legs: [{ mode: 'bus', from: 'MK', to: 'POR', rideMinutes: 30, accessible: true }],
-    totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
+    legs: [{ mode: 'bus', from: 'MK', to: 'POR', rideMinutes: 25, accessible: true }],
+    totalRideMinutes: 25, totalRideRange: [25,45], tags: [],
   },
   {
     id: 'mk-asmo-bus',
@@ -202,44 +223,44 @@ export const ALL_ROUTES: Route[] = [
   {
     id: 'mk-asmu-bus',
     from: 'MK', to: 'ASMu', name: 'Bus from Magic Kingdom',
-    legs: [{ mode: 'bus', from: 'MK', to: 'ASMu', rideMinutes: 30, accessible: true }],
-    totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
+    legs: [{ mode: 'bus', from: 'MK', to: 'ASMu', rideMinutes: 29, accessible: true }],
+    totalRideMinutes: 29, totalRideRange: [29,49], tags: [],
   },
   {
     id: 'mk-ass-bus',
     from: 'MK', to: 'ASS', name: 'Bus from Magic Kingdom',
-    legs: [{ mode: 'bus', from: 'MK', to: 'ASS', rideMinutes: 30, accessible: true }],
-    totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
+    legs: [{ mode: 'bus', from: 'MK', to: 'ASS', rideMinutes: 29, accessible: true }],
+    totalRideMinutes: 29, totalRideRange: [29,49], tags: [],
   },
   {
     id: 'mk-pop-bus',
     from: 'MK', to: 'POP', name: 'Bus from Magic Kingdom',
-    legs: [{ mode: 'bus', from: 'MK', to: 'POP', rideMinutes: 30, accessible: true }],
-    totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
+    legs: [{ mode: 'bus', from: 'MK', to: 'POP', rideMinutes: 28, accessible: true }],
+    totalRideMinutes: 28, totalRideRange: [28,48], tags: [],
   },
   {
     id: 'mk-aoa-bus',
     from: 'MK', to: 'AOA', name: 'Bus from Magic Kingdom',
-    legs: [{ mode: 'bus', from: 'MK', to: 'AOA', rideMinutes: 30, accessible: true }],
-    totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
+    legs: [{ mode: 'bus', from: 'MK', to: 'AOA', rideMinutes: 29, accessible: true }],
+    totalRideMinutes: 29, totalRideRange: [29,49], tags: [],
   },
   {
     id: 'mk-riv-bus',
     from: 'MK', to: 'RIV', name: 'Bus from Magic Kingdom',
-    legs: [{ mode: 'bus', from: 'MK', to: 'RIV', rideMinutes: 30, accessible: true }],
-    totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
+    legs: [{ mode: 'bus', from: 'MK', to: 'RIV', rideMinutes: 24, accessible: true }],
+    totalRideMinutes: 24, totalRideRange: [24,44], tags: [],
   },
   {
     id: 'mk-okw-bus',
     from: 'MK', to: 'OKW', name: 'Bus from Magic Kingdom',
-    legs: [{ mode: 'bus', from: 'MK', to: 'OKW', rideMinutes: 30, accessible: true }],
-    totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
+    legs: [{ mode: 'bus', from: 'MK', to: 'OKW', rideMinutes: 26, accessible: true }],
+    totalRideMinutes: 26, totalRideRange: [26,46], tags: [],
   },
   {
     id: 'mk-ss-bus',
     from: 'MK', to: 'SS', name: 'Bus from Magic Kingdom',
-    legs: [{ mode: 'bus', from: 'MK', to: 'SS', rideMinutes: 30, accessible: true }],
-    totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
+    legs: [{ mode: 'bus', from: 'MK', to: 'SS', rideMinutes: 27, accessible: true }],
+    totalRideMinutes: 27, totalRideRange: [27,47], tags: [],
   },
 
   // FROM: TTC
@@ -396,8 +417,8 @@ export const ALL_ROUTES: Route[] = [
   {
     id: 'ep-ak-bus',
     from: 'EP', to: 'AK', name: 'Bus from EPCOT',
-    legs: [{ mode: 'bus', from: 'EP', to: 'AK', rideMinutes: 30, accessible: true }],
-    totalRideMinutes: 30, totalRideRange: [30,50], tags: ['time_restricted'],
+    legs: [{ mode: 'bus', from: 'EP', to: 'AK', rideMinutes: 17, accessible: true }],
+    totalRideMinutes: 17, totalRideRange: [17,37], tags: ['time_restricted'],
     timeRestriction: 'after_10am',
     notes: 'Park-to-park buses run from 10am until about 1 hour after the later park\'s closing time (varies daily).',
   },
@@ -433,10 +454,10 @@ export const ALL_ROUTES: Route[] = [
     id: 'ep-bb-bus',
     from: 'EP', to: 'BB', name: 'Bus to Animal Kingdom, then Bus to Blizzard Beach',
     legs: [
-      { mode: 'bus', from: 'EP', to: 'AK', rideMinutes: 30, accessible: true },
+      { mode: 'bus', from: 'EP', to: 'AK', rideMinutes: 17, accessible: true },
       { mode: 'bus', from: 'AK', to: 'BB', rideMinutes: 15, accessible: true, walkMinutes: 5 },
     ],
-    totalRideMinutes: 45, totalRideRange: [45,70], tags: ['transfer'],
+    totalRideMinutes: 32, totalRideRange: [32,57], tags: ['transfer'],
   },
   {
     id: 'ep-bb-minnie',
@@ -559,62 +580,62 @@ export const ALL_ROUTES: Route[] = [
   {
     id: 'ep-wl-bus',
     from: 'EP', to: 'WL', name: 'Bus from EPCOT',
-    legs: [{ mode: 'bus', from: 'EP', to: 'WL', rideMinutes: 30, accessible: true }],
-    totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
+    legs: [{ mode: 'bus', from: 'EP', to: 'WL', rideMinutes: 17, accessible: true }],
+    totalRideMinutes: 17, totalRideRange: [17,37], tags: [],
   },
   {
     id: 'ep-fw-bus',
     from: 'EP', to: 'FW', name: 'Bus from EPCOT',
-    legs: [{ mode: 'bus', from: 'EP', to: 'FW', rideMinutes: 30, accessible: true }],
-    totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
+    legs: [{ mode: 'bus', from: 'EP', to: 'FW', rideMinutes: 17, accessible: true }],
+    totalRideMinutes: 17, totalRideRange: [17,37], tags: [],
   },
   {
     id: 'ep-akl-bus',
     from: 'EP', to: 'AKL', name: 'Bus from EPCOT',
-    legs: [{ mode: 'bus', from: 'EP', to: 'AKL', rideMinutes: 30, accessible: true }],
-    totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
+    legs: [{ mode: 'bus', from: 'EP', to: 'AKL', rideMinutes: 20, accessible: true }],
+    totalRideMinutes: 20, totalRideRange: [20,40], tags: [],
   },
   {
     id: 'ep-cor-bus',
     from: 'EP', to: 'COR', name: 'Bus from EPCOT',
-    legs: [{ mode: 'bus', from: 'EP', to: 'COR', rideMinutes: 30, accessible: true }],
-    totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
+    legs: [{ mode: 'bus', from: 'EP', to: 'COR', rideMinutes: 13, accessible: true }],
+    totalRideMinutes: 13, totalRideRange: [13,33], tags: [],
   },
   {
     id: 'ep-pofq-bus',
     from: 'EP', to: 'POFQ', name: 'Bus from EPCOT',
-    legs: [{ mode: 'bus', from: 'EP', to: 'POFQ', rideMinutes: 30, accessible: true }],
-    totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
+    legs: [{ mode: 'bus', from: 'EP', to: 'POFQ', rideMinutes: 14, accessible: true }],
+    totalRideMinutes: 14, totalRideRange: [14,34], tags: [],
   },
   {
     id: 'ep-por-bus',
     from: 'EP', to: 'POR', name: 'Bus from EPCOT',
-    legs: [{ mode: 'bus', from: 'EP', to: 'POR', rideMinutes: 30, accessible: true }],
-    totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
+    legs: [{ mode: 'bus', from: 'EP', to: 'POR', rideMinutes: 13, accessible: true }],
+    totalRideMinutes: 13, totalRideRange: [13,33], tags: [],
   },
   {
     id: 'ep-asso-bus',
     from: 'EP', to: 'ASMo', name: 'Bus from EPCOT',
-    legs: [{ mode: 'bus', from: 'EP', to: 'ASMo', rideMinutes: 30, accessible: true }],
-    totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
+    legs: [{ mode: 'bus', from: 'EP', to: 'ASMo', rideMinutes: 19, accessible: true }],
+    totalRideMinutes: 19, totalRideRange: [19,39], tags: [],
   },
   {
     id: 'ep-pop-bus',
     from: 'EP', to: 'POP', name: 'Bus from EPCOT (alternative)',
-    legs: [{ mode: 'bus', from: 'EP', to: 'POP', rideMinutes: 30, accessible: true }],
-    totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
+    legs: [{ mode: 'bus', from: 'EP', to: 'POP', rideMinutes: 12, accessible: true }],
+    totalRideMinutes: 12, totalRideRange: [12,32], tags: [],
   },
   {
     id: 'ep-okw-bus',
     from: 'EP', to: 'OKW', name: 'Bus from EPCOT',
-    legs: [{ mode: 'bus', from: 'EP', to: 'OKW', rideMinutes: 30, accessible: true }],
-    totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
+    legs: [{ mode: 'bus', from: 'EP', to: 'OKW', rideMinutes: 13, accessible: true }],
+    totalRideMinutes: 13, totalRideRange: [13,33], tags: [],
   },
   {
     id: 'ep-ss-bus',
     from: 'EP', to: 'SS', name: 'Bus from EPCOT',
-    legs: [{ mode: 'bus', from: 'EP', to: 'SS', rideMinutes: 30, accessible: true }],
-    totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
+    legs: [{ mode: 'bus', from: 'EP', to: 'SS', rideMinutes: 13, accessible: true }],
+    totalRideMinutes: 13, totalRideRange: [13,33], tags: [],
   },
 
   // FROM: HOLLYWOOD STUDIOS (HS)
@@ -797,86 +818,86 @@ export const ALL_ROUTES: Route[] = [
   {
     id: 'hs-con-bus',
     from: 'HS', to: 'CON', name: 'Bus from Hollywood Studios',
-    legs: [{ mode: 'bus', from: 'HS', to: 'CON', rideMinutes: 30, accessible: true }],
-    totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
+    legs: [{ mode: 'bus', from: 'HS', to: 'CON', rideMinutes: 23, accessible: true }],
+    totalRideMinutes: 23, totalRideRange: [23,43], tags: [],
   },
   {
     id: 'hs-gf-bus',
     from: 'HS', to: 'GF', name: 'Bus from Hollywood Studios',
-    legs: [{ mode: 'bus', from: 'HS', to: 'GF', rideMinutes: 30, accessible: true }],
-    totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
+    legs: [{ mode: 'bus', from: 'HS', to: 'GF', rideMinutes: 23, accessible: true }],
+    totalRideMinutes: 23, totalRideRange: [23,43], tags: [],
   },
   {
     id: 'hs-poly-bus',
     from: 'HS', to: 'POLY', name: 'Bus from Hollywood Studios',
-    legs: [{ mode: 'bus', from: 'HS', to: 'POLY', rideMinutes: 30, accessible: true }],
-    totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
+    legs: [{ mode: 'bus', from: 'HS', to: 'POLY', rideMinutes: 21, accessible: true }],
+    totalRideMinutes: 21, totalRideRange: [21,41], tags: [],
   },
   {
     id: 'hs-wl-bus',
     from: 'HS', to: 'WL', name: 'Bus from Hollywood Studios',
-    legs: [{ mode: 'bus', from: 'HS', to: 'WL', rideMinutes: 30, accessible: true }],
-    totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
+    legs: [{ mode: 'bus', from: 'HS', to: 'WL', rideMinutes: 21, accessible: true }],
+    totalRideMinutes: 21, totalRideRange: [21,41], tags: [],
   },
   {
     id: 'hs-fw-bus',
     from: 'HS', to: 'FW', name: 'Bus from Hollywood Studios',
-    legs: [{ mode: 'bus', from: 'HS', to: 'FW', rideMinutes: 30, accessible: true }],
-    totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
+    legs: [{ mode: 'bus', from: 'HS', to: 'FW', rideMinutes: 22, accessible: true }],
+    totalRideMinutes: 22, totalRideRange: [22,42], tags: [],
   },
   {
     id: 'hs-akl-bus',
     from: 'HS', to: 'AKL', name: 'Bus from Hollywood Studios',
-    legs: [{ mode: 'bus', from: 'HS', to: 'AKL', rideMinutes: 30, accessible: true }],
-    totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
+    legs: [{ mode: 'bus', from: 'HS', to: 'AKL', rideMinutes: 16, accessible: true }],
+    totalRideMinutes: 16, totalRideRange: [16,36], tags: [],
   },
   {
     id: 'hs-cor-bus',
     from: 'HS', to: 'COR', name: 'Bus from Hollywood Studios',
-    legs: [{ mode: 'bus', from: 'HS', to: 'COR', rideMinutes: 30, accessible: true }],
-    totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
+    legs: [{ mode: 'bus', from: 'HS', to: 'COR', rideMinutes: 10, accessible: true }],
+    totalRideMinutes: 10, totalRideRange: [10,30], tags: [],
   },
   {
     id: 'hs-pofq-bus',
     from: 'HS', to: 'POFQ', name: 'Bus from Hollywood Studios',
-    legs: [{ mode: 'bus', from: 'HS', to: 'POFQ', rideMinutes: 30, accessible: true }],
-    totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
+    legs: [{ mode: 'bus', from: 'HS', to: 'POFQ', rideMinutes: 19, accessible: true }],
+    totalRideMinutes: 19, totalRideRange: [19,39], tags: [],
   },
   {
     id: 'hs-por-bus',
     from: 'HS', to: 'POR', name: 'Bus from Hollywood Studios',
-    legs: [{ mode: 'bus', from: 'HS', to: 'POR', rideMinutes: 30, accessible: true }],
-    totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
+    legs: [{ mode: 'bus', from: 'HS', to: 'POR', rideMinutes: 17, accessible: true }],
+    totalRideMinutes: 17, totalRideRange: [17,37], tags: [],
   },
   {
     id: 'hs-asmo-bus',
     from: 'HS', to: 'ASMo', name: 'Bus from Hollywood Studios',
-    legs: [{ mode: 'bus', from: 'HS', to: 'ASMo', rideMinutes: 30, accessible: true }],
-    totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
+    legs: [{ mode: 'bus', from: 'HS', to: 'ASMo', rideMinutes: 13, accessible: true }],
+    totalRideMinutes: 13, totalRideRange: [13,33], tags: [],
   },
   {
     id: 'hs-asmu-bus',
     from: 'HS', to: 'ASMu', name: 'Bus from Hollywood Studios',
-    legs: [{ mode: 'bus', from: 'HS', to: 'ASMu', rideMinutes: 30, accessible: true }],
-    totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
+    legs: [{ mode: 'bus', from: 'HS', to: 'ASMu', rideMinutes: 12, accessible: true }],
+    totalRideMinutes: 12, totalRideRange: [12,32], tags: [],
   },
   {
     id: 'hs-ass-bus',
     from: 'HS', to: 'ASS', name: 'Bus from Hollywood Studios',
-    legs: [{ mode: 'bus', from: 'HS', to: 'ASS', rideMinutes: 30, accessible: true }],
-    totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
+    legs: [{ mode: 'bus', from: 'HS', to: 'ASS', rideMinutes: 11, accessible: true }],
+    totalRideMinutes: 11, totalRideRange: [11,31], tags: [],
   },
   {
     id: 'hs-okw-bus',
     from: 'HS', to: 'OKW', name: 'Bus from Hollywood Studios',
-    legs: [{ mode: 'bus', from: 'HS', to: 'OKW', rideMinutes: 30, accessible: true }],
-    totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
+    legs: [{ mode: 'bus', from: 'HS', to: 'OKW', rideMinutes: 16, accessible: true }],
+    totalRideMinutes: 16, totalRideRange: [16,36], tags: [],
   },
   {
     id: 'hs-ss-bus',
     from: 'HS', to: 'SS', name: 'Bus from Hollywood Studios',
-    legs: [{ mode: 'bus', from: 'HS', to: 'SS', rideMinutes: 30, accessible: true }],
-    totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
+    legs: [{ mode: 'bus', from: 'HS', to: 'SS', rideMinutes: 16, accessible: true }],
+    totalRideMinutes: 16, totalRideRange: [16,36], tags: [],
   },
   {
     id: 'hs-bc-bus',
@@ -905,8 +926,8 @@ export const ALL_ROUTES: Route[] = [
   {
     id: 'ak-ep-bus',
     from: 'AK', to: 'EP', name: 'Bus from Animal Kingdom',
-    legs: [{ mode: 'bus', from: 'AK', to: 'EP', rideMinutes: 30, accessible: true }],
-    totalRideMinutes: 30, totalRideRange: [30,50], tags: ['time_restricted'],
+    legs: [{ mode: 'bus', from: 'AK', to: 'EP', rideMinutes: 17, accessible: true }],
+    totalRideMinutes: 17, totalRideRange: [17,37], tags: ['time_restricted'],
     timeRestriction: 'after_10am',
     notes: 'Park-to-park buses run from 10am until about 1 hour after the later park\'s closing time (varies daily).',
   },
@@ -982,38 +1003,38 @@ export const ALL_ROUTES: Route[] = [
   {
     id: 'ak-cbr-bus',
     from: 'AK', to: 'CBR', name: 'Bus from Animal Kingdom',
-    legs: [{ mode: 'bus', from: 'AK', to: 'CBR', rideMinutes: 30, accessible: true }],
-    totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
+    legs: [{ mode: 'bus', from: 'AK', to: 'CBR', rideMinutes: 18, accessible: true }],
+    totalRideMinutes: 18, totalRideRange: [18,38], tags: [],
   },
   {
     id: 'ak-pop-bus',
     from: 'AK', to: 'POP', name: 'Bus from Animal Kingdom',
-    legs: [{ mode: 'bus', from: 'AK', to: 'POP', rideMinutes: 30, accessible: true }],
-    totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
+    legs: [{ mode: 'bus', from: 'AK', to: 'POP', rideMinutes: 18, accessible: true }],
+    totalRideMinutes: 18, totalRideRange: [18,38], tags: [],
   },
   {
     id: 'ak-yc-bus',
     from: 'AK', to: 'YC', name: 'Bus from Animal Kingdom',
-    legs: [{ mode: 'bus', from: 'AK', to: 'YC', rideMinutes: 30, accessible: true }],
-    totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
+    legs: [{ mode: 'bus', from: 'AK', to: 'YC', rideMinutes: 15, accessible: true }],
+    totalRideMinutes: 15, totalRideRange: [15,35], tags: [],
   },
   {
     id: 'ak-con-bus',
     from: 'AK', to: 'CON', name: 'Bus from Animal Kingdom',
-    legs: [{ mode: 'bus', from: 'AK', to: 'CON', rideMinutes: 30, accessible: true }],
-    totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
+    legs: [{ mode: 'bus', from: 'AK', to: 'CON', rideMinutes: 24, accessible: true }],
+    totalRideMinutes: 24, totalRideRange: [24,44], tags: [],
   },
   {
     id: 'ak-pofq-bus',
     from: 'AK', to: 'POFQ', name: 'Bus from Animal Kingdom',
-    legs: [{ mode: 'bus', from: 'AK', to: 'POFQ', rideMinutes: 30, accessible: true }],
-    totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
+    legs: [{ mode: 'bus', from: 'AK', to: 'POFQ', rideMinutes: 27, accessible: true }],
+    totalRideMinutes: 27, totalRideRange: [27,47], tags: [],
   },
   {
     id: 'ak-okw-bus',
     from: 'AK', to: 'OKW', name: 'Bus from Animal Kingdom',
-    legs: [{ mode: 'bus', from: 'AK', to: 'OKW', rideMinutes: 30, accessible: true }],
-    totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
+    legs: [{ mode: 'bus', from: 'AK', to: 'OKW', rideMinutes: 25, accessible: true }],
+    totalRideMinutes: 25, totalRideRange: [25,45], tags: [],
   },
 
   // FROM: DISNEY SPRINGS (DS)
@@ -1166,14 +1187,14 @@ export const ALL_ROUTES: Route[] = [
   {
     id: 'ds-con-bus',
     from: 'DS', to: 'CON', name: 'Bus from Disney Springs',
-    legs: [{ mode: 'bus', from: 'DS', to: 'CON', rideMinutes: 30, accessible: true }],
-    totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
+    legs: [{ mode: 'bus', from: 'DS', to: 'CON', rideMinutes: 26, accessible: true }],
+    totalRideMinutes: 26, totalRideRange: [26,46], tags: [],
   },
   {
     id: 'ds-akl-bus',
     from: 'DS', to: 'AKL', name: 'Bus from Disney Springs',
-    legs: [{ mode: 'bus', from: 'DS', to: 'AKL', rideMinutes: 30, accessible: true }],
-    totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
+    legs: [{ mode: 'bus', from: 'DS', to: 'AKL', rideMinutes: 29, accessible: true }],
+    totalRideMinutes: 29, totalRideRange: [29,49], tags: [],
   },
   {
     id: 'ds-ttc-minnie',
@@ -1247,9 +1268,9 @@ export const ALL_ROUTES: Route[] = [
     from: 'BB', to: 'EP', name: 'Bus to Animal Kingdom, Bus to EPCOT',
     legs: [
       { mode: 'bus', from: 'BB', to: 'AK', rideMinutes: 15, accessible: true },
-      { mode: 'bus', from: 'AK', to: 'EP', rideMinutes: 30, accessible: true, walkMinutes: 5 },
+      { mode: 'bus', from: 'AK', to: 'EP', rideMinutes: 17, accessible: true, walkMinutes: 5 },
     ],
-    totalRideMinutes: 45, totalRideRange: [45,70], tags: ['transfer'],
+    totalRideMinutes: 32, totalRideRange: [32,57], tags: ['transfer'],
   },
   {
     id: 'bb-ep-minnie',
@@ -1314,8 +1335,8 @@ export const ALL_ROUTES: Route[] = [
   {
     id: 'bwi-mk-bus',
     from: 'BWI', to: 'MK', name: 'Bus from Boardwalk Inn',
-    legs: [{ mode: 'bus', from: 'BWI', to: 'MK', rideMinutes: 30, accessible: true }],
-    totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
+    legs: [{ mode: 'bus', from: 'BWI', to: 'MK', rideMinutes: 21, accessible: true }],
+    totalRideMinutes: 21, totalRideRange: [21,41], tags: [],
   },
   {
     id: 'bwi-ak-bus',
@@ -1326,8 +1347,8 @@ export const ALL_ROUTES: Route[] = [
   {
     id: 'bwi-ds-bus',
     from: 'BWI', to: 'DS', name: 'Bus from Boardwalk Inn',
-    legs: [{ mode: 'bus', from: 'BWI', to: 'DS', rideMinutes: 30, accessible: true }],
-    totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
+    legs: [{ mode: 'bus', from: 'BWI', to: 'DS', rideMinutes: 16, accessible: true }],
+    totalRideMinutes: 16, totalRideRange: [16,36], tags: [],
   },
   {
     id: 'bwi-yc-walk',
@@ -1344,8 +1365,8 @@ export const ALL_ROUTES: Route[] = [
   {
     id: 'bwi-cbr-bus',
     from: 'BWI', to: 'CBR', name: 'Bus from Boardwalk Inn',
-    legs: [{ mode: 'bus', from: 'BWI', to: 'CBR', rideMinutes: 30, accessible: true }],
-    totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
+    legs: [{ mode: 'bus', from: 'BWI', to: 'CBR', rideMinutes: 10, accessible: true }],
+    totalRideMinutes: 10, totalRideRange: [10,30], tags: [],
   },
 
   // FROM: YACHT CLUB / BEACH CLUB (YC / BC): use YC as the canonical from
@@ -1389,8 +1410,8 @@ export const ALL_ROUTES: Route[] = [
   {
     id: 'yc-mk-bus',
     from: 'YC', to: 'MK', name: 'Bus from Yacht Club',
-    legs: [{ mode: 'bus', from: 'YC', to: 'MK', rideMinutes: 30, accessible: true }],
-    totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
+    legs: [{ mode: 'bus', from: 'YC', to: 'MK', rideMinutes: 21, accessible: true }],
+    totalRideMinutes: 21, totalRideRange: [21,41], tags: [],
   },
   {
     id: 'yc-ak-bus',
@@ -1401,8 +1422,8 @@ export const ALL_ROUTES: Route[] = [
   {
     id: 'yc-ds-bus',
     from: 'YC', to: 'DS', name: 'Bus from Yacht Club',
-    legs: [{ mode: 'bus', from: 'YC', to: 'DS', rideMinutes: 30, accessible: true }],
-    totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
+    legs: [{ mode: 'bus', from: 'YC', to: 'DS', rideMinutes: 15, accessible: true }],
+    totalRideMinutes: 15, totalRideRange: [15,35], tags: [],
   },
   {
     id: 'yc-bwi-walk',
@@ -1419,8 +1440,8 @@ export const ALL_ROUTES: Route[] = [
   {
     id: 'bc-mk-bus',
     from: 'BC', to: 'MK', name: 'Bus from Beach Club',
-    legs: [{ mode: 'bus', from: 'BC', to: 'MK', rideMinutes: 30, accessible: true }],
-    totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
+    legs: [{ mode: 'bus', from: 'BC', to: 'MK', rideMinutes: 20, accessible: true }],
+    totalRideMinutes: 20, totalRideRange: [20,40], tags: [],
   },
   {
     id: 'bc-ak-bus',
@@ -1547,14 +1568,14 @@ export const ALL_ROUTES: Route[] = [
   {
     id: 'cbr-mk-bus',
     from: 'CBR', to: 'MK', name: 'Bus from Caribbean Beach Resort',
-    legs: [{ mode: 'bus', from: 'CBR', to: 'MK', rideMinutes: 30, accessible: true }],
-    totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
+    legs: [{ mode: 'bus', from: 'CBR', to: 'MK', rideMinutes: 26, accessible: true }],
+    totalRideMinutes: 26, totalRideRange: [26,46], tags: [],
   },
   {
     id: 'cbr-ak-bus',
     from: 'CBR', to: 'AK', name: 'Bus from Caribbean Beach Resort',
-    legs: [{ mode: 'bus', from: 'CBR', to: 'AK', rideMinutes: 30, accessible: true }],
-    totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
+    legs: [{ mode: 'bus', from: 'CBR', to: 'AK', rideMinutes: 18, accessible: true }],
+    totalRideMinutes: 18, totalRideRange: [18,38], tags: [],
   },
   {
     id: 'cbr-ds-bus',
@@ -1616,20 +1637,20 @@ export const ALL_ROUTES: Route[] = [
   {
     id: 'riv-mk-bus',
     from: 'RIV', to: 'MK', name: 'Bus from Riviera Resort',
-    legs: [{ mode: 'bus', from: 'RIV', to: 'MK', rideMinutes: 30, accessible: true }],
-    totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
+    legs: [{ mode: 'bus', from: 'RIV', to: 'MK', rideMinutes: 24, accessible: true }],
+    totalRideMinutes: 24, totalRideRange: [24,44], tags: [],
   },
   {
     id: 'riv-ak-bus',
     from: 'RIV', to: 'AK', name: 'Bus from Riviera Resort',
-    legs: [{ mode: 'bus', from: 'RIV', to: 'AK', rideMinutes: 30, accessible: true }],
-    totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
+    legs: [{ mode: 'bus', from: 'RIV', to: 'AK', rideMinutes: 16, accessible: true }],
+    totalRideMinutes: 16, totalRideRange: [16,36], tags: [],
   },
   {
     id: 'riv-ds-bus',
     from: 'RIV', to: 'DS', name: 'Bus from Riviera Resort',
-    legs: [{ mode: 'bus', from: 'RIV', to: 'DS', rideMinutes: 30, accessible: true }],
-    totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
+    legs: [{ mode: 'bus', from: 'RIV', to: 'DS', rideMinutes: 13, accessible: true }],
+    totalRideMinutes: 13, totalRideRange: [13,33], tags: [],
   },
   {
     id: 'riv-yc-skyliner-walk',
@@ -1706,26 +1727,26 @@ export const ALL_ROUTES: Route[] = [
   {
     id: 'pop-mk-bus',
     from: 'POP', to: 'MK', name: 'Bus from Pop Century',
-    legs: [{ mode: 'bus', from: 'POP', to: 'MK', rideMinutes: 30, accessible: true }],
-    totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
+    legs: [{ mode: 'bus', from: 'POP', to: 'MK', rideMinutes: 28, accessible: true }],
+    totalRideMinutes: 28, totalRideRange: [28,48], tags: [],
   },
   {
     id: 'aoa-mk-bus',
     from: 'AOA', to: 'MK', name: 'Bus from Art of Animation',
-    legs: [{ mode: 'bus', from: 'AOA', to: 'MK', rideMinutes: 30, accessible: true }],
-    totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
+    legs: [{ mode: 'bus', from: 'AOA', to: 'MK', rideMinutes: 29, accessible: true }],
+    totalRideMinutes: 29, totalRideRange: [29,49], tags: [],
   },
   {
     id: 'pop-ak-bus',
     from: 'POP', to: 'AK', name: 'Bus from Pop Century',
-    legs: [{ mode: 'bus', from: 'POP', to: 'AK', rideMinutes: 30, accessible: true }],
-    totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
+    legs: [{ mode: 'bus', from: 'POP', to: 'AK', rideMinutes: 18, accessible: true }],
+    totalRideMinutes: 18, totalRideRange: [18,38], tags: [],
   },
   {
     id: 'pop-ds-bus',
     from: 'POP', to: 'DS', name: 'Bus from Pop Century',
-    legs: [{ mode: 'bus', from: 'POP', to: 'DS', rideMinutes: 30, accessible: true }],
-    totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
+    legs: [{ mode: 'bus', from: 'POP', to: 'DS', rideMinutes: 13, accessible: true }],
+    totalRideMinutes: 13, totalRideRange: [13,33], tags: [],
   },
   {
     id: 'pop-yc-skyliner-walk',
@@ -1793,20 +1814,20 @@ export const ALL_ROUTES: Route[] = [
   {
     id: 'gf-hs-bus',
     from: 'GF', to: 'HS', name: 'Bus from Grand Floridian',
-    legs: [{ mode: 'bus', from: 'GF', to: 'HS', rideMinutes: 30, accessible: true }],
-    totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
+    legs: [{ mode: 'bus', from: 'GF', to: 'HS', rideMinutes: 23, accessible: true }],
+    totalRideMinutes: 23, totalRideRange: [23,43], tags: [],
   },
   {
     id: 'gf-ak-bus',
     from: 'GF', to: 'AK', name: 'Bus from Grand Floridian',
-    legs: [{ mode: 'bus', from: 'GF', to: 'AK', rideMinutes: 30, accessible: true }],
-    totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
+    legs: [{ mode: 'bus', from: 'GF', to: 'AK', rideMinutes: 22, accessible: true }],
+    totalRideMinutes: 22, totalRideRange: [22,42], tags: [],
   },
   {
     id: 'gf-ds-bus',
     from: 'GF', to: 'DS', name: 'Bus from Grand Floridian',
-    legs: [{ mode: 'bus', from: 'GF', to: 'DS', rideMinutes: 30, accessible: true }],
-    totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
+    legs: [{ mode: 'bus', from: 'GF', to: 'DS', rideMinutes: 28, accessible: true }],
+    totalRideMinutes: 28, totalRideRange: [28,48], tags: [],
   },
 
   // FROM: POLYNESIAN VILLAGE (POLY)
@@ -1841,20 +1862,20 @@ export const ALL_ROUTES: Route[] = [
   {
     id: 'poly-hs-bus',
     from: 'POLY', to: 'HS', name: 'Bus from Polynesian Village',
-    legs: [{ mode: 'bus', from: 'POLY', to: 'HS', rideMinutes: 30, accessible: true }],
-    totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
+    legs: [{ mode: 'bus', from: 'POLY', to: 'HS', rideMinutes: 21, accessible: true }],
+    totalRideMinutes: 21, totalRideRange: [21,41], tags: [],
   },
   {
     id: 'poly-ak-bus',
     from: 'POLY', to: 'AK', name: 'Bus from Polynesian Village',
-    legs: [{ mode: 'bus', from: 'POLY', to: 'AK', rideMinutes: 30, accessible: true }],
-    totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
+    legs: [{ mode: 'bus', from: 'POLY', to: 'AK', rideMinutes: 20, accessible: true }],
+    totalRideMinutes: 20, totalRideRange: [20,40], tags: [],
   },
   {
     id: 'poly-ds-bus',
     from: 'POLY', to: 'DS', name: 'Bus from Polynesian Village',
-    legs: [{ mode: 'bus', from: 'POLY', to: 'DS', rideMinutes: 30, accessible: true }],
-    totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
+    legs: [{ mode: 'bus', from: 'POLY', to: 'DS', rideMinutes: 26, accessible: true }],
+    totalRideMinutes: 26, totalRideRange: [26,46], tags: [],
   },
 
   // FROM: CONTEMPORARY (CON)
@@ -1892,20 +1913,20 @@ export const ALL_ROUTES: Route[] = [
   {
     id: 'con-hs-bus',
     from: 'CON', to: 'HS', name: 'Bus from Contemporary Resort',
-    legs: [{ mode: 'bus', from: 'CON', to: 'HS', rideMinutes: 30, accessible: true }],
-    totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
+    legs: [{ mode: 'bus', from: 'CON', to: 'HS', rideMinutes: 23, accessible: true }],
+    totalRideMinutes: 23, totalRideRange: [23,43], tags: [],
   },
   {
     id: 'con-ak-bus',
     from: 'CON', to: 'AK', name: 'Bus from Contemporary Resort',
-    legs: [{ mode: 'bus', from: 'CON', to: 'AK', rideMinutes: 30, accessible: true }],
-    totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
+    legs: [{ mode: 'bus', from: 'CON', to: 'AK', rideMinutes: 24, accessible: true }],
+    totalRideMinutes: 24, totalRideRange: [24,44], tags: [],
   },
   {
     id: 'con-ds-bus',
     from: 'CON', to: 'DS', name: 'Bus from Contemporary Resort',
-    legs: [{ mode: 'bus', from: 'CON', to: 'DS', rideMinutes: 30, accessible: true }],
-    totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
+    legs: [{ mode: 'bus', from: 'CON', to: 'DS', rideMinutes: 26, accessible: true }],
+    totalRideMinutes: 26, totalRideRange: [26,46], tags: [],
   },
 
   // FROM: WILDERNESS LODGE (WL)
@@ -1931,20 +1952,20 @@ export const ALL_ROUTES: Route[] = [
   {
     id: 'wl-hs-bus',
     from: 'WL', to: 'HS', name: 'Bus from Wilderness Lodge',
-    legs: [{ mode: 'bus', from: 'WL', to: 'HS', rideMinutes: 30, accessible: true }],
-    totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
+    legs: [{ mode: 'bus', from: 'WL', to: 'HS', rideMinutes: 21, accessible: true }],
+    totalRideMinutes: 21, totalRideRange: [21,41], tags: [],
   },
   {
     id: 'wl-ak-bus',
     from: 'WL', to: 'AK', name: 'Bus from Wilderness Lodge',
-    legs: [{ mode: 'bus', from: 'WL', to: 'AK', rideMinutes: 30, accessible: true }],
-    totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
+    legs: [{ mode: 'bus', from: 'WL', to: 'AK', rideMinutes: 23, accessible: true }],
+    totalRideMinutes: 23, totalRideRange: [23,43], tags: [],
   },
   {
     id: 'wl-ds-bus',
     from: 'WL', to: 'DS', name: 'Bus from Wilderness Lodge',
-    legs: [{ mode: 'bus', from: 'WL', to: 'DS', rideMinutes: 30, accessible: true }],
-    totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
+    legs: [{ mode: 'bus', from: 'WL', to: 'DS', rideMinutes: 24, accessible: true }],
+    totalRideMinutes: 24, totalRideRange: [24,44], tags: [],
   },
   {
     id: 'wl-con-watertaxi',
@@ -1979,20 +2000,20 @@ export const ALL_ROUTES: Route[] = [
   {
     id: 'fw-hs-bus',
     from: 'FW', to: 'HS', name: 'Bus from Fort Wilderness',
-    legs: [{ mode: 'bus', from: 'FW', to: 'HS', rideMinutes: 30, accessible: true, tip: 'Take internal FW bus to Outpost Depot, then external bus to HS.' }],
-    totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
+    legs: [{ mode: 'bus', from: 'FW', to: 'HS', rideMinutes: 22, accessible: true, tip: 'Take internal FW bus to Outpost Depot, then external bus to HS.' }],
+    totalRideMinutes: 22, totalRideRange: [22,42], tags: [],
   },
   {
     id: 'fw-ak-bus',
     from: 'FW', to: 'AK', name: 'Bus from Fort Wilderness',
-    legs: [{ mode: 'bus', from: 'FW', to: 'AK', rideMinutes: 30, accessible: true }],
-    totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
+    legs: [{ mode: 'bus', from: 'FW', to: 'AK', rideMinutes: 24, accessible: true }],
+    totalRideMinutes: 24, totalRideRange: [24,44], tags: [],
   },
   {
     id: 'fw-ds-bus',
     from: 'FW', to: 'DS', name: 'Bus from Fort Wilderness',
-    legs: [{ mode: 'bus', from: 'FW', to: 'DS', rideMinutes: 30, accessible: true }],
-    totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
+    legs: [{ mode: 'bus', from: 'FW', to: 'DS', rideMinutes: 23, accessible: true }],
+    totalRideMinutes: 23, totalRideRange: [23,43], tags: [],
   },
   {
     id: 'fw-wl-bus',
@@ -2025,20 +2046,20 @@ export const ALL_ROUTES: Route[] = [
   {
     id: 'akl-mk-bus',
     from: 'AKL', to: 'MK', name: 'Bus from Animal Kingdom Lodge',
-    legs: [{ mode: 'bus', from: 'AKL', to: 'MK', rideMinutes: 30, accessible: true }],
-    totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
+    legs: [{ mode: 'bus', from: 'AKL', to: 'MK', rideMinutes: 26, accessible: true }],
+    totalRideMinutes: 26, totalRideRange: [26,46], tags: [],
   },
   {
     id: 'akl-ep-bus',
     from: 'AKL', to: 'EP', name: 'Bus from Animal Kingdom Lodge',
-    legs: [{ mode: 'bus', from: 'AKL', to: 'EP', rideMinutes: 30, accessible: true }],
-    totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
+    legs: [{ mode: 'bus', from: 'AKL', to: 'EP', rideMinutes: 20, accessible: true }],
+    totalRideMinutes: 20, totalRideRange: [20,40], tags: [],
   },
   {
     id: 'akl-hs-bus',
     from: 'AKL', to: 'HS', name: 'Bus from Animal Kingdom Lodge',
-    legs: [{ mode: 'bus', from: 'AKL', to: 'HS', rideMinutes: 30, accessible: true }],
-    totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
+    legs: [{ mode: 'bus', from: 'AKL', to: 'HS', rideMinutes: 16, accessible: true }],
+    totalRideMinutes: 16, totalRideRange: [16,36], tags: [],
   },
   {
     id: 'akl-bb-bus',
@@ -2049,8 +2070,8 @@ export const ALL_ROUTES: Route[] = [
   {
     id: 'akl-ds-bus',
     from: 'AKL', to: 'DS', name: 'Bus from Animal Kingdom Lodge',
-    legs: [{ mode: 'bus', from: 'AKL', to: 'DS', rideMinutes: 30, accessible: true }],
-    totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
+    legs: [{ mode: 'bus', from: 'AKL', to: 'DS', rideMinutes: 29, accessible: true }],
+    totalRideMinutes: 29, totalRideRange: [29,49], tags: [],
   },
 
   // FROM: CORONADO SPRINGS (COR)
@@ -2064,20 +2085,20 @@ export const ALL_ROUTES: Route[] = [
   {
     id: 'cor-mk-bus',
     from: 'COR', to: 'MK', name: 'Bus from Coronado Springs',
-    legs: [{ mode: 'bus', from: 'COR', to: 'MK', rideMinutes: 30, accessible: true }],
-    totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
+    legs: [{ mode: 'bus', from: 'COR', to: 'MK', rideMinutes: 24, accessible: true }],
+    totalRideMinutes: 24, totalRideRange: [24,44], tags: [],
   },
   {
     id: 'cor-ep-bus',
     from: 'COR', to: 'EP', name: 'Bus from Coronado Springs',
-    legs: [{ mode: 'bus', from: 'COR', to: 'EP', rideMinutes: 30, accessible: true }],
-    totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
+    legs: [{ mode: 'bus', from: 'COR', to: 'EP', rideMinutes: 13, accessible: true }],
+    totalRideMinutes: 13, totalRideRange: [13,33], tags: [],
   },
   {
     id: 'cor-hs-bus',
     from: 'COR', to: 'HS', name: 'Bus from Coronado Springs',
-    legs: [{ mode: 'bus', from: 'COR', to: 'HS', rideMinutes: 30, accessible: true }],
-    totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
+    legs: [{ mode: 'bus', from: 'COR', to: 'HS', rideMinutes: 10, accessible: true }],
+    totalRideMinutes: 10, totalRideRange: [10,30], tags: [],
   },
   {
     id: 'cor-bb-bus',
@@ -2088,8 +2109,8 @@ export const ALL_ROUTES: Route[] = [
   {
     id: 'cor-ds-bus',
     from: 'COR', to: 'DS', name: 'Bus from Coronado Springs',
-    legs: [{ mode: 'bus', from: 'COR', to: 'DS', rideMinutes: 30, accessible: true }],
-    totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
+    legs: [{ mode: 'bus', from: 'COR', to: 'DS', rideMinutes: 20, accessible: true }],
+    totalRideMinutes: 20, totalRideRange: [20,40], tags: [],
   },
 
   // FROM: ALL-STAR RESORTS (ASMo / ASMu / ASS)
@@ -2126,20 +2147,20 @@ export const ALL_ROUTES: Route[] = [
   {
     id: 'asmo-ep-bus',
     from: 'ASMo', to: 'EP', name: 'Bus from All-Star Movies',
-    legs: [{ mode: 'bus', from: 'ASMo', to: 'EP', rideMinutes: 30, accessible: true }],
-    totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
+    legs: [{ mode: 'bus', from: 'ASMo', to: 'EP', rideMinutes: 19, accessible: true }],
+    totalRideMinutes: 19, totalRideRange: [19,39], tags: [],
   },
   {
     id: 'asmo-hs-bus',
     from: 'ASMo', to: 'HS', name: 'Bus from All-Star Movies',
-    legs: [{ mode: 'bus', from: 'ASMo', to: 'HS', rideMinutes: 30, accessible: true }],
-    totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
+    legs: [{ mode: 'bus', from: 'ASMo', to: 'HS', rideMinutes: 13, accessible: true }],
+    totalRideMinutes: 13, totalRideRange: [13,33], tags: [],
   },
   {
     id: 'asmo-ak-bus',
     from: 'ASMo', to: 'AK', name: 'Bus from All-Star Movies',
-    legs: [{ mode: 'bus', from: 'ASMo', to: 'AK', rideMinutes: 30, accessible: true }],
-    totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
+    legs: [{ mode: 'bus', from: 'ASMo', to: 'AK', rideMinutes: 11, accessible: true }],
+    totalRideMinutes: 11, totalRideRange: [11,31], tags: [],
   },
   {
     id: 'asmo-bb-bus',
@@ -2150,32 +2171,32 @@ export const ALL_ROUTES: Route[] = [
   {
     id: 'asmo-ds-bus',
     from: 'ASMo', to: 'DS', name: 'Bus from All-Star Movies',
-    legs: [{ mode: 'bus', from: 'ASMo', to: 'DS', rideMinutes: 30, accessible: true }],
-    totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
+    legs: [{ mode: 'bus', from: 'ASMo', to: 'DS', rideMinutes: 24, accessible: true }],
+    totalRideMinutes: 24, totalRideRange: [24,44], tags: [],
   },
   {
     id: 'asmu-mk-bus',
     from: 'ASMu', to: 'MK', name: 'Bus from All-Star Music',
-    legs: [{ mode: 'bus', from: 'ASMu', to: 'MK', rideMinutes: 30, accessible: true }],
-    totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
+    legs: [{ mode: 'bus', from: 'ASMu', to: 'MK', rideMinutes: 29, accessible: true }],
+    totalRideMinutes: 29, totalRideRange: [29,49], tags: [],
   },
   {
     id: 'asmu-ep-bus',
     from: 'ASMu', to: 'EP', name: 'Bus from All-Star Music',
-    legs: [{ mode: 'bus', from: 'ASMu', to: 'EP', rideMinutes: 30, accessible: true }],
-    totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
+    legs: [{ mode: 'bus', from: 'ASMu', to: 'EP', rideMinutes: 17, accessible: true }],
+    totalRideMinutes: 17, totalRideRange: [17,37], tags: [],
   },
   {
     id: 'asmu-hs-bus',
     from: 'ASMu', to: 'HS', name: 'Bus from All-Star Music',
-    legs: [{ mode: 'bus', from: 'ASMu', to: 'HS', rideMinutes: 30, accessible: true }],
-    totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
+    legs: [{ mode: 'bus', from: 'ASMu', to: 'HS', rideMinutes: 12, accessible: true }],
+    totalRideMinutes: 12, totalRideRange: [12,32], tags: [],
   },
   {
     id: 'asmu-ak-bus',
     from: 'ASMu', to: 'AK', name: 'Bus from All-Star Music',
-    legs: [{ mode: 'bus', from: 'ASMu', to: 'AK', rideMinutes: 30, accessible: true }],
-    totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
+    legs: [{ mode: 'bus', from: 'ASMu', to: 'AK', rideMinutes: 10, accessible: true }],
+    totalRideMinutes: 10, totalRideRange: [10,30], tags: [],
   },
   {
     id: 'asmu-bb-bus',
@@ -2216,8 +2237,8 @@ export const ALL_ROUTES: Route[] = [
   {
     id: 'ass-ds-bus',
     from: 'ASS', to: 'DS', name: 'Bus from All-Star Sports',
-    legs: [{ mode: 'bus', from: 'ASS', to: 'DS', rideMinutes: 30, accessible: true }],
-    totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
+    legs: [{ mode: 'bus', from: 'ASS', to: 'DS', rideMinutes: 22, accessible: true }],
+    totalRideMinutes: 22, totalRideRange: [22,42], tags: [],
   },
 
   // FROM: PORT ORLEANS FRENCH QUARTER (POFQ) & RIVERSIDE (POR)
@@ -2261,26 +2282,26 @@ export const ALL_ROUTES: Route[] = [
   {
     id: 'pofq-mk-bus',
     from: 'POFQ', to: 'MK', name: 'Bus from Port Orleans French Quarter',
-    legs: [{ mode: 'bus', from: 'POFQ', to: 'MK', rideMinutes: 30, accessible: true }],
-    totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
+    legs: [{ mode: 'bus', from: 'POFQ', to: 'MK', rideMinutes: 24, accessible: true }],
+    totalRideMinutes: 24, totalRideRange: [24,44], tags: [],
   },
   {
     id: 'pofq-ep-bus',
     from: 'POFQ', to: 'EP', name: 'Bus from Port Orleans French Quarter',
-    legs: [{ mode: 'bus', from: 'POFQ', to: 'EP', rideMinutes: 30, accessible: true }],
-    totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
+    legs: [{ mode: 'bus', from: 'POFQ', to: 'EP', rideMinutes: 14, accessible: true }],
+    totalRideMinutes: 14, totalRideRange: [14,34], tags: [],
   },
   {
     id: 'pofq-hs-bus',
     from: 'POFQ', to: 'HS', name: 'Bus from Port Orleans French Quarter',
-    legs: [{ mode: 'bus', from: 'POFQ', to: 'HS', rideMinutes: 30, accessible: true }],
-    totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
+    legs: [{ mode: 'bus', from: 'POFQ', to: 'HS', rideMinutes: 19, accessible: true }],
+    totalRideMinutes: 19, totalRideRange: [19,39], tags: [],
   },
   {
     id: 'pofq-ak-bus',
     from: 'POFQ', to: 'AK', name: 'Bus from Port Orleans French Quarter',
-    legs: [{ mode: 'bus', from: 'POFQ', to: 'AK', rideMinutes: 30, accessible: true }],
-    totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
+    legs: [{ mode: 'bus', from: 'POFQ', to: 'AK', rideMinutes: 27, accessible: true }],
+    totalRideMinutes: 27, totalRideRange: [27,47], tags: [],
   },
   {
     id: 'pofq-tl-via-ds',
@@ -2294,26 +2315,26 @@ export const ALL_ROUTES: Route[] = [
   {
     id: 'por-mk-bus',
     from: 'POR', to: 'MK', name: 'Bus from Port Orleans Riverside',
-    legs: [{ mode: 'bus', from: 'POR', to: 'MK', rideMinutes: 30, accessible: true }],
-    totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
+    legs: [{ mode: 'bus', from: 'POR', to: 'MK', rideMinutes: 25, accessible: true }],
+    totalRideMinutes: 25, totalRideRange: [25,45], tags: [],
   },
   {
     id: 'por-ep-bus',
     from: 'POR', to: 'EP', name: 'Bus from Port Orleans Riverside',
-    legs: [{ mode: 'bus', from: 'POR', to: 'EP', rideMinutes: 30, accessible: true }],
-    totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
+    legs: [{ mode: 'bus', from: 'POR', to: 'EP', rideMinutes: 13, accessible: true }],
+    totalRideMinutes: 13, totalRideRange: [13,33], tags: [],
   },
   {
     id: 'por-hs-bus',
     from: 'POR', to: 'HS', name: 'Bus from Port Orleans Riverside',
-    legs: [{ mode: 'bus', from: 'POR', to: 'HS', rideMinutes: 30, accessible: true }],
-    totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
+    legs: [{ mode: 'bus', from: 'POR', to: 'HS', rideMinutes: 17, accessible: true }],
+    totalRideMinutes: 17, totalRideRange: [17,37], tags: [],
   },
   {
     id: 'por-ak-bus',
     from: 'POR', to: 'AK', name: 'Bus from Port Orleans Riverside',
-    legs: [{ mode: 'bus', from: 'POR', to: 'AK', rideMinutes: 30, accessible: true }],
-    totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
+    legs: [{ mode: 'bus', from: 'POR', to: 'AK', rideMinutes: 26, accessible: true }],
+    totalRideMinutes: 26, totalRideRange: [26,46], tags: [],
   },
 
   // FROM: OLD KEY WEST (OKW) & SARATOGA SPRINGS (SS)
@@ -2369,59 +2390,59 @@ export const ALL_ROUTES: Route[] = [
   {
     id: 'okw-mk-bus',
     from: 'OKW', to: 'MK', name: 'Bus from Old Key West',
-    legs: [{ mode: 'bus', from: 'OKW', to: 'MK', rideMinutes: 30, accessible: true }],
-    totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
+    legs: [{ mode: 'bus', from: 'OKW', to: 'MK', rideMinutes: 26, accessible: true }],
+    totalRideMinutes: 26, totalRideRange: [26,46], tags: [],
   },
   {
     id: 'okw-ep-bus',
     from: 'OKW', to: 'EP', name: 'Bus from Old Key West',
-    legs: [{ mode: 'bus', from: 'OKW', to: 'EP', rideMinutes: 30, accessible: true }],
-    totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
+    legs: [{ mode: 'bus', from: 'OKW', to: 'EP', rideMinutes: 13, accessible: true }],
+    totalRideMinutes: 13, totalRideRange: [13,33], tags: [],
   },
   {
     id: 'okw-hs-bus',
     from: 'OKW', to: 'HS', name: 'Bus from Old Key West',
-    legs: [{ mode: 'bus', from: 'OKW', to: 'HS', rideMinutes: 30, accessible: true }],
-    totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
+    legs: [{ mode: 'bus', from: 'OKW', to: 'HS', rideMinutes: 16, accessible: true }],
+    totalRideMinutes: 16, totalRideRange: [16,36], tags: [],
   },
   {
     id: 'okw-ak-bus',
     from: 'OKW', to: 'AK', name: 'Bus from Old Key West',
-    legs: [{ mode: 'bus', from: 'OKW', to: 'AK', rideMinutes: 30, accessible: true }],
-    totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
+    legs: [{ mode: 'bus', from: 'OKW', to: 'AK', rideMinutes: 25, accessible: true }],
+    totalRideMinutes: 25, totalRideRange: [25,45], tags: [],
   },
   {
     id: 'ss-mk-bus',
     from: 'SS', to: 'MK', name: 'Bus from Saratoga Springs',
-    legs: [{ mode: 'bus', from: 'SS', to: 'MK', rideMinutes: 30, accessible: true }],
-    totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
+    legs: [{ mode: 'bus', from: 'SS', to: 'MK', rideMinutes: 27, accessible: true }],
+    totalRideMinutes: 27, totalRideRange: [27,47], tags: [],
   },
   {
     id: 'ss-ep-bus',
     from: 'SS', to: 'EP', name: 'Bus from Saratoga Springs',
-    legs: [{ mode: 'bus', from: 'SS', to: 'EP', rideMinutes: 30, accessible: true }],
-    totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
+    legs: [{ mode: 'bus', from: 'SS', to: 'EP', rideMinutes: 13, accessible: true }],
+    totalRideMinutes: 13, totalRideRange: [13,33], tags: [],
   },
   {
     id: 'ss-hs-bus',
     from: 'SS', to: 'HS', name: 'Bus from Saratoga Springs',
-    legs: [{ mode: 'bus', from: 'SS', to: 'HS', rideMinutes: 30, accessible: true }],
-    totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
+    legs: [{ mode: 'bus', from: 'SS', to: 'HS', rideMinutes: 16, accessible: true }],
+    totalRideMinutes: 16, totalRideRange: [16,36], tags: [],
   },
   {
     id: 'ss-ak-bus',
     from: 'SS', to: 'AK', name: 'Bus from Saratoga Springs',
-    legs: [{ mode: 'bus', from: 'SS', to: 'AK', rideMinutes: 30, accessible: true }],
-    totalRideMinutes: 30, totalRideRange: [30,50], tags: [],
+    legs: [{ mode: 'bus', from: 'SS', to: 'AK', rideMinutes: 25, accessible: true }],
+    totalRideMinutes: 25, totalRideRange: [25,45], tags: [],
   },
   {
     id: 'okw-bb-via-ak',
     from: 'OKW', to: 'BB', name: 'Bus to AK area, Bus to Blizzard Beach',
     legs: [
-      { mode: 'bus', from: 'OKW', to: 'AK', rideMinutes: 30, accessible: true },
+      { mode: 'bus', from: 'OKW', to: 'AK', rideMinutes: 25, accessible: true },
       { mode: 'bus', from: 'AK', to: 'BB', rideMinutes: 15, accessible: true, walkMinutes: 5 },
     ],
-    totalRideMinutes: 45, totalRideRange: [45,70], tags: ['transfer'],
+    totalRideMinutes: 40, totalRideRange: [40,65], tags: ['transfer'],
   },
 
 ];

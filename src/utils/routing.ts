@@ -271,10 +271,14 @@ function sharedStop(id: string): string {
 // A transfer that carries you well past where you were going is a bad
 // transfer, even when the clock says otherwise. Riding a bus from Magic
 // Kingdom all the way across property to Caribbean Beach in order to catch a
-// gondola back to Hollywood Studios is not what anybody does, and the only
-// reason it can win on time is that the route file records almost every
-// resort bus as a flat 30 minutes, so a hub next door and a hub across the
-// resort look identical.
+// gondola back to Hollywood Studios is not what anybody does.
+//
+// This used to be here to compensate for the route file recording almost
+// every resort bus as a flat 30 minutes, which made a hub next door and a hub
+// across the resort look identical. Those durations are real now, and the
+// weighting still earns its place: the Skyliner loads continuously and so
+// costs no wait, which is enough on its own to sell a long ride out to
+// Caribbean Beach as the quick way to somewhere much nearer.
 //
 // This is a tiebreak for *choosing* between hubs, not a cost added to the
 // trip: the minutes shown to the guest stay the honest ones.
