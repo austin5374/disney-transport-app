@@ -6,7 +6,7 @@ import { Route } from '../types';
 // by an earlier cleanup rather than anything measured. It read as harmless
 // data noise and was not. The router picks a transfer hub by cost, so when
 // every resort bus costs the same 30 minutes it cannot tell a hub next door
-// from one across property — Magic Kingdom to Hollywood Studios ranked a bus
+// from one across property. Magic Kingdom to Hollywood Studios ranked a bus
 // out to Caribbean Beach above a four-minute monorail to the Contemporary,
 // because both onward buses were recorded as the same number.
 //
@@ -16,7 +16,7 @@ import { Route } from '../types';
 // overriding a real duration the app had already worked out.
 //
 // So they are all busRideMinutes() now, and a leg edited here has to keep
-// totalRideMinutes and totalRideRange in step with it — routeData.test.ts
+// totalRideMinutes and totalRideRange in step with it: routeData.test.ts
 // checks both. The legs that are *not* the model's number are deliberate:
 // the short hops around Bay Lake sit below its ten-minute floor, and were
 // measured.
