@@ -38,13 +38,18 @@ export default function RouteCard({ route, live, at, onPress }: RouteCardProps) 
   const isPaid   = route.legs.some(l => l.mode === 'minnie_van');
   const firstLeg = route.legs[0];
 
-  // Worst live disruption across this route's legs
+  // Worst live disruption across this route's legs. Ranked, because the old
+  // rule only ever let "down" win: a shut line found after a delayed one left
+  // the card badged as running late when it was not running at all.
+  const SEVERITY: Record<ServiceStatus, number> = {
+    operating: 0, delayed: 1, down: 2, closed: 3,
+  };
   let disruption: { status: ServiceStatus; name: string } | null = null;
   for (const leg of route.legs) {
     const line = lineForLeg(leg.mode, leg.from, leg.to);
     const st = line ? live[line.id] : null;
     if (st && st.status !== 'operating') {
-      if (!disruption || st.status === 'down') {
+      if (!disruption || SEVERITY[st.status] > SEVERITY[disruption.status]) {
         disruption = { status: st.status, name: line!.shortName };
       }
     }
@@ -87,9 +92,11 @@ export default function RouteCard({ route, live, at, onPress }: RouteCardProps) 
                 },
               ]}>
                 <Text style={[styles.badgeText, { color: StatusColors[disruption.status].text }]}>
-                  {disruption.status === 'down'
-                    ? `${disruption.name} temporarily down`
-                    : `${disruption.name} delays`}
+                  {disruption.status === 'closed'
+                    ? `${disruption.name} not running`
+                    : disruption.status === 'down'
+                      ? `${disruption.name} temporarily down`
+                      : `${disruption.name} delays`}
                 </Text>
               </View>
             )}

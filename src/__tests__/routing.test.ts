@@ -1,8 +1,9 @@
 import {
   getActiveRoutes, applyFilters, journeyMinutes, waitMinutesFor,
   transferCount, driveMinutes, describeExclusions, expectedWait,
-  describeTimeGaps, restrictionLabel,
+  describeTimeGaps, restrictionLabel, nextServiceStart, closedForNow,
 } from '../utils/routing';
+import { computeStatusAt } from '../utils/liveStatus';
 import { DESTINATIONS } from '../data/destinations';
 import { RAIL_STATIONS } from '../data/rail';
 import { lineForLeg } from '../data/lines';
@@ -568,6 +569,77 @@ describe('a restricted route never stands alone', () => {
       }
     }
     expect(offenders).toEqual([]);
+  });
+});
+
+describe('planning past the end of the service day', () => {
+  // Caribbean Beach to Hollywood Studios is one Skyliner hop and nothing
+  // else: no bus, because the gondola serves the pair. After the Skyliner
+  // shuts, the list is empty and correct, and it was a dead end. A guest
+  // reading it at 11 PM is planning tomorrow, and the only way on was to
+  // guess an hour out of the time picker.
+  const lateNight = at(23);
+  const board = (d: Date) => computeStatusAt(d.getTime());
+
+  it('finds the hour a pair starts working again', () => {
+    const resumption = nextServiceStart('CBR', 'HS', lateNight);
+    expect(resumption).toBeTruthy();
+    // Tomorrow, not a time earlier today that has already gone.
+    expect(resumption!.at.getTime()).toBeGreaterThan(lateNight.getTime());
+    // ...and it is a moment the trip genuinely works, not merely a moment
+    // inside the answer.
+    const working = applyFilters(
+      getActiveRoutes('CBR', 'HS', resumption!.at, board(resumption!.at)), BASE,
+      board(resumption!.at),
+    ).filter(r => !isPaid(r));
+    expect(working.length).toBeGreaterThan(0);
+  });
+
+  it('names the system the guest is waiting on, not the line', () => {
+    // "Skyliner: Hollywood Studios Line starts at 8:00 AM" is not a sentence
+    // anybody says. Two monorail beams are shut between Magic Kingdom and
+    // EPCOT overnight, and a guest calls that "the monorail".
+    expect(nextServiceStart('CBR', 'HS', lateNight)!.waitingOn).toBe('Skyliner');
+    expect(nextServiceStart('MK', 'EP', lateNight)!.waitingOn).toBe('Monorail');
+  });
+
+  it('does not send anyone to a walk and call it service resuming', () => {
+    // Boardwalk Inn to EPCOT is a six-minute footpath that works at any hour.
+    // If a walk counted, every pair would "resume" at the next timetable mark
+    // and the button would move the clock for nothing.
+    const resumption = nextServiceStart('BWI', 'EP', lateNight);
+    expect(resumption).toBeTruthy();
+    const working = getActiveRoutes('BWI', 'EP', resumption!.at, board(resumption!.at))
+      .filter(r => !isPaid(r) && !r.legs.every(l => l.mode === 'walk'));
+    expect(working.length).toBeGreaterThan(0);
+  });
+});
+
+describe('trips the clock is holding back', () => {
+  const lateNight = at(23);
+  const board = computeStatusAt(lateNight.getTime());
+
+  it('surfaces the routes applyFilters drops for being shut', () => {
+    // Told "no transit options" and nothing else, a guest cannot tell an
+    // overnight gap from a pair Disney does not connect at all. One of those
+    // is worth waiting for.
+    const all = getActiveRoutes('CBR', 'HS', lateNight, board);
+    expect(applyFilters(all, BASE, board).filter(r => !isPaid(r))).toHaveLength(0);
+
+    const held = closedForNow(all, BASE, board);
+    expect(held.length).toBeGreaterThan(0);
+    expect(held.some(r => r.legs.some(l => l.mode === 'skyliner'))).toBe(true);
+    // Never a paid car: the bottom of the list is still transit.
+    expect(held.some(isPaid)).toBe(false);
+  });
+
+  it('keeps obeying the filters the user set', () => {
+    // A step-free filter that quietly stops applying at the bottom of the
+    // list is worse than no filter at all.
+    const all = getActiveRoutes('BWI', 'EP', lateNight, board);
+    const water = closedForNow(all, BASE, board).filter(r => r.tags.includes('water'));
+    expect(water.length).toBeGreaterThan(0);
+    expect(closedForNow(all, { ...BASE, noWater: true }, board)).toEqual([]);
   });
 });
 

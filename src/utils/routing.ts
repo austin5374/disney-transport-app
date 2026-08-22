@@ -1,7 +1,9 @@
 import { Route, ActiveFilters, TransportMode, Leg } from '../types';
 import { ALL_ROUTES } from '../data/routes';
 import { DESTINATIONS, DESTINATION_MAP, GEOFENCE_ZONES } from '../data/destinations';
-import { lineForLeg } from '../data/lines';
+import {
+  lineForLeg, TRANSIT_LINES, serviceWindowMinutes, isInService, PARK_DAY, LineGroup,
+} from '../data/lines';
 import { shortLabel } from './destinationMeta';
 import { LineStatus, DELAY_HEADWAY_FACTOR, CROWD_WAIT_FACTOR, getTemporaryBridges } from './liveStatus';
 import { railRoutes } from '../data/rail';
@@ -830,6 +832,119 @@ export function describeTimeGaps(from: string, to: string, when?: Date): TimeGap
       };
     })
     .sort((x, y) => x.at.getTime() - y.at.getTime());
+}
+
+// Planning past the end of the service day
+//
+// A guest reading this list at 11 PM is almost always planning tomorrow, not
+// tonight. The list they get is empty and correct, and it was a dead end: the
+// only way on was to guess an hour out of the time picker and try again. What
+// they are asking is "when does this work", and the timetable knows.
+
+/** Is every line this route rides inside its service window at `when`?
+ *
+ *  This reads the timetable rather than the live board on purpose. The board
+ *  rolls disruptions from the clock, so asking it about tomorrow morning
+ *  invents a breakdown and then reports it as fact. Closure is the one thing
+ *  the two always agree on, because `computeLine` derives it from exactly
+ *  this window. */
+function runsAt(route: Route, when: Date): boolean {
+  return route.legs.every(leg => {
+    if (leg.mode === 'walk' || leg.mode === 'minnie_van') return true;
+    const line = lineForLeg(leg.mode, leg.from, leg.to);
+    return !line || isInService(line, when);
+  });
+}
+
+/** The same clock time, on today if it is still ahead and tomorrow if not. */
+function nextOccurrence(after: Date, minutesFromMidnight: number): Date {
+  const at = new Date(after);
+  at.setHours(Math.floor(minutesFromMidnight / 60) % 24, minutesFromMidnight % 60, 0, 0);
+  if (at.getTime() <= after.getTime()) at.setDate(at.getDate() + 1);
+  return at;
+}
+
+/** What to call a system in a sentence about its hours. Singular, because
+ *  "Boat service starts" survives having one line or four behind it and "the
+ *  boats starts" does not. */
+const SYSTEM_LABEL: Record<LineGroup, string> = {
+  Monorail: 'Monorail',
+  Skyliner: 'Skyliner',
+  Boats:    'Boat',
+  Buses:    'Bus',
+};
+
+export interface ServiceResumption {
+  /** The first moment this pair has a trip somebody could actually board. */
+  at: Date;
+  /** The system they are waiting on, ready to take "service starts at ...".
+   *  Null when more than one system is shut, or when the wait is a restricted
+   *  route's window rather than a closed line. */
+  waitingOn: string | null;
+}
+
+/** When this pair starts working again, for a list the clock has emptied.
+ *
+ *  Only the moments where the answer can change are tried: a line opening, or
+ *  a time-restricted route coming into its window. Scanning the clock in
+ *  fixed steps would land between them and report a time that is merely
+ *  inside the answer rather than the start of it. */
+export function nextServiceStart(from: string, to: string, when?: Date): ServiceResumption | null {
+  const now = when ?? new Date();
+  const a = DEST_ALIAS[from] ?? from;
+  const b = DEST_ALIAS[to] ?? to;
+
+  const marks = new Set<number>();
+  for (const line of TRANSIT_LINES) marks.add(serviceWindowMinutes(line.window)[0]);
+  for (const m of Object.values(RESTRICTION_MINUTES)) marks.add(m);
+
+  const moments = [...marks]
+    .map(m => nextOccurrence(now, m))
+    .sort((x, y) => x.getTime() - y.getTime());
+
+  for (const at of moments) {
+    const working = getActiveRoutes(a, b, at)
+      .filter(r => !isPaidRoute(r) && !isWalkOnly(r))
+      .filter(r => runsAt(r, at));
+    if (working.length === 0) continue;
+
+    // Name what they are waiting on. The system rather than the line: two
+    // monorail beams are shut between Magic Kingdom and EPCOT overnight, and
+    // "the monorail" is what a guest calls that, not a pair of line names.
+    const best = working.sort((x, y) => journeyMinutes(x) - journeyMinutes(y))[0];
+    const shutNow = best.legs
+      .map(leg => lineForLeg(leg.mode, leg.from, leg.to))
+      .filter((line): line is NonNullable<typeof line> => !!line && !isInService(line, now));
+    const systems = [...new Set(shutNow.map(l => SYSTEM_LABEL[l.group]))];
+
+    return { at, waitingOn: systems.length === 1 ? systems[0] : null };
+  }
+  return null;
+}
+
+/** When the parks open, as a display string, for copy that plans a morning. */
+export function parkOpenLabel(): string {
+  const at = new Date();
+  at.setHours(Math.floor(PARK_DAY.open / 60), PARK_DAY.open % 60, 0, 0);
+  return at.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+}
+
+/** Trips this pair has that only the clock is holding back, quickest first.
+ *
+ *  `applyFilters` drops these, which is right for a list of what to do now
+ *  and wrong as the whole answer: a guest told "no transit options" cannot
+ *  tell an overnight gap from a pair Disney simply does not connect. The
+ *  user's own filters still apply, because a step-free filter that quietly
+ *  stops applying at the bottom of the list is worse than no filter. */
+export function closedForNow(
+  all: Route[], filters: ActiveFilters, live?: LiveBoard,
+): Route[] {
+  return all
+    .filter(r => !isPaidRoute(r))
+    .filter(r => isRouteClosed(r, live))
+    .filter(r => !(filters.noWater && isWater(r)))
+    .filter(r => !(filters.accessible && !isStepFree(r)))
+    .sort((x, y) => journeyMinutes(x, live) - journeyMinutes(y, live));
 }
 
 // Labels

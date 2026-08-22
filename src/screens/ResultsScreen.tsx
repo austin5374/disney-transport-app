@@ -7,6 +7,7 @@ import { Colors, Type, Spacing } from '../utils/theme';
 import { DESTINATION_MAP } from '../data/destinations';
 import {
   getActiveRoutes, applyFilters, describeExclusions, describeTimeGaps, hiddenByFilters,
+  nextServiceStart, closedForNow, parkOpenLabel,
 } from '../utils/routing';
 import { useLiveStatusAt } from '../utils/liveStatus';
 import AppHeader from '../components/AppHeader';
@@ -70,6 +71,24 @@ export default function ResultsScreen({ navigation, route: navRoute }: Props) {
   // Transit options come first; a paid car is never the headline answer.
   const transit = routes.filter(r => !r.legs.some(l => l.mode === 'minnie_van'));
   const paid = routes.filter(r => r.legs.some(l => l.mode === 'minnie_van'));
+
+  // Trips the clock is holding back rather than trips that do not exist. They
+  // are ranked out of the list above and shown under their own heading, so an
+  // overnight gap stops looking like a pair Disney does not connect.
+  const closed = useMemo(
+    () => closedForNow(all, filters, live),
+    [all, filters, live]
+  );
+
+  // Where the morning starts for this pair. Only wanted when the clock has
+  // emptied the list; a guest with options in front of them is not planning
+  // tomorrow, and the scan is wasted work on every other trip.
+  const resumesAt = useMemo(
+    () => (from && to && transit.length === 0
+      ? nextServiceStart(from.id, to.id, timeDate ?? undefined)
+      : null),
+    [from, to, timeDate, transit.length]
+  );
 
   // Naming the filters that are actually removing routes, rather than
   // blaming the network for an empty list the user's own settings produced.
@@ -149,12 +168,35 @@ export default function ResultsScreen({ navigation, route: navRoute }: Props) {
                 </Text>
                 <Text style={styles.emptyBody}>
                   {excluded.join(' ')}
-                  {blameFilters
-                    ? ' Turn a filter off to see the rest.'
-                    : ' Try a later time to see how this trip works once service starts.'}
+                  {blameFilters && ' Turn a filter off to see the rest.'}
+                  {/* Without a way forward this used to end on "try a later
+                      time", which is an instruction to go and guess. The
+                      button below knows the hour, so the sentence is only
+                      needed where the timetable cannot answer. */}
+                  {!blameFilters && !resumesAt
+                    && ' Try a later time to see how this trip works once service starts.'}
                 </Text>
                 {blameFilters && (
                   <PillButton label="Clear Filters" onPress={clearFilters} style={styles.emptyBtn} />
+                )}
+                {/* The guest reading an empty list at 11 PM is planning
+                    tomorrow. Sending them to the time picker to guess when
+                    the Skyliner starts is asking them to know the timetable
+                    the app is holding. */}
+                {!blameFilters && resumesAt && (
+                  <>
+                    <PillButton
+                      label="Plan for Park Opening"
+                      onPress={() => setTimeDate(resumesAt.at)}
+                      style={styles.emptyBtn}
+                    />
+                    <Text style={styles.emptyHint}>
+                      Parks open at {parkOpenLabel()}.{' '}
+                      {resumesAt.waitingOn
+                        ? `${resumesAt.waitingOn} service starts at ${fmtHour(resumesAt.at)}.`
+                        : `This trip works from ${fmtHour(resumesAt.at)}.`}
+                    </Text>
+                  </>
                 )}
               </>
             ) : (
@@ -180,6 +222,26 @@ export default function ResultsScreen({ navigation, route: navRoute }: Props) {
             })}
           />
         ))}
+
+        {closed.length > 0 && (
+          <>
+            <View style={styles.groupHeader}>
+              <Text style={styles.groupTitle}>Not Running Right Now</Text>
+              <Text style={styles.groupSub}>These work at other times of day</Text>
+            </View>
+            {closed.map(r => (
+              <RouteCard
+                key={r.id}
+                route={r}
+                live={live}
+                at={at ?? undefined}
+                onPress={() => navigation.navigate('Detail', {
+                  fromId, toId, routeId: r.id, timeOverride: timeDate?.toISOString(),
+                })}
+              />
+            ))}
+          </>
+        )}
 
         {paid.length > 0 && (
           <>
@@ -250,6 +312,11 @@ const styles = StyleSheet.create({
   },
   emptyBtn: {
     marginTop: Spacing.lg,
+  },
+  emptyHint: {
+    ...Type.caption,
+    color: Colors.textPlaceholder,
+    marginTop: Spacing.sm,
   },
   groupHeader: {
     paddingHorizontal: Spacing.lg,
