@@ -120,7 +120,7 @@ All rights reserved, and the [LICENSE](LICENSE) file means it. The code is here 
 
 The route information is based on the real Walt Disney World transportation system. Everything about live service is simulated, as described above.
 
-This is a personal project, not affiliated with or endorsed by Disney. Park and resort names are used so you know what the app is talking about.
+This is a personal project, not affiliated with or endorsed by the Walt Disney Company. Park and resort names are used so you know what the app is talking about.
 
 ---
 
