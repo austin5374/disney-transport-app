@@ -748,7 +748,7 @@ export function describeExclusions(
   const closed = transit.filter(r => isRouteClosed(r, live)).length;
   if (closed > 0) {
     reasons.push(
-      `${closed} route${closed === 1 ? '' : 's'} ${closed === 1 ? 'uses a line' : 'use lines'} that are not running at this hour.`
+      `${closed} route${closed === 1 ? '' : 's'} ${closed === 1 ? 'uses a line that is' : 'use lines that are'} not running at this hour.`
     );
   }
   if (filters.noWater) {
